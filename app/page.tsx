@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useOrderStore } from "@/store/useOrderStore";
 import { 
   ArrowRight, 
   ChevronDown, 
@@ -26,9 +27,15 @@ import {
 
 export default function Home() {
   const router = useRouter();
+  const { loadFromLocalStorage } = useOrderStore();
   const [selectedService, setSelectedService] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Load saved order data on page load
+  useEffect(() => {
+    loadFromLocalStorage();
+  }, [loadFromLocalStorage]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,6 +51,29 @@ export default function Home() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const serviceCategoryMap: Record<string, string[]> = {
+    "Printing": ["Printing", "Photocopy", "Scanning"],
+    "Photocopy": ["Photocopy", "Printing"],
+    "Typing": ["Typing", "Document Conversion"],
+    "Binding": ["Binding", "Hardcover Binding"],
+    "Scanning": ["Scanning", "Document Conversion"],
+    "Document Conversion": ["Document Conversion", "Typing"],
+    "Graphic/Logo Design": ["Graphic/Logo Design", "Business Card / ID Card"],
+    "Business Card / ID Card": ["Business Card / ID Card", "Graphic/Logo Design"],
+    "Application Services": ["Application Services", "Typing", "Document Conversion"],
+    "Technical Support": ["Technical Support"],
+  };
+
+  const handleServiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedService(e.target.value);
+    setSelectedCategory(""); // Reset category when service changes
+  };
+
+  const getAvailableCategories = () => {
+    if (!selectedService) return [];
+    return serviceCategoryMap[selectedService] || [];
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -66,31 +96,32 @@ export default function Home() {
     }
     if (location) params.set("location", location);
     
-    router.push(`/order?${params.toString()}`);
+    router.push(`/order/details?${params.toString()}`);
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-white text-black font-sans">
       {/* Navbar */}
-      <header className="w-full border-b border-gray-100 sticky top-0 bg-white z-50">
-        <div className="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
+      <header className="w-full border-b border-gray-900 sticky top-0 bg-black z-50">
+        <div className="container mx-auto px-4 lg:px-8 h-24 flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <div className="relative h-14 w-56 md:h-16 md:w-64">
-              <Image src="/logo.jpeg" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
+            <div className="relative h-12 w-60 md:h-20 md:w-80">
+              <Image src="/New Logo.jpeg" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
             </div>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-700">
-            <Link href="#services" className="hover:text-black">Services</Link>
-            <Link href="#how-it-works" className="hover:text-black">How it Works</Link>
-            <Link href="#pricing" className="hover:text-black">Pricing</Link>
-            <Link href="#terms" className="hover:text-black">Terms & Conditions</Link>
-            <Link href="#privacy" className="hover:text-black">Privacy Policy</Link>
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-white">
+            <Link href="#services" className="hover:text-[#D1AFFF]">Services</Link>
+            <Link href="#how-it-works" className="hover:text-[#D1AFFF]">How it Works</Link>
+            <Link href="#pricing" className="hover:text-[#D1AFFF]">Pricing</Link>
+            <Link href="/terms" className="hover:text-[#D1AFFF]">Terms & Conditions</Link>
+            <Link href="/refund-policy" className="hover:text-[#D1AFFF]">Refund Policy</Link>
+            <Link href="/privacy" className="hover:text-[#D1AFFF]">Privacy Policy</Link>
           </nav>
           
           <div>
-            <Link href="/order" className="bg-[#0047FF] hover:bg-blue-700 text-white px-6 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm">
-              Get Started
+            <Link href="/order/details" className="bg-[#0047FF] hover:bg-blue-700 text-white px-6 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm">
+              Recall
             </Link>
           </div>
         </div>
@@ -101,13 +132,13 @@ export default function Home() {
         <section className="container mx-auto px-4 lg:px-8 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="flex flex-col gap-6 max-w-xl">
             <h1 className="text-5xl lg:text-[4.5rem] font-bold tracking-tight leading-[1.05] text-black">
-              We Bring Computer Service to your doorstep.
+              We Bring Computer Services to your doorstep.
             </h1>
             <p className="text-lg text-gray-600 mt-2">
-              Request any document or computer service online and we will deliver quality result to you.
+              Request any document or computer services online and we will deliver quality result to you.
             </p>
             <div className="flex items-center gap-4 mt-6">
-              <Link href="/order" className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3 rounded-md font-medium flex items-center gap-2 transition-colors shadow-sm">
+              <Link href="/order/details" className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3 rounded-md font-medium flex items-center gap-2 transition-colors shadow-sm">
                 Get Started <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="#learn-more" className="bg-white border border-gray-300 text-black px-8 py-3 rounded-md font-medium hover:bg-gray-50 transition-colors">
@@ -217,7 +248,7 @@ export default function Home() {
                   name="service" 
                   required 
                   value={selectedService}
-                  onChange={(e) => setSelectedService(e.target.value)}
+                  onChange={handleServiceChange}
                   className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer"
                 >
                   <option value="" disabled>What do you want</option>
@@ -257,19 +288,13 @@ export default function Home() {
                   required 
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer"
+                  disabled={!selectedService}
+                  className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="" disabled>Select a service category</option>
-                  <option value="Printing">Printing</option>
-                  <option value="Photocopy">Photocopy</option>
-                  <option value="Typing">Typing</option>
-                  <option value="Binding">Binding</option>
-                  <option value="Scanning">Scanning</option>
-                  <option value="Document Conversion">Document Conversion</option>
-                  <option value="Graphic/Logo Design">Graphic/Logo Design</option>
-                  <option value="Business Card / ID Card">Business Card / ID Card</option>
-                  <option value="Application Services">Application Services</option>
-                  <option value="Technical Support">Technical Support</option>
+                  {getAvailableCategories().map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                   <option value="Other">Other</option>
                 </select>
                 <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none" />
@@ -336,11 +361,18 @@ export default function Home() {
       {/* Footer */}
       <footer className="w-full">
         {/* Main Footer Content */}
-        <div className="bg-[#190934] text-white py-16">
+        <div className="bg-black border-t border-gray-900 py-16">
           <div className="container mx-auto px-4 lg:px-8">
+            {/* Logo Section */}
+            <div className="mb-12 flex justify-start">
+              <div className="relative h-20 w-80">
+                <Image src="/New Logo.jpeg" alt="computerservice.ng" fill className="object-contain object-left" quality={100} />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12">
               <div>
-                <h4 className="font-bold text-sm mb-4">Secure and Reliable</h4>
+                <h4 className="font-bold text-sm mb-4 text-white">Secure and Reliable</h4>
                 <p className="text-xs text-white/70 leading-relaxed mb-8 max-w-[200px]">
                   Your data and files are safe with us.
                 </p>
@@ -376,22 +408,22 @@ export default function Home() {
               </div>
               
               <div>
-                <h4 className="font-bold text-sm mb-4">Fast Turnaround</h4>
+                <h4 className="font-bold text-sm mb-4 text-white">Fast Turnaround</h4>
                 <p className="text-xs text-white/70 leading-relaxed max-w-[200px]">
                   Your data and files are safe with us.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-sm mb-4">Quality Guaranteed</h4>
+                <h4 className="font-bold text-sm mb-4 text-white">Quality Guaranteed</h4>
                 <p className="text-xs text-white/70 leading-relaxed max-w-[200px]">
                   Your data and files are safe with us.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-sm mb-4">Contact</h4>
-                <div className="flex flex-col gap-4 text-xs text-white/80">
+                <h4 className="font-bold text-sm mb-4 text-white">Contact</h4>
+                <div className="flex flex-col gap-4 text-xs text-white/70">
                   <div className="flex items-center gap-3">
                     <Phone className="w-4 h-4 text-white/60" />
                     <span>+234 8035671112</span>
@@ -411,13 +443,13 @@ export default function Home() {
         </div>
         
         {/* Footer Bottom Bar */}
-        <div className="bg-[#D1AFFF] text-[#190934] py-6">
+        <div className="bg-black text-white py-6">
           <div className="container mx-auto px-4 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs font-medium">
             <p>©2026 computerservice.ng All right reserved.</p>
             <div className="flex items-center gap-8 mt-4 md:mt-0">
-              <Link href="/about" className="hover:text-black transition-colors">About Us</Link>
-              <Link href="/terms" className="hover:text-black transition-colors">Terms & Conditions</Link>
-              <Link href="/privacy" className="hover:text-black transition-colors">Privacy policy</Link>
+              <Link href="/about" className="hover:text-[#D1AFFF] transition-colors">About Us</Link>
+              <Link href="/terms" className="hover:text-[#D1AFFF] transition-colors">Terms & Conditions</Link>
+              <Link href="/privacy" className="hover:text-[#D1AFFF] transition-colors">Privacy policy</Link>
             </div>
           </div>
         </div>
