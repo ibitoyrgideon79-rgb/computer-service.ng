@@ -128,23 +128,7 @@ export default function OrderReviewPage() {
     };
     document.body.appendChild(script);
   };
-
-  const handleSaveProject = () => {
-    // TODO: Save project to database linked to phone number
-    console.log("Saving project for:", orderData.phoneNumber);
-    setShowSaveModal(false);
-    handleSubmit();
-  };
-
-  const handleDeleteProject = () => {
-    // TODO: Mark project for deletion after completion
-    console.log("Project will be deleted after completion");
-    setShowSaveModal(false);
-    handleSubmit();
-  };
-
-<<<<<<< Updated upstream
-=======
+  
   const handleSaveProject = () => {
     
     console.log("Saving project for:", orderData.phoneNumber);
@@ -159,7 +143,6 @@ export default function OrderReviewPage() {
     handleSubmit();
   };
 
->>>>>>> Stashed changes
   const steps = [
     { label: "Request", completed: true },
     { label: "Prepare & Price", completed: true },
