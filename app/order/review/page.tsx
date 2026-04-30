@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useOrderStore } from "@/store/useOrderStore";
+import SaveProjectModal from "@/app/components/SaveProjectModal";
 import {
   Check, Download, ShieldCheck, FileText,
   ChevronLeft, ChevronRight, ZoomIn, ZoomOut,
@@ -29,6 +30,7 @@ export default function OrderReviewPage() {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [approved, setApproved] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -125,6 +127,20 @@ export default function OrderReviewPage() {
       alert("Could not load payment gateway. Please check your internet connection.");
     };
     document.body.appendChild(script);
+  };
+
+  const handleSaveProject = () => {
+    // TODO: Save project to database linked to phone number
+    console.log("Saving project for:", orderData.phoneNumber);
+    setShowSaveModal(false);
+    handleSubmit();
+  };
+
+  const handleDeleteProject = () => {
+    // TODO: Mark project for deletion after completion
+    console.log("Project will be deleted after completion");
+    setShowSaveModal(false);
+    handleSubmit();
   };
 
   const steps = [
@@ -389,8 +405,8 @@ export default function OrderReviewPage() {
                 {approved ? "✅ Document approved. Click Submit to proceed to payment." : "Approve your document above before submitting."}
               </p>
               <button
-                onClick={handleSubmit}
-                disabled={paying}
+                onClick={() => setShowSaveModal(true)}
+                disabled={paying || !approved}
                 className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 sm:px-10 py-3 rounded-md font-semibold transition-colors min-w-[180px] ${
                   paying
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -407,6 +423,13 @@ export default function OrderReviewPage() {
           </div>
         </div>
       </div>
+
+      {/* Save/Delete Project Modal */}
+      <SaveProjectModal
+        isOpen={showSaveModal}
+        onSave={handleSaveProject}
+        onDelete={handleDeleteProject}
+      />
     </div>
   );
 }
