@@ -127,6 +127,23 @@ export default function OrderReviewPage() {
     document.body.appendChild(script);
   };
 
+<<<<<<< Updated upstream
+=======
+  const handleSaveProject = () => {
+    
+    console.log("Saving project for:", orderData.phoneNumber);
+    setShowSaveModal(false);
+    handleSubmit();
+  };
+
+  const handleDeleteProject = () => {
+
+    console.log("Project will be deleted after completion");
+    setShowSaveModal(false);
+    handleSubmit();
+  };
+
+>>>>>>> Stashed changes
   const steps = [
     { label: "Request", completed: true },
     { label: "Prepare & Price", completed: true },
