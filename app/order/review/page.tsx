@@ -36,7 +36,6 @@ export default function OrderReviewPage() {
   useEffect(() => {
     if (orderData.document) {
       const url = URL.createObjectURL(orderData.document);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFileUrl(url);
       return () => URL.revokeObjectURL(url);
     }
@@ -46,11 +45,27 @@ export default function OrderReviewPage() {
     setNumPages(numPages);
   }
 
-  // Pricing
-  const basePrice = 5000;
-  const serviceFee = 1000;
+  // ── Dynamic pricing ──────────────────────────────────────────────────────
+  const RATE: Record<string, Record<string, number>> = {
+    "Black & white": { A4: 50, A3: 100, "Custom type": 80 },
+    Coloured:        { A4: 150, A3: 300, "Custom type": 200 },
+  };
+  const FINISHING_COST: Record<string, number> = {
+    None: 0, Stapled: 200, "Spiral Binding": 500, "Hardcover Binding": 2000,
+  };
+  const SERVICE_FEE = 500;
+
+  const color       = orderData.printColor || "Black & white";
+  const paper       = orderData.paperType  || "A4";
+  const copies      = orderData.copies     || 1;
+  const perPage     = RATE[color]?.[paper] ?? 50;
+  const baseDoc     = perPage * copies;
+  const finishing   = FINISHING_COST[orderData.finishingOption ?? "None"] ?? 0;
+  const isExpress   = orderData.deadline === "Express (1hr - 2hrs)";
+  const expressExtra = isExpress ? Math.round(baseDoc * 0.5) : 0;
   const deliveryFee = orderData.deliveryMethod === "Doorstep" ? 1000 : 0;
-  const total = basePrice + serviceFee + deliveryFee;
+  const serviceFee  = SERVICE_FEE;
+  const total       = baseDoc + finishing + expressExtra + deliveryFee + serviceFee;
 
   // Preview logic 
   const hasCustomHtml = !!(orderData.customDocumentHtml?.trim());
@@ -114,9 +129,36 @@ export default function OrderReviewPage() {
         onClose: () => {
           setPaying(false);
         },
-        callback: (response: { reference: string }) => {
+        callback: async (response: { reference: string }) => {
           setPaying(false);
-          // Navigate to tracking page with reference
+          // Save order to database
+          try {
+            await fetch("/api/orders", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name:                 orderData.name,
+                phone_number:         orderData.phoneNumber,
+                email:                orderData.email,
+                service:              orderData.service      || "Unspecified",
+                category:             orderData.category     || null,
+                delivery_method:      orderData.deliveryMethod || null,
+                pickup_location:      orderData.pickupLocation || null,
+                delivery_details:     orderData.deliveryDetails || null,
+                deadline:             orderData.deadline      || null,
+                print_color:          orderData.printColor    || null,
+                paper_type:           orderData.paperType     || null,
+                copies:               orderData.copies        || 1,
+                print_layout:         orderData.printLayout   || null,
+                finishing_option:     orderData.finishingOption || null,
+                specific_instruction: orderData.specificInstruction || null,
+                amount:               total,
+                paystack_ref:         response.reference,
+              }),
+            });
+          } catch (err) {
+            console.error("Failed to save order to database:", err);
+          }
           router.push(`/order/tracking?ref=${response.reference}&total=${total}`);
         },
       });
@@ -246,9 +288,30 @@ export default function OrderReviewPage() {
 
                 {/* Pricing */}
                 <div className="space-y-2.5 py-3 text-sm">
-                  <div className="flex justify-between"><p className="font-semibold">Subtotal</p><p className="text-gray-700">₦{basePrice.toLocaleString()}</p></div>
-                  <div className="flex justify-between"><p className="font-semibold">Service fee</p><p className="text-gray-700">₦{serviceFee.toLocaleString()}</p></div>
-                  <div className="flex justify-between"><p className="font-semibold">Delivery Fee</p><p className="text-gray-700">₦{deliveryFee.toLocaleString()}</p></div>
+                  <div className="flex justify-between">
+                    <p className="font-semibold text-black">Pages ({color}, {paper}) × {copies}</p>
+                    <p className="text-gray-700">₦{baseDoc.toLocaleString()}</p>
+                  </div>
+                  {finishing > 0 && (
+                    <div className="flex justify-between">
+                      <p className="font-semibold text-black">Finishing — {orderData.finishingOption}</p>
+                      <p className="text-gray-700">₦{finishing.toLocaleString()}</p>
+                    </div>
+                  )}
+                  {expressExtra > 0 && (
+                    <div className="flex justify-between">
+                      <p className="font-semibold text-amber-700">Express surcharge (+50%)</p>
+                      <p className="text-amber-700">₦{expressExtra.toLocaleString()}</p>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <p className="font-semibold text-black">Delivery</p>
+                    <p className="text-gray-700">{deliveryFee > 0 ? `₦${deliveryFee.toLocaleString()}` : "Free"}</p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="font-semibold text-black">Service fee</p>
+                    <p className="text-gray-700">₦{serviceFee.toLocaleString()}</p>
+                  </div>
                   <div className="flex justify-between pt-2 mt-1 border-t border-gray-100">
                     <p className="text-base font-bold text-[#5123d4]">Total</p>
                     <p className="text-base font-bold text-[#5123d4]">₦{total.toLocaleString()}</p>

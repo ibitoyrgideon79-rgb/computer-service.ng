@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X } from "lucide-react";
+import { Lock, Trash2, Shield } from "lucide-react";
 
 interface SaveProjectModalProps {
   isOpen: boolean;
@@ -9,115 +9,118 @@ interface SaveProjectModalProps {
   onDelete: () => void;
 }
 
-export default function SaveProjectModal({
-  isOpen,
-  onSave,
-  onDelete,
-}: SaveProjectModalProps) {
-  const [selectedOption, setSelectedOption] = useState<"save" | "delete" | null>(null);
-  const [showExplanation, setShowExplanation] = useState(false);
+export default function SaveProjectModal({ isOpen, onSave, onDelete }: SaveProjectModalProps) {
+  const [view, setView] = useState<"choice" | "saved" | "deleteConfirm">("choice");
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
-    setSelectedOption("save");
-    setShowExplanation(true);
-  };
+  if (view === "saved") {
+    return (
+      <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
+            <Shield className="w-8 h-8 text-green-600" />
+          </div>
+          <h2 className="text-xl font-bold text-black mb-2">Saved for Recall!</h2>
+          <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+            Your project is securely stored. Retrieve it anytime using your phone number and a
+            verification code — no account needed.
+          </p>
+          <button
+            type="button"
+            onClick={() => { setView("choice"); onSave(); }}
+            className="w-full bg-[#5123d4] hover:bg-[#401AA0] text-white font-medium py-3 rounded-xl transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const handleDelete = () => {
-    setSelectedOption("delete");
-  };
-
-  const handleConfirmSave = () => {
-    onSave();
-    setSelectedOption(null);
-    setShowExplanation(false);
-  };
-
-  const handleConfirmDelete = () => {
-    onDelete();
-    setSelectedOption(null);
-    setShowExplanation(false);
-  };
+  if (view === "deleteConfirm") {
+    return (
+      <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8">
+          <h2 className="text-xl font-bold text-black mb-2">Delete After Completion?</h2>
+          <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+            Your project will be permanently deleted after we deliver it. You won&apos;t be able to
+            access it again.
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setView("choice")}
+              className="flex-1 border border-gray-200 text-black font-medium py-3 rounded-xl hover:bg-gray-50 transition-colors text-sm"
+            >
+              Go Back
+            </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-colors text-sm"
+            >
+              Confirm Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-8">
-        {showExplanation ? (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-black">Project Saved! 🎉</h2>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-              <p className="font-semibold text-black">You&apos;ll be able to access this project anytime using your phone number and a one-time code.</p>
-              <p className="text-sm text-gray-700">Your project is now securely saved and linked to your phone number. No account needed!</p>
-            </div>
-            <button
-              onClick={handleConfirmSave}
-              className="w-full bg-[#5123d4] hover:bg-[#401AA0] text-white font-medium py-3 rounded-md transition-colors"
-            >
-              Continue
-            </button>
-          </div>
-        ) : selectedOption === "delete" ? (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-black">Delete After Completion?</h2>
-            <p className="text-gray-600">
-              This project will be permanently deleted after completion. You won&apos;t be able to access it again.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setSelectedOption(null)}
-                className="flex-1 border border-gray-300 text-black font-medium py-2.5 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-md transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-black">Save This Project?</h2>
-            <p className="text-gray-600">
-              Would you like to save this project for easy recall anytime?
-            </p>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+        {/* Privacy notice banner */}
+        <div className="bg-[#f0ebff] px-6 py-4 rounded-t-2xl border-b border-purple-100">
+          <p className="text-xs text-[#5123d4] font-medium text-center flex items-center justify-center gap-1.5">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            For your privacy, all projects are deleted automatically 48 hours after delivery
+          </p>
+        </div>
 
-            {/* Option 1: Save */}
-            <button
-              onClick={handleSave}
-              className="w-full border-2 border-green-500 bg-green-50 rounded-lg p-4 text-left hover:bg-green-100 transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <Check className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-black">✅ Yes — Save for easy recall anytime</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Access this project anytime using your phone number
-                  </p>
-                </div>
-              </div>
-            </button>
+        <div className="p-6 space-y-4">
+          <h2 className="text-xl font-bold text-black text-center">Save This Project?</h2>
 
-            {/* Option 2: Delete */}
-            <button
-              onClick={handleDelete}
-              className="w-full border-2 border-red-500 bg-red-50 rounded-lg p-4 text-left hover:bg-red-100 transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <X className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-black">❌ No — Delete after completion</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Project will be permanently deleted
-                  </p>
-                </div>
+          {/* Save to Recall */}
+          <button
+            type="button"
+            onClick={() => setView("saved")}
+            className="w-full bg-[#5123d4] hover:bg-[#401AA0] rounded-xl p-5 text-left transition-colors"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                <Lock className="w-5 h-5 text-white" />
               </div>
-            </button>
-          </div>
-        )}
+              <div>
+                <p className="font-semibold text-white text-sm">Save to Recall</p>
+                <p className="text-xs text-white/80 mt-1 leading-relaxed">
+                  We&apos;ll securely store it so you can access or request it again anytime — using
+                  your phone number + a verification code.
+                </p>
+              </div>
+            </div>
+          </button>
+
+          {/* Delete after delivery */}
+          <button
+            type="button"
+            onClick={() => setView("deleteConfirm")}
+            className="w-full border border-gray-200 hover:border-red-200 hover:bg-red-50 rounded-xl p-5 text-left transition-colors group"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-red-100 transition-colors">
+                <Trash2 className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-800 text-sm">Don&apos;t save</p>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                  Delete this project immediately after delivery is complete.
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );

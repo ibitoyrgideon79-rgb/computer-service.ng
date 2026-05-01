@@ -22,7 +22,8 @@ import {
   Check,
   Phone,
   Mail,
-  ArrowUp
+  ArrowUp,
+  Truck
 } from "lucide-react";
 
 export default function Home() {
@@ -57,7 +58,8 @@ export default function Home() {
   const serviceCategoryMap: Record<string, string[]> = {
     "Printing": [
       "A4 Paper", "A3 Paper", "A5 Paper", "Legal Size", "Letter Size",
-      "Photo Print", "Poster Print", "Banner Print",
+      "Photo Print", "Poster Print", "Banner Print", "Document", "Photos & Passport",
+      "Business Materials", "Cards & Labels", "Event Prints"
     ],
     "Photocopy": [
       "A4 Photocopy", "A3 Photocopy", "A5 Photocopy",
@@ -170,6 +172,7 @@ export default function Home() {
           
           <div>
             <button
+              type="button"
               onClick={() => setRecallModalOpen(true)}
               className="bg-[#0047FF] hover:bg-blue-700 text-white px-6 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
             >
@@ -203,27 +206,32 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Services Icons Row */}
-        <section className="border-y border-gray-100 bg-white py-12" id="services">
-          <div className="container mx-auto px-4 lg:px-8 overflow-x-auto pb-4 lg:pb-0 hide-scrollbar">
-            <div className="flex items-center justify-between min-w-max gap-8 lg:gap-4">
+        {/* Services Section */}
+        <section className="py-20 bg-gray-50 border-y border-gray-100" id="services">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-black mb-3">Our Services</h2>
+              <p className="text-gray-500 max-w-xl mx-auto">Everything you need handled quickly, professionally, and delivered to you.</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {[
-                { name: "Printing", icon: Printer },
-                { name: "Photocopy", icon: Copy },
-                { name: "Typing", icon: Keyboard },
-                { name: "Binding", icon: Book },
-                { name: "Scanning", icon: Scan },
-                { name: "Document\nConversion", icon: FileEdit },
-                { name: "Graphic/\nLogo Design", icon: Palette },
-                { name: "Business Card /\nID Card", icon: CreditCard },
-                { name: "Application\nServices", icon: Monitor },
-                { name: "Technical\nSupport", icon: Wrench },
+                { name: "Printing", icon: Printer, desc: "A4, A3, colour & B&W printing", iconBg: "bg-purple-50", iconColor: "text-[#5123d4]" },
+                { name: "Photocopy", icon: Copy, desc: "Fast bulk or single photocopying", iconBg: "bg-blue-50", iconColor: "text-blue-600" },
+                { name: "Typing", icon: Keyboard, desc: "CVs, letters, assignments & more", iconBg: "bg-green-50", iconColor: "text-green-600" },
+                { name: "Binding", icon: Book, desc: "Spiral, hardcover & comb binding", iconBg: "bg-amber-50", iconColor: "text-amber-600" },
+                { name: "Scanning", icon: Scan, desc: "Document & ID scanning services", iconBg: "bg-orange-50", iconColor: "text-orange-500" },
+                { name: "Document Conversion", icon: FileEdit, desc: "PDF, Word, Excel & more", iconBg: "bg-pink-50", iconColor: "text-pink-600" },
+                { name: "Graphic/Logo Design", icon: Palette, desc: "Logos, flyers & banners", iconBg: "bg-indigo-50", iconColor: "text-indigo-600" },
+                { name: "Business Card / ID Card", icon: CreditCard, desc: "Business & staff ID cards", iconBg: "bg-teal-50", iconColor: "text-teal-600" },
+                { name: "Application Services", icon: Monitor, desc: "JAMB, WAEC, NIN & more", iconBg: "bg-red-50", iconColor: "text-red-500" },
+                { name: "Technical Support", icon: Wrench, desc: "Laptop repair, software & setup", iconBg: "bg-cyan-50", iconColor: "text-cyan-600" },
               ].map((service, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-4 w-[100px]">
-                  <service.icon className="w-9 h-9 text-black stroke-[1.5]" />
-                  <span className="text-xs text-center font-medium text-black whitespace-pre-line leading-relaxed">
-                    {service.name}
-                  </span>
+                <div key={idx} className="bg-white rounded-xl p-5 border border-gray-100 hover:border-[#5123d4]/30 hover:shadow-md transition-all cursor-pointer flex flex-col">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${service.iconBg}`}>
+                    <service.icon className={`w-6 h-6 ${service.iconColor}`} />
+                  </div>
+                  <h3 className="font-semibold text-sm text-black mb-1.5 leading-tight">{service.name}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">{service.desc}</p>
                 </div>
               ))}
             </div>
@@ -261,8 +269,9 @@ export default function Home() {
                 {
                   num: "5",
                   title: "We Deliver or Submit",
-                  desc: "We deliver or submit your job and handle submission through submittal."
-                }
+                  desc: "We deliver the project to your email or doorstep"
+                },
+
               ].map((step, idx) => (
                 <div key={idx} className="bg-[#f8f5ff] p-6 rounded-xl flex flex-col h-full border border-purple-50">
                   <div className="w-8 h-8 bg-[#5123d4] text-white rounded-full flex items-center justify-center font-bold text-sm mb-6 shrink-0">
@@ -288,6 +297,94 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Pricing Section */}
+        <section className="py-24 bg-white border-t border-gray-100" id="pricing">
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-black mb-3">Transparent Pricing</h2>
+              <p className="text-gray-500 max-w-xl mx-auto">Clear, upfront pricing for every service. What you see is what you pay no hidden charges.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
+              <div className="bg-white rounded-xl border border-gray-200 p-6 hover:border-[#5123d4]/30 hover:shadow-md transition-all">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                    <Printer className="w-5 h-5 text-[#5123d4]" />
+                  </div>
+                  <h3 className="font-bold text-black">Printing &amp; Photocopy</h3>
+                </div>
+                <ul className="space-y-3">
+                  {[
+                    ["A4 — Black & White", "₦50/page"],
+                    ["A4 — Colour", "₦150/page"],
+                    ["A3 — Black & White", "₦100/page"],
+                    ["A3 — Colour", "₦300/page"],
+                  ].map(([label, price]) => (
+                    <li key={label} className="flex justify-between items-center text-sm border-b border-gray-50 pb-2 last:border-0">
+                      <span className="text-gray-600">{label}</span>
+                      <span className="font-semibold text-black">{price}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-200 p-6 hover:border-[#5123d4]/30 hover:shadow-md transition-all">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
+                    <Book className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <h3 className="font-bold text-black">Binding &amp; Finishing</h3>
+                </div>
+                <ul className="space-y-3">
+                  {[
+                    ["Stapled", "₦200"],
+                    ["Spiral Binding", "₦500"],
+                    ["Hardcover Binding", "₦2,000"],
+                  ].map(([label, price]) => (
+                    <li key={label} className="flex justify-between items-center text-sm border-b border-gray-50 pb-2 last:border-0">
+                      <span className="text-gray-600">{label}</span>
+                      <span className="font-semibold text-black">{price}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-200 p-6 hover:border-[#5123d4]/30 hover:shadow-md transition-all">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                    <Truck className="w-5 h-5 text-green-600" />
+                  </div>
+                  <h3 className="font-bold text-black">Delivery &amp; Fees</h3>
+                </div>
+                <ul className="space-y-3">
+                  {[
+                    ["Pick Up (self-collect)", "Free", "green"],
+                    ["Doorstep Delivery", "₦1,000", "black"],
+                    ["Service Fee (flat)", "₦500", "black"],
+                    ["Express (1–2 hrs)", "+50% surcharge", "orange"],
+                  ].map(([label, price, color]) => (
+                    <li key={label} className="flex justify-between items-center text-sm border-b border-gray-50 pb-2 last:border-0">
+                      <span className="text-gray-600">{label}</span>
+                      <span className={`font-semibold ${color === "green" ? "text-green-600" : color === "orange" ? "text-orange-500" : "text-black"}`}>{price}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <p className="text-center text-sm text-gray-400 mb-8">
+              * Typing, design, scanning and other services are custom-quoted based on your request.
+              Business cards &amp; high-value print jobs may require bespoke pricing.
+            </p>
+
+            <div className="text-center">
+              <Link href="/order/details" className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3 rounded-md font-medium inline-flex items-center gap-2 transition-colors shadow-sm">
+                Start Your Order <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Get Started Form Section */}
         <section className="py-24 bg-white">
           <div className="container mx-auto px-4 lg:px-8 max-w-[44rem] flex flex-col items-center text-center">
@@ -296,9 +393,10 @@ export default function Home() {
             
             <form onSubmit={handleFormSubmit} className="w-full flex flex-col gap-5">
               <div className="relative">
-                <select 
-                  name="service" 
-                  required 
+                <select
+                  name="service"
+                  required
+                  title="Select a service"
                   value={selectedService}
                   onChange={handleServiceChange}
                   className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer"
@@ -320,9 +418,10 @@ export default function Home() {
 
               {selectedService === "Printing" && (
                 <div className="relative animate-in fade-in slide-in-from-top-2 duration-300">
-                  <select 
-                    name="printType" 
-                    required 
+                  <select
+                    name="printType"
+                    required
+                    title="Select print colour"
                     defaultValue="Black and White"
                     className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer border border-[#5123d4]/30"
                   >
@@ -335,9 +434,10 @@ export default function Home() {
               )}
               
               <div className="relative">
-                <select 
-                  name="category" 
-                  required 
+                <select
+                  name="category"
+                  required
+                  title="Select a service category"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   disabled={!selectedService}
@@ -393,7 +493,8 @@ export default function Home() {
 
       {/* Scroll To Top Button (Left Side) */}
       {showScrollTop && (
-        <button 
+        <button
+          type="button"
           onClick={scrollToTop}
           className="fixed bottom-8 left-8 z-50 p-3 bg-[#5123d4] text-white rounded-full shadow-lg hover:bg-[#401AA0] transition-colors"
           aria-label="Scroll to top"
@@ -497,9 +598,9 @@ export default function Home() {
                 <h4 className="font-bold text-sm mb-4 text-white">Contact</h4>
                 <ul className="flex flex-col gap-3 text-xs text-white/70">
                   <li>
-                    <a href="mailto:support@customerservice.ng" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <a href="mailto:support@computerservice.ng" className="flex items-center gap-2 hover:text-white transition-colors">
                       <Mail className="w-3.5 h-3.5 shrink-0" />
-                      support@customerservice.ng
+                      support@computerservice.ng
                     </a>
                   </li>
                   <li>
@@ -515,9 +616,9 @@ export default function Home() {
         </div>
         
         {/* Footer Bottom Bar */}
-        <div className="bg-black text-white py-6 border-t border-white/10">
+        <div className="bg-[#190934] text-white py-6 border-t border-white/10">
           <div className="container mx-auto px-4 lg:px-8 text-xs font-medium text-center">
-            <p>©2026 computerservice.ng All rights reserved.</p>
+            <p className="text-[#D1AFFF]">©2026 computerservice.ng All rights reserved.</p>
           </div>
         </div>
       </footer>

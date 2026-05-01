@@ -1,16 +1,20 @@
 import { create } from 'zustand';
 
 export interface OrderData {
+  // Service (from homepage form)
+  service: string;
+  category: string;
+
   // Personal Details
   name: string;
   phoneNumber: string;
   email: string;
-  
+
   // Document
   document: File | null;
   documentText: string;
   customDocumentHtml?: string;
-  
+
   // Options
   checkFormatting: boolean;
   printColor: 'Black & white' | 'Coloured' | '';
@@ -22,18 +26,23 @@ export interface OrderData {
   specificPages?: string;
   orientation: 'Landscape' | 'Portrait' | 'Auto' | '';
   finishingOption: 'None' | 'Spiral Binding' | 'Stapled' | 'Hardcover Binding' | '';
-  
+
   // Binding Details
   bindingType: 'Spiral' | 'Comb' | 'Hard Cover' | '';
   frontCover: 'Transparent' | 'Designed Cover' | 'Use first page' | '';
   backCover: 'Plain' | 'Cardboard' | '';
-  
+
   // Delivery
   deliveryMethod: 'Pick Up' | 'Doorstep' | '';
   specificInstruction: string;
-  deadline: 'Standard(24 -48 hours)' | 'Expresss ( same day)' | 'Customer (Date Picker)' | '';
+  deadline: 'Standard (3hrs - 5hrs)' | 'Express (1hr - 2hrs)' | 'Custom (Date Picker)' | '';
   customDeadlineDate?: string;
   deliveryDetails: string;
+
+  // Pick Up specifics
+  pickupLocation: string;
+  pickupContactName: string;
+  pickupContactPhone: string;
 }
 
 interface OrderStore {
@@ -47,30 +56,32 @@ interface OrderStore {
 const defaultState: Partial<OrderData> = {
   checkFormatting: false,
   copies: 1,
+  pickupLocation: '',
+  pickupContactName: '',
+  pickupContactPhone: '',
 };
 
 const STORAGE_KEY = 'computerservice_order_data';
 
 export const useOrderStore = create<OrderStore>((set, get) => ({
   orderData: defaultState,
-  
+
   setOrderData: (data) => {
     set((state) => ({ orderData: { ...state.orderData, ...data } }));
-    // Auto-save to localStorage whenever data changes
     setTimeout(() => get().saveToLocalStorage(), 0);
   },
-  
+
   resetOrder: () => set({ orderData: defaultState }),
-  
+
   saveToLocalStorage: () => {
     const { orderData } = get();
     const dataToSave = {
       ...orderData,
-      document: null, // Don't save File objects
+      document: null,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   },
-  
+
   loadFromLocalStorage: () => {
     if (typeof window === 'undefined') return;
     const saved = localStorage.getItem(STORAGE_KEY);
