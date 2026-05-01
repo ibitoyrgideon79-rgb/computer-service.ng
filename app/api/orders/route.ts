@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-server";
 
+export const dynamic = "force-dynamic";
+
 function generateOrderId(): string {
   const ts  = Date.now().toString().slice(-6);
   const rnd = Math.floor(Math.random() * 100).toString().padStart(2, "0");

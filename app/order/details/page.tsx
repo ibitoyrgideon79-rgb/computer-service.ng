@@ -6,6 +6,8 @@ import { useOrderStore, OrderData } from "@/store/useOrderStore";
 import { UploadCloud, AlertCircle, MapPin, User, Phone, Info } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
+export const dynamic = "force-dynamic";
+
 // ── Pricing constants ──────────────────────────────────────────────────────
 const RATE: Record<string, Record<string, number>> = {
   "Black & white": { A4: 50, A3: 100, "Custom type": 80 },
