@@ -21,6 +21,9 @@ export interface OrderData {
   paperType: 'A4' | 'A3' | 'Custom type' | '';
   customPaperType?: string;
   copies: number;
+  pages?: number;
+  expressService?: boolean;
+  otherCategory?: string;
   printLayout: 'Single Sided' | 'Double Sided' | '';
   pageSelection: 'Print all pages' | 'Specify Pages' | '';
   specificPages?: string;
