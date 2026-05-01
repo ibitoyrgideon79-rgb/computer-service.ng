@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Computer Service NG",
   description: "Request any document or computer service online and we will deliver quality result to you.",
+  icons: {
+    icon: "/Computer service PNG 111.png",
+    shortcut: "/Computer service PNG 111.png",
+    apple: "/Computer service PNG 111.png",
+  },
 };
 
 export default function RootLayout({

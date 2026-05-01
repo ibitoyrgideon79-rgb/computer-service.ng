@@ -57,46 +57,47 @@ export default function OrderReviewPage() {
 
   const color       = orderData.printColor || "Black & white";
   const paper       = orderData.paperType  || "A4";
+  const pages       = orderData.pages      || 1;
   const copies      = orderData.copies     || 1;
   const perPage     = RATE[color]?.[paper] ?? 50;
-  const baseDoc     = perPage * copies;
+  const baseDoc     = perPage * pages * copies;
   const finishing   = FINISHING_COST[orderData.finishingOption ?? "None"] ?? 0;
-  const isExpress   = orderData.deadline === "Express (1hr - 2hrs)";
+  const isExpress   = orderData.expressService === true || orderData.deadline === "Express (1hr - 2hrs)";
   const expressExtra = isExpress ? Math.round(baseDoc * 0.5) : 0;
   const deliveryFee = orderData.deliveryMethod === "Doorstep" ? 1000 : 0;
   const serviceFee  = SERVICE_FEE;
   const total       = baseDoc + finishing + expressExtra + deliveryFee + serviceFee;
 
-  // Preview logic 
+  // Preview logic
   const hasCustomHtml = !!(orderData.customDocumentHtml?.trim());
+  const hasDocumentText = !!(orderData.documentText?.trim());
   const hasUploadedFile = !!fileUrl;
   const isPdf = orderData.document?.type === "application/pdf";
   const isImage = orderData.document?.type?.startsWith("image/");
 
   const docLabel = hasCustomHtml
     ? "Typed Document"
+    : hasDocumentText
+    ? "Pasted Text"
     : (orderData.document?.name || "No document uploaded");
 
   // ── Download ──
   const handleDownload = async () => {
     if (hasCustomHtml) {
-      // For typed HTML: open a printable window
       const win = window.open("", "_blank");
       if (!win) return;
-      win.document.write(`
-        <!DOCTYPE html><html><head>
-        <title>${docLabel}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 40px; color: #000; max-width: 800px; margin: auto; }
-          h1,h2,h3 { color: #5123d4; }
-          @media print { body { padding: 0; } }
-        </style>
-        </head><body>${orderData.customDocumentHtml}</body></html>
-      `);
+      win.document.write(`<!DOCTYPE html><html><head><title>${docLabel}</title><style>body{font-family:Arial,sans-serif;padding:40px;color:#000;max-width:800px;margin:auto}h1,h2,h3{color:#5123d4}@media print{body{padding:0}}</style></head><body>${orderData.customDocumentHtml}</body></html>`);
       win.document.close();
       setTimeout(() => win.print(), 500);
+    } else if (hasDocumentText) {
+      const blob = new Blob([orderData.documentText!], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "document.txt";
+      a.click();
+      URL.revokeObjectURL(url);
     } else if (fileUrl && orderData.document) {
-      // For uploaded file: trigger direct download
       const a = document.createElement("a");
       a.href = fileUrl;
       a.download = orderData.document.name;
@@ -234,50 +235,78 @@ export default function OrderReviewPage() {
 
               <div className="space-y-4">
                 {/* Order ID */}
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-0.5">Order ID</p>
-                  <p className="text-[#5123d4] font-bold text-base sm:text-lg flex items-center gap-2">
-                    CSN-240525-5378
-                    <button
-                      onClick={() => navigator.clipboard.writeText("CSN-240525-5378")}
-                      className="hover:text-[#401AA0]"
-                      aria-label="Copy order ID"
-                    >
-                      <CopyIcon className="w-4 h-4" />
-                    </button>
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-0.5">Order ID</p>
+                    <p className="text-sm text-gray-400 italic">Assigned after payment</p>
+                  </div>
+                  {approved && (
+                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-medium">
+                      Approved
+                    </span>
+                  )}
                 </div>
 
-                {/* Status */}
-                {approved && (
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-medium inline-block">
-                    Approved
-                  </span>
+                {/* Customer Info */}
+                {(orderData.name || orderData.phoneNumber || orderData.email) && (
+                  <div className="space-y-1.5 py-3 border-t border-gray-100 text-sm">
+                    <p className="text-[11px] font-bold text-[#5123d4] uppercase tracking-wide mb-2">Customer</p>
+                    {orderData.name && (
+                      <div className="flex justify-between gap-2">
+                        <p className="font-semibold text-black shrink-0">Name</p>
+                        <p className="text-gray-700 text-right">{orderData.name}</p>
+                      </div>
+                    )}
+                    {orderData.phoneNumber && (
+                      <div className="flex justify-between gap-2">
+                        <p className="font-semibold text-black shrink-0">Phone</p>
+                        <p className="text-gray-700 text-right">{orderData.phoneNumber}</p>
+                      </div>
+                    )}
+                    {orderData.email && (
+                      <div className="flex justify-between gap-2">
+                        <p className="font-semibold text-black shrink-0">Email</p>
+                        <p className="text-gray-700 text-right truncate max-w-[160px]">{orderData.email}</p>
+                      </div>
+                    )}
+                    {orderData.service && (
+                      <div className="flex justify-between gap-2">
+                        <p className="font-semibold text-black shrink-0">Service</p>
+                        <p className="text-gray-700 text-right">{orderData.service}</p>
+                      </div>
+                    )}
+                    {orderData.category && (
+                      <div className="flex justify-between gap-2">
+                        <p className="font-semibold text-black shrink-0">Category</p>
+                        <p className="text-gray-700 text-right">{orderData.category}</p>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* Document card */}
-                <div className="flex items-center gap-3 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3 py-4 border-t border-b border-gray-100">
                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#f0f2fb] rounded flex items-center justify-center shrink-0 border border-gray-100">
                     <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-[#5123d4]" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-bold text-black text-sm truncate">
-                      {hasCustomHtml ? "Typed Document" : (orderData.document?.name || "No Document")}
+                      {hasCustomHtml ? "Typed Document" : hasDocumentText ? "Pasted Text" : (orderData.document?.name || "No Document")}
                     </h3>
-                    <p className="text-xs text-gray-600 mt-0.5">{orderData.copies || 1} {(orderData.copies || 1) === 1 ? "Copy" : "Copies"}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">{pages} {pages === 1 ? "Page" : "Pages"} · {copies} {copies === 1 ? "Copy" : "Copies"}</p>
                     <p className="text-xs text-gray-600">{orderData.printColor || "Black & white"}</p>
                   </div>
                 </div>
 
                 {/* Order details */}
                 <div className="space-y-2.5 py-3 border-b border-gray-100 text-sm">
+                  <p className="text-[11px] font-bold text-[#5123d4] uppercase tracking-wide mb-2">Print Options</p>
                   {[
+                    { label: "Paper Size", value: orderData.paperType || "A4" },
                     { label: "Print Layout", value: orderData.printLayout || "—" },
-                    { label: "Delivery", value: orderData.deliveryMethod || "—" },
                     { label: "Orientation", value: orderData.orientation || "—" },
                     { label: "Finishing", value: orderData.finishingOption || "None" },
-                    { label: "Deadline", value: orderData.deadline || "Standard" },
-                    { label: "Est. Delivery", value: "May 26, 2026, 2:30 pm" },
+                    { label: "Express", value: isExpress ? "Yes (+50%)" : "No" },
                   ].map(({ label, value }) => (
                     <div key={label} className="flex justify-between gap-2">
                       <p className="font-semibold text-black shrink-0">{label}</p>
@@ -286,10 +315,37 @@ export default function OrderReviewPage() {
                   ))}
                 </div>
 
+                {/* Delivery details */}
+                <div className="space-y-2.5 py-3 border-b border-gray-100 text-sm">
+                  <p className="text-[11px] font-bold text-[#5123d4] uppercase tracking-wide mb-2">Delivery</p>
+                  <div className="flex justify-between gap-2">
+                    <p className="font-semibold text-black shrink-0">Method</p>
+                    <p className="text-gray-700 text-right">{orderData.deliveryMethod || "—"}</p>
+                  </div>
+                  {orderData.deliveryMethod === "Doorstep" && orderData.deliveryDetails && (
+                    <div className="flex justify-between gap-2">
+                      <p className="font-semibold text-black shrink-0">Address</p>
+                      <p className="text-gray-700 text-right max-w-[160px]">{orderData.deliveryDetails}</p>
+                    </div>
+                  )}
+                  {orderData.deliveryMethod === "Pick Up" && orderData.pickupLocation && (
+                    <div className="flex justify-between gap-2">
+                      <p className="font-semibold text-black shrink-0">Pickup</p>
+                      <p className="text-gray-700 text-right">{orderData.pickupLocation}</p>
+                    </div>
+                  )}
+                  {orderData.specificInstruction && (
+                    <div className="flex justify-between gap-2">
+                      <p className="font-semibold text-black shrink-0">Note</p>
+                      <p className="text-gray-700 text-right max-w-[160px]">{orderData.specificInstruction}</p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Pricing */}
                 <div className="space-y-2.5 py-3 text-sm">
                   <div className="flex justify-between">
-                    <p className="font-semibold text-black">Pages ({color}, {paper}) × {copies}</p>
+                    <p className="font-semibold text-black">{pages}pg × {copies} {copies === 1 ? "copy" : "copies"} ({color}, {paper})</p>
                     <p className="text-gray-700">₦{baseDoc.toLocaleString()}</p>
                   </div>
                   {finishing > 0 && (
@@ -334,12 +390,14 @@ export default function OrderReviewPage() {
               <p className="text-[11px] font-bold text-[#5123d4] uppercase">Need Changes?</p>
               <p className="text-xs text-gray-600">Open the editor to type or make changes to your document.</p>
               <button
+                type="button"
                 onClick={() => router.push("/order/editor")}
                 className="w-full bg-[#5123d4] text-white px-4 py-2.5 rounded text-sm font-medium hover:bg-[#401AA0] transition-colors flex items-center justify-center gap-2"
               >
                 <Edit className="w-4 h-4" /> Edit / Type Document
               </button>
               <button
+                type="button"
                 onClick={() => router.push("/order/details")}
                 className="w-full bg-white border border-gray-200 text-black px-4 py-2.5 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
               >
@@ -355,8 +413,8 @@ export default function OrderReviewPage() {
             <div className="bg-[#1e1e1e] rounded-t-xl p-2 sm:p-3 flex items-center justify-between text-white border-b border-gray-800 gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xs sm:text-sm font-medium truncate max-w-[120px] sm:max-w-[200px]">{docLabel}</span>
-                {hasCustomHtml && (
-                  <span className="bg-[#5123d4] text-white text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0">Typed</span>
+                {(hasCustomHtml || hasDocumentText) && (
+                  <span className="bg-[#5123d4] text-white text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0">{hasCustomHtml ? "Typed" : "Pasted"}</span>
                 )}
               </div>
 
@@ -364,16 +422,16 @@ export default function OrderReviewPage() {
                 {/* Page nav — only for PDF */}
                 {isPdf && hasUploadedFile && !hasCustomHtml && (
                   <>
-                    <button onClick={() => setPageNumber(p => Math.max(1, p - 1))} className="p-1 hover:bg-white/10 rounded"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                    <button type="button" onClick={() => setPageNumber(p => Math.max(1, p - 1))} className="p-1 hover:bg-white/10 rounded"><ChevronLeft className="w-3.5 h-3.5" /></button>
                     <span className="text-[10px] sm:text-xs whitespace-nowrap">{pageNumber}/{numPages || "?"}</span>
-                    <button onClick={() => setPageNumber(p => Math.min(numPages || p, p + 1))} className="p-1 hover:bg-white/10 rounded"><ChevronRight className="w-3.5 h-3.5" /></button>
+                    <button type="button" onClick={() => setPageNumber(p => Math.min(numPages || p, p + 1))} className="p-1 hover:bg-white/10 rounded"><ChevronRight className="w-3.5 h-3.5" /></button>
                     <div className="w-px h-4 bg-gray-600 mx-1" />
                   </>
                 )}
                 <span className="text-[10px] sm:text-xs">{Math.round(scale * 100)}%</span>
-                <button onClick={() => setScale(s => Math.min(s + 0.15, 3))} className="p-1 hover:bg-white/10 rounded"><ZoomIn className="w-3.5 h-3.5" /></button>
-                <button onClick={() => setScale(s => Math.max(0.4, s - 0.15))} className="p-1 hover:bg-white/10 rounded"><ZoomOut className="w-3.5 h-3.5" /></button>
-                <button onClick={() => setScale(1.0)} className="p-1 hover:bg-white/10 rounded"><RotateCcw className="w-3.5 h-3.5" /></button>
+                <button type="button" onClick={() => setScale(s => Math.min(s + 0.15, 3))} className="p-1 hover:bg-white/10 rounded"><ZoomIn className="w-3.5 h-3.5" /></button>
+                <button type="button" onClick={() => setScale(s => Math.max(0.4, s - 0.15))} className="p-1 hover:bg-white/10 rounded"><ZoomOut className="w-3.5 h-3.5" /></button>
+                <button type="button" onClick={() => setScale(1.0)} className="p-1 hover:bg-white/10 rounded"><RotateCcw className="w-3.5 h-3.5" /></button>
               </div>
             </div>
 
@@ -399,6 +457,27 @@ export default function OrderReviewPage() {
                     dangerouslySetInnerHTML={{ __html: orderData.customDocumentHtml! }}
                   />
                 </div>
+              ) : hasDocumentText ? (
+                <div
+                  className="w-full max-w-[800px] bg-white shadow-xl rounded text-black self-start"
+                  style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}
+                >
+                  <div className="bg-[#f0ebff] px-6 py-3 flex items-center justify-between border-b border-[#e2d9f3] rounded-t">
+                    <div className="flex items-center gap-2">
+                      <MonitorIcon className="w-4 h-4 text-[#5123d4]" />
+                      <span className="font-bold text-sm text-[#5123d4]">computerservice.ng</span>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                    </span>
+                  </div>
+                  <div
+                    className="px-6 sm:px-10 py-8"
+                    style={{ minHeight: "600px", fontFamily: "Arial, sans-serif", whiteSpace: "pre-wrap", wordBreak: "break-word", lineHeight: "1.8", fontSize: "14px" }}
+                  >
+                    {orderData.documentText}
+                  </div>
+                </div>
               ) : hasUploadedFile && isPdf ? (
                 <PdfPreview
                   fileUrl={fileUrl!}
@@ -421,10 +500,10 @@ export default function OrderReviewPage() {
                     <p className="text-white/60 text-sm mt-2">Go back to upload a file, or use the editor to type your document.</p>
                   </div>
                   <div className="flex flex-col gap-3 w-full">
-                    <button onClick={() => router.push("/order/editor")} className="bg-[#5123d4] text-white px-5 py-2.5 rounded-md font-medium hover:bg-[#401AA0] transition-colors flex items-center justify-center gap-2 text-sm">
+                    <button type="button" onClick={() => router.push("/order/editor")} className="bg-[#5123d4] text-white px-5 py-2.5 rounded-md font-medium hover:bg-[#401AA0] transition-colors flex items-center justify-center gap-2 text-sm">
                       <Edit className="w-4 h-4" /> Open Editor
                     </button>
-                    <button onClick={() => router.push("/order/details")} className="bg-white/10 text-white px-5 py-2.5 rounded-md font-medium hover:bg-white/20 transition-colors text-sm">
+                    <button type="button" onClick={() => router.push("/order/details")} className="bg-white/10 text-white px-5 py-2.5 rounded-md font-medium hover:bg-white/20 transition-colors text-sm">
                       Upload File
                     </button>
                   </div>
@@ -443,12 +522,14 @@ export default function OrderReviewPage() {
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
+                  type="button"
                   onClick={handleDownload}
                   className="flex-1 sm:flex-none border border-[#5123d4] text-[#5123d4] px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-medium hover:bg-purple-50 flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <Download className="w-4 h-4" /> Download
                 </button>
                 <button
+                  type="button"
                   onClick={() => setApproved(true)}
                   className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${
                     approved
@@ -468,6 +549,7 @@ export default function OrderReviewPage() {
                 {approved ? "✅ Document approved. Click Submit to proceed to payment." : "Approve your document above before submitting."}
               </p>
               <button
+                type="button"
                 onClick={() => setShowSaveModal(true)}
                 disabled={paying || !approved}
                 className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 sm:px-10 py-3 rounded-md font-semibold transition-colors min-w-[180px] ${

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOrderStore, OrderData } from "@/store/useOrderStore";
 import { UploadCloud, AlertCircle } from "lucide-react";
@@ -126,24 +126,26 @@ export default function OrderDetailsContent() {
     specificInstruction: orderData.specificInstruction,
     expressService:   orderData.expressService,
     document:         orderData.document,
+    documentText:     orderData.documentText || "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadMode, setUploadMode] = useState<"file" | "text">(orderData.documentText ? "text" : "file");
 
-  const { getRootProps, getInputProps } = useDropzone({
-    onDrop: (files) => { if (files.length > 0) handleFileSelect(files[0]); },
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    multiple: false,
+    maxSize: 50 * 1024 * 1024,
+    onDropAccepted: (files) => {
+      setFormData(prev => ({ ...prev, document: files[0] }));
+      setErrors(prev => ({ ...prev, document: "" }));
+    },
+    onDropRejected: (rejected) => {
+      const msg = rejected[0]?.errors[0]?.code === "file-too-large"
+        ? "File size should be less than 50MB"
+        : "File not accepted. Please try a different file.";
+      setErrors(prev => ({ ...prev, document: msg }));
+    },
   });
-
-  const handleFileSelect = (file: File) => {
-    if (file.size > 50 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, document: "File size should be less than 50MB" }));
-      return;
-    }
-    setFormData(prev => ({ ...prev, document: file }));
-    setErrors(prev => ({ ...prev, document: "" }));
-  };
 
   const handleInputChange = (field: keyof OrderData, value: string | boolean | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -171,7 +173,7 @@ export default function OrderDetailsContent() {
     if (!formData.deliveryMethod) newErrors.deliveryMethod = "Delivery method is required";
     if (formData.deliveryMethod === "Doorstep" && !formData.deliveryDetails) newErrors.deliveryDetails = "Delivery address is required";
     if (formData.deliveryMethod === "Pick Up" && !formData.pickupLocation) newErrors.pickupLocation = "Pickup location is required";
-    if (!formData.document) newErrors.document = "Document is required";
+    if (!formData.document && !formData.documentText) newErrors.document = "Please upload a file or type/paste your document text";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -210,7 +212,45 @@ export default function OrderDetailsContent() {
 
             {showPrintOptions && ["Printing", "Photocopy"].includes(formData.service || "") && (
               <>
-                <RadioRow label="Color" name="printColor" required options={["Black & white", "Coloured"]} value={formData.printColor || ""} onChange={(v) => handleInputChange("printColor", v as OrderData["printColor"])} />
+                {/* Color — with per-page price badges */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Color <span className="text-red-500">*</span>
+                  </label>
+                  <div className="space-y-2">
+                    {(
+                      [
+                        { value: "Black & white", prices: { A4: 50, A3: 100, "Custom type": 80 } },
+                        { value: "Coloured",       prices: { A4: 150, A3: 300, "Custom type": 200 } },
+                      ] as { value: OrderData["printColor"]; prices: Record<string, number> }[]
+                    ).map((opt) => {
+                      const paper = (formData.paperType || "A4") as string;
+                      const price = opt.prices[paper] ?? opt.prices["A4"];
+                      const selected = formData.printColor === opt.value;
+                      return (
+                        <label
+                          key={String(opt.value)}
+                          className={`flex items-center justify-between gap-3 cursor-pointer border rounded-lg px-4 py-3 transition-all ${selected ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-200 bg-gray-50 hover:border-[#5123d4]/40"}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="radio" name="printColor" value={String(opt.value)}
+                              checked={selected}
+                              onChange={() => handleInputChange("printColor", opt.value!)}
+                              className="w-4 h-4 text-[#5123d4] focus:ring-[#5123d4]"
+                            />
+                            <span className="text-sm font-medium text-gray-800">{opt.value}</span>
+                          </div>
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${selected ? "bg-[#5123d4] text-white border-[#5123d4]" : "bg-white text-[#5123d4] border-[#5123d4]/30"}`}>
+                            ₦{price}/pg
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {errors.printColor && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.printColor}</p>}
+                </div>
+
                 <RadioRow label="Size" name="paperType" required options={["A4", "A3", "Custom type"]} value={formData.paperType || ""} onChange={(v) => handleInputChange("paperType", v as OrderData["paperType"])} />
                 <TextInput label="Number of Pages" name="pages" type="number" required value={String(formData.pages ?? "")} onChange={(v) => handleInputChange("pages", v ? parseInt(v, 10) : undefined as unknown as number)} />
               </>
@@ -226,14 +266,69 @@ export default function OrderDetailsContent() {
           </SectionCard>
 
           {/* Document Upload */}
-          <SectionCard title="Upload Document">
-            <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragging ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-300"}`} onDragOver={() => setIsDragging(true)} onDragLeave={() => setIsDragging(false)}>
-              <input {...getInputProps()} ref={fileInputRef} />
-              <UploadCloud className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p className="text-sm text-gray-600">Drag your document here or click to browse (Max 50MB)</p>
+          <SectionCard title="Document">
+            {/* Mode toggle */}
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => { setUploadMode("file"); handleInputChange("documentText", ""); }}
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${uploadMode === "file" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                Upload File
+              </button>
+              <button
+                type="button"
+                onClick={() => { setUploadMode("text"); setFormData(prev => ({ ...prev, document: null })); }}
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${uploadMode === "text" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                Type / Paste Text
+              </button>
             </div>
-            {formData.document && <p className="text-sm text-green-600 mt-2">✓ {formData.document.name}</p>}
-            {errors.document && <p className="text-red-500 text-xs mt-2"><AlertCircle className="w-3 h-3 inline mr-1" />{errors.document}</p>}
+
+            {uploadMode === "file" ? (
+              <>
+                <div
+                  {...getRootProps()}
+                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${isDragActive ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-300 hover:border-[#5123d4]/60 hover:bg-gray-50"}`}
+                >
+                  <input {...getInputProps()} />
+                  <UploadCloud className={`w-12 h-12 mx-auto mb-3 transition-colors ${isDragActive ? "text-[#5123d4]" : "text-gray-400"}`} />
+                  <p className="text-sm font-medium text-gray-700">
+                    {isDragActive ? "Drop your file here…" : "Drag & drop or click to browse"}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">PDF, Word, images — Max 50MB</p>
+                </div>
+                {formData.document && (
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                    <span className="text-sm text-green-700 font-medium">✓ {formData.document.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, document: null }))}
+                      className="text-xs text-red-400 hover:text-red-600 ml-2"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div>
+                <textarea
+                  value={formData.documentText || ""}
+                  onChange={(e) => handleInputChange("documentText", e.target.value)}
+                  placeholder="Paste or type your document content here…"
+                  rows={10}
+                  className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-y leading-relaxed"
+                />
+                <p className="text-xs text-gray-400 mt-1">{(formData.documentText || "").length} characters</p>
+              </div>
+            )}
+
+            {errors.document && (
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 shrink-0" />{errors.document}
+              </p>
+            )}
           </SectionCard>
 
           {/* Delivery Information */}
@@ -245,7 +340,7 @@ export default function OrderDetailsContent() {
             {formData.deliveryMethod === "Pick Up" && (
               <RadioRow label="Pickup Location" name="pickupLocation" required options={PICKUP_LOCATIONS} value={formData.pickupLocation || ""} onChange={(v) => handleInputChange("pickupLocation", v)} error={errors.pickupLocation} />
             )}
-            <TextInput label="Additional Notes (Optional)" name="specificInstruction" value={formData.specificInstruction || ""} onChange={(v) => handleInputChange("specificInstruction", v)} />
+            <TextInput label="Full Address (Optional)" name="specificInstruction" placeholder="Landmark, building number, nearest bus-stop…" value={formData.specificInstruction || ""} onChange={(v) => handleInputChange("specificInstruction", v)} />
           </SectionCard>
 
           {/* Order Summary */}

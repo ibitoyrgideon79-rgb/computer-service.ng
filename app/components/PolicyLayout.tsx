@@ -70,7 +70,7 @@ export default function PolicyLayout({ title, lastUpdated, children }: PolicyLay
 
       {/* Footer */}
       <footer className="w-full mt-12">
-        <div className="bg-[#190934] text-white py-8">
+        <div className="bg-[#190934] text-white py-3">
           <div className="container mx-auto px-4 lg:px-8 flex flex-col md:flex-row items-center justify-between text-xs">
             <p className="text-[#D1AFFF]">©2026 computerservice.ng All rights reserved.</p>
             <div className="flex items-center gap-6 mt-4 md:mt-0">

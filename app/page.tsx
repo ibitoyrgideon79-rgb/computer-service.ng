@@ -6,24 +6,26 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useOrderStore } from "@/store/useOrderStore";
 import RecallModal from "@/app/components/RecallModal";
-import { 
-  ArrowRight, 
-  ChevronDown, 
-  Printer, 
-  Copy, 
-  Keyboard, 
-  Book, 
-  Scan, 
-  FileEdit, 
-  Palette, 
-  CreditCard, 
-  Monitor, 
+import {
+  ArrowRight,
+  ChevronDown,
+  Printer,
+  Copy,
+  Keyboard,
+  Book,
+  Scan,
+  FileEdit,
+  Palette,
+  CreditCard,
+  Monitor,
   Wrench,
   Check,
   Phone,
   Mail,
   ArrowUp,
-  Truck
+  Truck,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function Home() {
@@ -33,6 +35,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [recallModalOpen, setRecallModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Load saved order data on page load
   useEffect(() => {
@@ -154,32 +157,58 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-white text-black font-sans">
       {/* Navbar */}
       <header className="w-full border-b border-gray-900 sticky top-0 bg-black z-50">
-        <div className="container mx-auto px-4 lg:px-8 h-24 flex items-center justify-between">
+        <div className="container mx-auto px-4 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <div className="relative h-14 w-64 md:h-24 md:w-96">
+            <div className="relative h-12 w-48 sm:h-16 sm:w-64 md:h-20 md:w-80">
               <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
             </div>
           </Link>
-          
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-white">
-            <Link href="#services" className="hover:text-[#D1AFFF]">Services</Link>
-            <Link href="#how-it-works" className="hover:text-[#D1AFFF]">How it Works</Link>
-            <Link href="#pricing" className="hover:text-[#D1AFFF]">Pricing</Link>
-            <Link href="/terms" className="hover:text-[#D1AFFF]">Terms & Conditions</Link>
-            <Link href="/refund-policy" className="hover:text-[#D1AFFF]">Refund Policy</Link>
-            <Link href="/privacy" className="hover:text-[#D1AFFF]">Privacy Policy</Link>
+
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-white">
+            <Link href="/services" className="hover:text-[#D1AFFF] transition-colors">Services</Link>
+            <Link href="#how-it-works" className="hover:text-[#D1AFFF] transition-colors">How it Works</Link>
+            <Link href="/pricing" className="hover:text-[#D1AFFF] transition-colors">Pricing</Link>
+            <Link href="/terms" className="hover:text-[#D1AFFF] transition-colors">Terms &amp; Conditions</Link>
+            <Link href="/refund-policy" className="hover:text-[#D1AFFF] transition-colors">Refund Policy</Link>
+            <Link href="/privacy" className="hover:text-[#D1AFFF] transition-colors">Privacy Policy</Link>
           </nav>
-          
-          <div>
+
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => setRecallModalOpen(true)}
-              className="bg-[#0047FF] hover:bg-blue-700 text-white px-6 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
+              className="bg-[#0047FF] hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
             >
               Recall
             </button>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden text-white p-1.5"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-black border-t border-white/10 px-4 py-6 flex flex-col gap-4">
+            {[
+              { label: "Services", href: "/services" },
+              { label: "How it Works", href: "#how-it-works" },
+              { label: "Pricing", href: "/pricing" },
+              { label: "Terms & Conditions", href: "/terms" },
+              { label: "Refund Policy", href: "/refund-policy" },
+              { label: "Privacy Policy", href: "/privacy" },
+            ].map(({ label, href }) => (
+              <Link key={label} href={href} onClick={() => setMobileMenuOpen(false)} className="text-white/80 hover:text-white text-base font-medium transition-colors">
+                {label}
+              </Link>
+            ))}
+          </div>
+        )}
       </header>
 
       <main className="flex-grow">
@@ -616,7 +645,7 @@ export default function Home() {
         </div>
         
         {/* Footer Bottom Bar */}
-        <div className="bg-[#190934] text-white py-6 border-t border-white/10">
+        <div className="bg-[#190934] text-white py-3 border-t border-white/10">
           <div className="container mx-auto px-4 lg:px-8 text-xs font-medium text-center">
             <p className="text-[#D1AFFF]">©2026 computerservice.ng All rights reserved.</p>
           </div>
