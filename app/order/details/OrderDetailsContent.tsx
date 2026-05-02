@@ -202,7 +202,27 @@ export default function OrderDetailsContent() {
 
           {/* Service Details */}
           <SectionCard title="Service Details">
-            <RadioRow label="Service" name="service" required options={["Printing", "Photocopy", "Binding", "Scanning", "Document Conversion", "Graphic/Logo Design", "Other"]} value={formData.service || ""} onChange={(v) => handleInputChange("service", v)} error={errors.service} />
+            <RadioRow
+              label="Service"
+              name="service"
+              required
+              options={[
+                "Printing", "Photocopy", "Binding", "Scanning",
+                "Typing", "Document Conversion", "Graphic/Logo Design",
+                "Business Card / ID Card", "Application Services",
+                "Technical Support", "Other",
+              ]}
+              value={formData.service || ""}
+              onChange={(v) => handleInputChange("service", v)}
+              error={errors.service}
+            />
+
+            {categoryParam && (
+              <div className="flex items-center gap-2 bg-[#f0ebff] border border-[#5123d4]/20 rounded-lg px-4 py-2.5">
+                <span className="text-xs text-[#5123d4] font-semibold uppercase tracking-wide">Selected type:</span>
+                <span className="text-sm font-medium text-gray-800">{categoryParam}</span>
+              </div>
+            )}
 
             {showPrintOptions && ["Printing", "Photocopy"].includes(formData.service || "") && (
               <>

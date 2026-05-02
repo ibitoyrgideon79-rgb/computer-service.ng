@@ -206,6 +206,13 @@ export default function Home() {
                 {label}
               </Link>
             ))}
+            <button
+              type="button"
+              onClick={() => { setMobileMenuOpen(false); setRecallModalOpen(true); }}
+              className="w-full bg-[#0047FF] hover:bg-blue-700 text-white px-6 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm text-left"
+            >
+              Recall/Track
+            </button>
           </div>
         )}
       </header>
