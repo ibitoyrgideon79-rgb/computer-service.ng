@@ -513,7 +513,7 @@ export default function AdminDashboard() {
       ]
     : [];
 
-  // ── Tab counts ────────────────────────────────────────────────────────────
+  // ── Tab counts ──
 
   const tabCount = (tab: string): number => {
     if (!stats) return 0;
