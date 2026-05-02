@@ -1,77 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
 import otpStore from "@/lib/otpStore";
 
+function normalizePhone(raw: string): string {
+  let phone = raw.replace(/\D/g, "");
+  if (phone.startsWith("0")) phone = "234" + phone.slice(1);
+  if (!phone.startsWith("234") && !phone.startsWith("+")) phone = "234" + phone;
+  if (!phone.startsWith("+")) phone = "+" + phone;
+  return phone;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const otp = body.otp as string;
-    let phoneNumber = body.phoneNumber as string;
+    const rawPhone = body.phoneNumber as string | undefined;
+    const rawEmail = body.email as string | undefined;
 
-    if (!phoneNumber || !otp) {
+    if (!otp) {
+      return NextResponse.json({ message: "Verification code is required" }, { status: 400 });
+    }
+
+    if (!rawPhone && !rawEmail) {
+      return NextResponse.json({ message: "Phone number or email is required" }, { status: 400 });
+    }
+
+    const identifier = rawEmail
+      ? rawEmail.toLowerCase().trim()
+      : normalizePhone(rawPhone!);
+
+    const stored = otpStore.get(identifier);
+
+    if (!stored) {
       return NextResponse.json(
-        { message: "Phone number and OTP are required" },
+        { message: "No verification code found. Please request a new one." },
         { status: 400 }
       );
     }
 
-    // Normalize phone number to international format (same as send-otp)
-    phoneNumber = phoneNumber.replace(/\D/g, "");
-    
-    if (phoneNumber.startsWith("0")) {
-      phoneNumber = "234" + phoneNumber.slice(1);
-    }
-    
-    if (!phoneNumber.startsWith("234") && !phoneNumber.startsWith("+")) {
-      phoneNumber = "234" + phoneNumber;
-    }
-    
-    if (!phoneNumber.startsWith("+")) {
-      phoneNumber = "+" + phoneNumber;
+    if (Date.now() > stored.expiresAt) {
+      otpStore.delete(identifier);
+      return NextResponse.json({ message: "Code has expired. Please request a new one." }, { status: 400 });
     }
 
-    const storedOtp = otpStore.get(phoneNumber);
-
-    if (!storedOtp) {
-      return NextResponse.json(
-        { message: "No OTP found for this phone number. Please request a new OTP." },
-        { status: 400 }
-      );
+    if (stored.code !== otp) {
+      return NextResponse.json({ message: "Invalid code. Please try again." }, { status: 400 });
     }
 
-    // Check if OTP has expired
-    if (Date.now() > storedOtp.expiresAt) {
-      otpStore.delete(phoneNumber);
-      return NextResponse.json(
-        { message: "OTP has expired. Please request a new one." },
-        { status: 400 }
-      );
-    }
+    otpStore.delete(identifier);
 
-    // Verify OTP
-    if (storedOtp.code !== otp) {
-      return NextResponse.json(
-        { message: "Invalid OTP. Please try again." },
-        { status: 400 }
-      );
-    }
-
-    // OTP is valid, delete it
-    otpStore.delete(phoneNumber);
-
-    // TODO: Fetch user's saved projects from database
     return NextResponse.json(
       {
-        message: "OTP verified successfully",
-        phoneNumber,
-        // projects: [] // Return user's saved projects here
+        message: "Verified successfully",
+        identifier,
       },
       { status: 200 }
     );
   } catch (error) {
     console.error("Verify OTP error:", error);
-    return NextResponse.json(
-      { message: "Failed to verify OTP" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Failed to verify code" }, { status: 500 });
   }
 }

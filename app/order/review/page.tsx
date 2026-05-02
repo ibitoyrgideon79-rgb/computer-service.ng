@@ -144,11 +144,15 @@ export default function OrderReviewPage() {
                 service:              orderData.service      || "Unspecified",
                 category:             orderData.category     || null,
                 delivery_method:      orderData.deliveryMethod || null,
+                pickup_state:         orderData.pickupState  || null,
+                pickup_city:          orderData.pickupCity   || null,
                 pickup_location:      orderData.pickupLocation || null,
                 delivery_details:     orderData.deliveryDetails || null,
                 deadline:             orderData.deadline      || null,
+                express_service:      orderData.expressService ?? false,
                 print_color:          orderData.printColor    || null,
                 paper_type:           orderData.paperType     || null,
+                pages:                orderData.pages         || 1,
                 copies:               orderData.copies        || 1,
                 print_layout:         orderData.printLayout   || null,
                 finishing_option:     orderData.finishingOption || null,
@@ -328,10 +332,12 @@ export default function OrderReviewPage() {
                       <p className="text-gray-700 text-right max-w-[160px]">{orderData.deliveryDetails}</p>
                     </div>
                   )}
-                  {orderData.deliveryMethod === "Pick Up" && orderData.pickupLocation && (
+                  {orderData.deliveryMethod === "Pick Up" && (
                     <div className="flex justify-between gap-2">
                       <p className="font-semibold text-black shrink-0">Pickup</p>
-                      <p className="text-gray-700 text-right">{orderData.pickupLocation}</p>
+                      <p className="text-gray-700 text-right max-w-40">
+                        {[orderData.pickupLocation, orderData.pickupCity, orderData.pickupState].filter(Boolean).join(", ") || "—"}
+                      </p>
                     </div>
                   )}
                   {orderData.specificInstruction && (

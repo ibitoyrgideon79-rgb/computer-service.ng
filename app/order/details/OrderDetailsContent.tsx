@@ -18,18 +18,6 @@ const SERVICE_FEE = 500;
 const DELIVERY_FEE = 1000;
 const EXPRESS_MULTIPLIER = 1.5;
 
-const PICKUP_LOCATIONS = [
-  "Wuse Zone 2, Abuja",
-  "Garki Area 11, Abuja",
-  "Maitama, Abuja",
-  "Gwarinpa, Abuja",
-  "Kubwa, Abuja",
-  "Karu, Abuja",
-  "Nyanya, Abuja",
-  "Lugbe, Abuja",
-  "Asokoro, Abuja",
-  "Jabi, Abuja",
-];
 
 // ── Helper: section card wrapper ───────────────────────────────────────────
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -121,6 +109,8 @@ export default function OrderDetailsContent() {
     finishingOption:  orderData.finishingOption,
     bindingType:      orderData.bindingType,
     deliveryMethod:   orderData.deliveryMethod,
+    pickupState:      orderData.pickupState,
+    pickupCity:       orderData.pickupCity,
     pickupLocation:   orderData.pickupLocation,
     deliveryDetails:  orderData.deliveryDetails,
     specificInstruction: orderData.specificInstruction,
@@ -172,7 +162,11 @@ export default function OrderDetailsContent() {
     if (!formData.service) newErrors.service = "Service is required";
     if (!formData.deliveryMethod) newErrors.deliveryMethod = "Delivery method is required";
     if (formData.deliveryMethod === "Doorstep" && !formData.deliveryDetails) newErrors.deliveryDetails = "Delivery address is required";
-    if (formData.deliveryMethod === "Pick Up" && !formData.pickupLocation) newErrors.pickupLocation = "Pickup location is required";
+    if (formData.deliveryMethod === "Pick Up") {
+      if (!formData.pickupState) newErrors.pickupState = "State is required";
+      if (!formData.pickupCity) newErrors.pickupCity = "City is required";
+      if (!formData.pickupLocation) newErrors.pickupLocation = "Street address or landmark is required";
+    }
     if (!formData.document && !formData.documentText) newErrors.document = "Please upload a file or type/paste your document text";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -338,7 +332,14 @@ export default function OrderDetailsContent() {
               <TextInput label="Delivery Address" name="deliveryDetails" required value={formData.deliveryDetails || ""} onChange={(v) => handleInputChange("deliveryDetails", v)} error={errors.deliveryDetails} />
             )}
             {formData.deliveryMethod === "Pick Up" && (
-              <RadioRow label="Pickup Location" name="pickupLocation" required options={PICKUP_LOCATIONS} value={formData.pickupLocation || ""} onChange={(v) => handleInputChange("pickupLocation", v)} error={errors.pickupLocation} />
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-gray-700">Pickup Address <span className="text-red-500">*</span></p>
+                <div className="grid grid-cols-2 gap-3">
+                  <TextInput label="State" name="pickupState" required placeholder="e.g. Abuja FCT" value={formData.pickupState || ""} onChange={(v) => handleInputChange("pickupState", v)} error={errors.pickupState} />
+                  <TextInput label="City / Area" name="pickupCity" required placeholder="e.g. Wuse Zone 2" value={formData.pickupCity || ""} onChange={(v) => handleInputChange("pickupCity", v)} error={errors.pickupCity} />
+                </div>
+                <TextInput label="Street Address / Landmark" name="pickupLocation" required placeholder="e.g. No. 5 Ibrahim Tahir Road, beside GTB" value={formData.pickupLocation || ""} onChange={(v) => handleInputChange("pickupLocation", v)} error={errors.pickupLocation} />
+              </div>
             )}
             <TextInput label="Full Address (Optional)" name="specificInstruction" placeholder="Landmark, building number, nearest bus-stop…" value={formData.specificInstruction || ""} onChange={(v) => handleInputChange("specificInstruction", v)} />
           </SectionCard>

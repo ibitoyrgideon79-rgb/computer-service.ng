@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Package, Clock, Loader2, TrendingUp, CheckCircle,
   Truck, XCircle, Search, RefreshCw, X, ChevronDown,
-  Phone, Mail, MapPin, Layers,
+  Phone, Mail, MapPin, Layers, MessageCircle, Trash2, Download,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -27,10 +27,14 @@ interface Order {
   status: string;
   print_color: string;
   paper_type: string;
+  pages: number;
   copies: number;
+  express_service: boolean;
   print_layout: string;
   finishing_option: string;
   specific_instruction: string;
+  pickup_state: string;
+  pickup_city: string;
   pickup_location: string;
   delivery_details: string;
   paystack_ref: string;
@@ -155,9 +159,42 @@ function StatusUpdater({ order, onUpdate }: { order: Order; onUpdate: (id: strin
   );
 }
 
-// ─── Order detail panel helpers ────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (v: string | null | undefined) => v || "—";
+
+function whatsappUrl(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  const normalized = digits.startsWith("0") ? "234" + digits.slice(1) : digits;
+  return `https://wa.me/${normalized}`;
+}
+
+function exportCSV(orders: Order[]) {
+  const cols = [
+    "Order ID", "Customer", "Phone", "Email", "Service", "Category",
+    "Amount", "Status", "Delivery", "Location", "Pages", "Copies",
+    "Print Color", "Paper", "Express", "Finishing", "Date",
+  ];
+  const rows = orders.map((o) => [
+    o.order_id, o.customer_name, o.phone_number, o.email,
+    o.service, o.category || "",
+    o.amount, o.status, o.delivery_method || "",
+    o.location || "", o.pages || 1, o.copies || 1,
+    o.print_color || "", o.paper_type || "",
+    o.express_service ? "Yes" : "No",
+    o.finishing_option || "",
+    format(new Date(o.created_at), "d MMM yyyy HH:mm"),
+  ].map((v) => `"${String(v).replace(/"/g, '""')}"`));
+
+  const csv = [cols.map((c) => `"${c}"`).join(","), ...rows.map((r) => r.join(","))].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `orders-${format(new Date(), "yyyy-MM-dd")}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -170,7 +207,25 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 // ─── Order detail panel ────────────────────────────────────────────────────────
 
-function DetailPanel({ order, onClose }: { order: Order; onClose: () => void }) {
+function DetailPanel({ order, onClose, onDelete }: { order: Order; onClose: () => void; onDelete: (id: string) => void }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      onDelete(order.id);
+      onClose();
+      toast.success(`Order ${order.order_id} deleted`);
+    } catch {
+      toast.error("Failed to delete order");
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end">
@@ -229,15 +284,17 @@ function DetailPanel({ order, onClose }: { order: Order; onClose: () => void }) 
           </section>
 
           {/* Print options (show if relevant) */}
-          {(order.print_color || order.paper_type || order.copies > 1) && (
+          {(order.print_color || order.paper_type || order.copies > 1 || order.pages > 1) && (
             <section>
               <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Print Options</h3>
               <div className="grid grid-cols-2 gap-3">
                 <DetailRow label="Colour" value={fmt(order.print_color)} />
                 <DetailRow label="Paper" value={fmt(order.paper_type)} />
+                <DetailRow label="Pages" value={String(order.pages || 1)} />
                 <DetailRow label="Copies" value={String(order.copies || 1)} />
                 <DetailRow label="Layout" value={fmt(order.print_layout)} />
                 <DetailRow label="Finishing" value={fmt(order.finishing_option)} />
+                <DetailRow label="Express" value={order.express_service ? "Yes (+50%)" : "No"} />
               </div>
             </section>
           )}
@@ -246,9 +303,16 @@ function DetailPanel({ order, onClose }: { order: Order; onClose: () => void }) 
           <section>
             <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Delivery / Pickup</h3>
             <div className="grid grid-cols-1 gap-3">
-              <DetailRow label="Location" value={fmt(order.location)} />
-              {order.pickup_location && <DetailRow label="Pickup Point" value={order.pickup_location} />}
-              {order.delivery_details && <DetailRow label="Delivery Address" value={order.delivery_details} />}
+              <DetailRow label="Method" value={fmt(order.delivery_method)} />
+              {order.delivery_method === "Pick Up" ? (
+                <>
+                  {order.pickup_location && <DetailRow label="Street / Landmark" value={order.pickup_location} />}
+                  {order.pickup_city && <DetailRow label="City / Area" value={order.pickup_city} />}
+                  {order.pickup_state && <DetailRow label="State" value={order.pickup_state} />}
+                </>
+              ) : (
+                order.delivery_details && <DetailRow label="Delivery Address" value={order.delivery_details} />
+              )}
             </div>
           </section>
 
@@ -269,20 +333,59 @@ function DetailPanel({ order, onClose }: { order: Order; onClose: () => void }) 
         </div>
 
         {/* Footer actions */}
-        <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-          <a
-            href={`tel:${order.phone_number}`}
-            className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Phone className="w-4 h-4" /> Call
-          </a>
-          {order.email && (
+        <div className="px-6 py-4 border-t border-gray-100 space-y-3">
+          <div className="flex gap-2">
             <a
-              href={`mailto:${order.email}`}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#5123d4] rounded-xl py-2.5 text-sm font-medium text-white hover:bg-[#401AA0] transition-colors"
+              href={`tel:${order.phone_number}`}
+              className="flex-1 flex items-center justify-center gap-1.5 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <Mail className="w-4 h-4" /> Email
+              <Phone className="w-4 h-4" /> Call
             </a>
+            <a
+              href={whatsappUrl(order.phone_number)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-green-500 hover:bg-green-600 rounded-xl py-2.5 text-sm font-medium text-white transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" /> WhatsApp
+            </a>
+            {order.email && (
+              <a
+                href={`mailto:${order.email}`}
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#5123d4] hover:bg-[#401AA0] rounded-xl py-2.5 text-sm font-medium text-white transition-colors"
+              >
+                <Mail className="w-4 h-4" /> Email
+              </a>
+            )}
+          </div>
+
+          {/* Delete */}
+          {confirmDelete ? (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="flex-1 border border-gray-200 rounded-xl py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 bg-red-500 hover:bg-red-600 rounded-xl py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : "Yes, Delete"}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="w-full flex items-center justify-center gap-2 border border-red-200 text-red-500 hover:bg-red-50 rounded-xl py-2 text-sm font-medium transition-colors"
+            >
+              <Trash2 className="w-4 h-4" /> Delete Order
+            </button>
           )}
         </div>
       </div>
@@ -391,6 +494,11 @@ export default function AdminDashboard() {
     fetchStats();
   }, [fetchStats]);
 
+  const handleDeleteOrder = useCallback((id: string) => {
+    setOrders((prev) => prev.filter((o) => o.id !== id));
+    fetchStats();
+  }, [fetchStats]);
+
   // ── Stats config ──────────────────────────────────────────────────────────
 
   const statCards = stats
@@ -473,7 +581,16 @@ export default function AdminDashboard() {
             {/* Table toolbar */}
             <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <h2 className="text-base font-bold text-black">Orders</h2>
-              <div className="flex-grow" />
+              <div className="grow" />
+              {/* CSV export */}
+              <button
+                type="button"
+                onClick={() => exportCSV(orders)}
+                disabled={orders.length === 0}
+                className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-800 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50 transition-colors disabled:opacity-40"
+              >
+                <Download className="w-3.5 h-3.5" /> Export CSV
+              </button>
               {/* Search */}
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -538,7 +655,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-medium">Amount</th>
                       <th className="text-left px-5 py-3 font-medium">Status</th>
                       <th className="text-left px-5 py-3 font-medium">Date</th>
-                      <th className="px-5 py-3" />
+                      <th className="px-5 py-3 font-medium sr-only">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -612,7 +729,7 @@ export default function AdminDashboard() {
 
       {/* ── Order detail panel ── */}
       {selectedOrder && (
-        <DetailPanel order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+        <DetailPanel order={selectedOrder} onClose={() => setSelectedOrder(null)} onDelete={handleDeleteOrder} />
       )}
     </>
   );

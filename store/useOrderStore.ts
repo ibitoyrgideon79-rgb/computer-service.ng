@@ -43,6 +43,8 @@ export interface OrderData {
   deliveryDetails: string;
 
   // Pick Up specifics
+  pickupState: string;
+  pickupCity: string;
   pickupLocation: string;
   pickupContactName: string;
   pickupContactPhone: string;

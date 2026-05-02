@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, LogOut } from "lucide-react";
+import { LayoutDashboard, LogOut, ExternalLink } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -39,7 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* Nav */}
-        <nav className="flex-grow px-3 py-4 space-y-1">
+        <nav className="grow px-3 py-4 space-y-1">
           {navLinks.map(({ href, icon: Icon, label }) => {
             const active = pathname === href;
             return (
@@ -59,8 +59,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="px-3 py-4 border-t border-white/10">
+        {/* Bottom links */}
+        <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <Link
+            href="/"
+            target="_blank"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <ExternalLink className="w-4 h-4 shrink-0" />
+            Visit Site
+          </Link>
           <button
             type="button"
             onClick={handleLogout}
@@ -73,7 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ── Main ── */}
-      <main className="flex-grow ml-56 min-h-screen">
+      <main className="grow ml-56 min-h-screen">
         {children}
       </main>
     </div>

@@ -23,7 +23,6 @@ import {
   Phone,
   Mail,
   ArrowUp,
-  Truck,
   Menu,
   X,
 } from "lucide-react";
@@ -177,7 +176,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setRecallModalOpen(true)}
-              className="bg-[#0047FF] hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
+              className="hidden md:block bg-[#0047FF] hover:bg-blue-700 text-white px-6 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
             >
               Recall
             </button>
@@ -322,94 +321,6 @@ export default function Home() {
                   )}
                 </div>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing Section */}
-        <section className="py-24 bg-white border-t border-gray-100" id="pricing">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-black mb-3">Transparent Pricing</h2>
-              <p className="text-gray-500 max-w-xl mx-auto">Clear, upfront pricing for every service. What you see is what you pay no hidden charges.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
-              <div className="bg-white rounded-xl border border-gray-200 p-6 hover:border-[#5123d4]/30 hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                    <Printer className="w-5 h-5 text-[#5123d4]" />
-                  </div>
-                  <h3 className="font-bold text-black">Printing &amp; Photocopy</h3>
-                </div>
-                <ul className="space-y-3">
-                  {[
-                    ["A4 — Black & White", "₦50/page"],
-                    ["A4 — Colour", "₦150/page"],
-                    ["A3 — Black & White", "₦100/page"],
-                    ["A3 — Colour", "₦300/page"],
-                  ].map(([label, price]) => (
-                    <li key={label} className="flex justify-between items-center text-sm border-b border-gray-50 pb-2 last:border-0">
-                      <span className="text-gray-600">{label}</span>
-                      <span className="font-semibold text-black">{price}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white rounded-xl border border-gray-200 p-6 hover:border-[#5123d4]/30 hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
-                    <Book className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <h3 className="font-bold text-black">Binding &amp; Finishing</h3>
-                </div>
-                <ul className="space-y-3">
-                  {[
-                    ["Stapled", "₦200"],
-                    ["Spiral Binding", "₦500"],
-                    ["Hardcover Binding", "₦2,000"],
-                  ].map(([label, price]) => (
-                    <li key={label} className="flex justify-between items-center text-sm border-b border-gray-50 pb-2 last:border-0">
-                      <span className="text-gray-600">{label}</span>
-                      <span className="font-semibold text-black">{price}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="bg-white rounded-xl border border-gray-200 p-6 hover:border-[#5123d4]/30 hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                    <Truck className="w-5 h-5 text-green-600" />
-                  </div>
-                  <h3 className="font-bold text-black">Delivery &amp; Fees</h3>
-                </div>
-                <ul className="space-y-3">
-                  {[
-                    ["Pick Up (self-collect)", "Free", "green"],
-                    ["Doorstep Delivery", "₦1,000", "black"],
-                    ["Service Fee (flat)", "₦500", "black"],
-                    ["Express (1–2 hrs)", "+50% surcharge", "orange"],
-                  ].map(([label, price, color]) => (
-                    <li key={label} className="flex justify-between items-center text-sm border-b border-gray-50 pb-2 last:border-0">
-                      <span className="text-gray-600">{label}</span>
-                      <span className={`font-semibold ${color === "green" ? "text-green-600" : color === "orange" ? "text-orange-500" : "text-black"}`}>{price}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <p className="text-center text-sm text-gray-400 mb-8">
-              * Typing, design, scanning and other services are custom-quoted based on your request.
-              Business cards &amp; high-value print jobs may require bespoke pricing.
-            </p>
-
-            <div className="text-center">
-              <Link href="/order/details" className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3 rounded-md font-medium inline-flex items-center gap-2 transition-colors shadow-sm">
-                Start Your Order <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           </div>
         </section>
@@ -587,7 +498,7 @@ export default function Home() {
                   <li><Link href="/" className="hover:text-white transition-colors">Home</Link></li>
                   <li><Link href="#services" className="hover:text-white transition-colors">Services</Link></li>
                   <li><Link href="#how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
-                  <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                  <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
                   <li><Link href="#contact" className="hover:text-white transition-colors">Contact</Link></li>
                 </ul>
               </div>

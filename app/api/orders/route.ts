@@ -16,9 +16,10 @@ export async function POST(req: NextRequest) {
     const orderId = generateOrderId();
 
     // Derive a human-readable location for the admin table
+    const pickupFull = [data.pickup_location, data.pickup_city, data.pickup_state].filter(Boolean).join(", ");
     const location =
       data.delivery_method === "Pick Up"
-        ? (data.pickup_location || "Pick Up")
+        ? (pickupFull || "Pick Up")
         : (data.delivery_details?.split(/[,\n]/)[0]?.trim() || "Doorstep");
 
     const supabase = getSupabaseAdminClient();
@@ -32,12 +33,16 @@ export async function POST(req: NextRequest) {
         service:              data.service   || "Unspecified",
         category:             data.category  || null,
         delivery_method:      data.delivery_method   || null,
+        pickup_state:         data.pickup_state      || null,
+        pickup_city:          data.pickup_city       || null,
         pickup_location:      data.pickup_location   || null,
         delivery_details:     data.delivery_details  || null,
         location,
         deadline:             data.deadline          || null,
+        express_service:      data.express_service   ?? false,
         print_color:          data.print_color       || null,
         paper_type:           data.paper_type        || null,
+        pages:                data.pages             || 1,
         copies:               data.copies            || 1,
         print_layout:         data.print_layout      || null,
         finishing_option:     data.finishing_option  || null,
