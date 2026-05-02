@@ -178,7 +178,7 @@ export default function Home() {
               onClick={() => setRecallModalOpen(true)}
               className="hidden md:block bg-[#0047FF] hover:bg-blue-700 text-white px-6 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
             >
-              Recall
+              Recall/Track
             </button>
             <button
               type="button"
