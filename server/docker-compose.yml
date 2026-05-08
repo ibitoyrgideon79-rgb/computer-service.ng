@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_NAME:-computerservice_ng}
+      POSTGRES_USER:     ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT:             ${PORT:-4000}
+      NODE_ENV:         production
+      DATABASE_URL:     "postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-computerservice_ng}?schema=public"
+      JWT_SECRET:       ${JWT_SECRET}
+      JWT_EXPIRES_IN:   ${JWT_EXPIRES_IN:-7d}
+      ADMIN_EMAIL:      ${ADMIN_EMAIL}
+      ADMIN_PASSWORD:   ${ADMIN_PASSWORD}
+      RESEND_API_KEY:   ${RESEND_API_KEY}
+      TERMII_API_KEY:   ${TERMII_API_KEY}
+      TERMII_SENDER_ID: ${TERMII_SENDER_ID:-N-Alert}
+      FRONTEND_URL:     ${FRONTEND_URL:-https://computerservice.ng}
+    ports:
+      - "${PORT:-4000}:4000"
+
+volumes:
+  pgdata:

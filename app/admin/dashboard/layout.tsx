@@ -1,0 +1,86 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, LogOut, ExternalLink } from "lucide-react";
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  const handleLogout = async () => {
+    localStorage.removeItem("admin_token");
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/admin/login";
+  };
+
+  const navLinks = [
+    { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  ];
+
+  return (
+    <div className="flex min-h-screen bg-[#f4f5f7]">
+      {/* ── Sidebar ── */}
+      <aside className="w-56 shrink-0 bg-[#0f0720] flex flex-col fixed inset-y-0 left-0 z-30">
+        {/* Logo */}
+        <div className="px-4 py-5 border-b border-white/10">
+          <div className="relative h-10 w-40">
+            <Image
+              src="/Computer service PNG 111.png"
+              alt="computerservice.ng"
+              fill
+              className="object-contain object-left"
+              priority
+            />
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="grow px-3 py-4 space-y-1">
+          {navLinks.map(({ href, icon: Icon, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-[#5123d4] text-white"
+                    : "text-white/60 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Bottom links */}
+        <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <Link
+            href="/"
+            target="_blank"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <ExternalLink className="w-4 h-4 shrink-0" />
+            Visit Site
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main ── */}
+      <main className="grow ml-56 min-h-screen">
+        {children}
+      </main>
+    </div>
+  );
+}
