@@ -6,7 +6,6 @@ import { useOrderStore, OrderData } from "@/store/useOrderStore";
 import { UploadCloud, AlertCircle } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
-// ── Pricing constants ──────────────────────────────────────────────────────
 const RATE: Record<string, Record<string, number>> = {
   "Black & white": { A4: 300, A3: 500, "Custom type": 300, Passport: 300 },
   Coloured:        { A4: 700, A3: 1200, "Custom type": 700, Passport: 750 },
@@ -19,7 +18,6 @@ const DELIVERY_FEE = 3000;
 const EXPRESS_MULTIPLIER = 1.5;
 
 
-// ── Nigerian states ────────────────────────────────────────────────────────
 const NIGERIAN_STATES = [
   "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
   "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu",
@@ -28,7 +26,6 @@ const NIGERIAN_STATES = [
   "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
 ];
 
-// ── Helper: section card wrapper ───────────────────────────────────────────
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
@@ -38,7 +35,6 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-// ── Helper: radio group row ────────────────────────────────────────────────
 function RadioRow({
   label, name, options, value, onChange, required, error,
 }: {
@@ -68,7 +64,6 @@ function RadioRow({
   );
 }
 
-// ── Helper: text input row ─────────────────────────────────────────────────
 function TextInput({
   label, name, type = "text", placeholder, value, onChange, required, error,
 }: {
@@ -91,7 +86,6 @@ function TextInput({
   );
 }
 
-// ── Main content component ──────────────────────────────────────────────────
 export default function OrderDetailsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -238,7 +232,7 @@ export default function OrderDetailsContent() {
                 "Printing", "Photocopy", "Binding", "Scanning",
                 "Typing", "Document Conversion", "Graphic/Logo Design",
                 "Business Card / ID Card", "Application Services",
-                "Technical Support", "Other",
+                "Technical Support", "Lamination", "Other",
               ]}
               value={formData.service || ""}
               onChange={(v) => handleInputChange("service", v)}

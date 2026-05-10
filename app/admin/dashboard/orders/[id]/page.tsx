@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Order {
   id: string;
@@ -37,7 +36,6 @@ interface Order {
   updated_at: string;
 }
 
-// ─── Auth helpers ─────────────────────────────────────────────────────────────
 
 function getToken() {
   if (typeof window === "undefined") return "";
@@ -47,7 +45,6 @@ function authHeaders(): HeadersInit {
   return { authorization: `Bearer ${getToken()}` };
 }
 
-// ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_LIST = [
   "Pending",
@@ -113,7 +110,6 @@ function buildActivity(order: Order) {
   return items;
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
   const s = STATUS_STYLES[status] ?? STATUS_STYLES.Pending;
@@ -125,7 +121,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -178,7 +173,6 @@ export default function OrderDetailPage() {
     }
   };
 
-  // ── Loading / error states ───────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -201,7 +195,6 @@ export default function OrderDetailPage() {
   const activity = buildActivity(order);
   const placedAt = format(new Date(order.created_at), "MMMM d, yyyy '@' h:mmaaa");
 
-  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-[#f8f9fc]">
@@ -244,8 +237,7 @@ export default function OrderDetailPage() {
         {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
 
-          {/* ── Left: document panel ─────────────────────────────────────────── */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
 
             {/* Document viewer */}
             <div className="flex min-h-120">
@@ -396,8 +388,7 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
-          {/* ── Right: activity timeline ──────────────────────────────────────── */}
-          <div>
+                    <div>
             <h2 className="text-2xl font-bold text-[#5123d4] mb-5">Project Activity</h2>
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
               <ol className="relative">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
+import { notifyAdminNewOrder } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,16 @@ export async function POST(req: NextRequest) {
         status:              data.status                || "Pending",
       },
     });
+
+    // Notify admin (fire-and-forget, never block the response)
+    notifyAdminNewOrder({
+      orderId:      order.orderId,
+      customerName: order.customerName,
+      phoneNumber:  order.phoneNumber,
+      email:        order.email,
+      service:      order.service,
+      amount:       Number(order.amount),
+    }).catch(console.error);
 
     return NextResponse.json(
       { orderId: order.orderId, id: order.id, status: order.status },

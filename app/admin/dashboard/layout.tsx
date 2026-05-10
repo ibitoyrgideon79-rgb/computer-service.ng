@@ -3,10 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, LogOut, ExternalLink } from "lucide-react";
+import { useEffect } from "react";
+import { LayoutDashboard, LogOut, ExternalLink, Settings } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!localStorage.getItem("admin_token")) {
+      window.location.href = "/admin/login";
+    }
+  }, []);
 
   const handleLogout = async () => {
     localStorage.removeItem("admin_token");
@@ -15,13 +22,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const navLinks = [
-    { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/admin/dashboard",          icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/admin/dashboard/settings", icon: Settings,        label: "Settings"  },
   ];
 
   return (
     <div className="flex min-h-screen bg-[#f4f5f7]">
-      {/* ── Sidebar ── */}
-      <aside className="w-56 shrink-0 bg-[#0f0720] flex flex-col fixed inset-y-0 left-0 z-30">
+            <aside className="w-56 shrink-0 bg-[#0f0720] flex flex-col fixed inset-y-0 left-0 z-30">
         {/* Logo */}
         <div className="px-4 py-5 border-b border-white/10">
           <div className="relative h-10 w-40">
@@ -77,8 +84,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* ── Main ── */}
-      <main className="grow ml-56 min-h-screen">
+            <main className="grow ml-56 min-h-screen">
         {children}
       </main>
     </div>

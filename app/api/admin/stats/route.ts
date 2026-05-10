@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyAdminToken } from "@/lib/auth";
+import { verifyAdminRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    verifyAdminToken(req.headers.get("authorization"));
+    verifyAdminRequest(req);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

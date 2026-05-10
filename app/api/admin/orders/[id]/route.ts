@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyAdminToken } from "@/lib/auth";
+import { verifyAdminRequest } from "@/lib/auth";
+import { serializeOrder } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    verifyAdminToken(req.headers.get("authorization"));
+    verifyAdminRequest(req);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -20,7 +21,7 @@ export async function GET(
       where: { OR: [{ id }, { orderId: id }] },
     });
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(order);
+    return NextResponse.json(serializeOrder(order));
   } catch (err) {
     console.error("[GET /api/admin/orders/[id]]", err);
     return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });
@@ -32,7 +33,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    verifyAdminToken(req.headers.get("authorization"));
+    verifyAdminRequest(req);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -61,7 +62,7 @@ export async function PATCH(
       where: { id },
       data:  updateData,
     });
-    return NextResponse.json(order);
+    return NextResponse.json(serializeOrder(order));
   } catch (err) {
     console.error("[PATCH /api/admin/orders/[id]]", err);
     return NextResponse.json({ error: "Failed to update order" }, { status: 500 });
@@ -73,7 +74,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    verifyAdminToken(req.headers.get("authorization"));
+    verifyAdminRequest(req);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

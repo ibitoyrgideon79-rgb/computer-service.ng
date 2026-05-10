@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyAdminToken } from "@/lib/auth";
+import { verifyAdminRequest } from "@/lib/auth";
+import { serializeOrder } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    verifyAdminToken(req.headers.get("authorization"));
+    verifyAdminRequest(req);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
       where,
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json(orders);
+    return NextResponse.json(orders.map(serializeOrder));
   } catch (err) {
     console.error("[GET /api/admin/orders]", err);
     return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });

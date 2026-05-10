@@ -47,7 +47,6 @@ export default function OrderReviewPage() {
     setNumPages(numPages);
   }
 
-  // ── Dynamic pricing ──────────────────────────────────────────────────────
   const RATE: Record<string, Record<string, number>> = {
     "Black & white": { A4: 300, A3: 500, "Custom type": 300, Passport: 300 },
     Coloured:        { A4: 700, A3: 1200, "Custom type": 700, Passport: 750 },
@@ -83,7 +82,6 @@ export default function OrderReviewPage() {
     ? "Pasted Text"
     : (orderData.document?.name || "No document uploaded");
 
-  // ── Download ──
   const handleDownload = async () => {
     if (hasCustomHtml) {
       const win = window.open("", "_blank");
@@ -107,7 +105,6 @@ export default function OrderReviewPage() {
     }
   };
 
-  // ── Submit & Pay ──
   const handleSubmitAndPay = async () => {
     setSubmitting(true);
     setSubmitError("");
@@ -204,8 +201,7 @@ export default function OrderReviewPage() {
     <div className="min-h-screen bg-[#f8f9fc] text-black font-sans pb-20">
       <div className="container mx-auto px-3 sm:px-6 max-w-7xl pt-4 sm:pt-8">
 
-        {/* ── Stepper ── */}
-        <div className="w-full mb-6 sm:mb-12 overflow-x-auto pb-2">
+                <div className="w-full mb-6 sm:mb-12 overflow-x-auto pb-2">
           <div className="flex items-center gap-1 sm:gap-4 min-w-max mx-auto w-max">
             {steps.map((step, idx) => (
               <React.Fragment key={idx}>
@@ -229,11 +225,9 @@ export default function OrderReviewPage() {
           </div>
         </div>
 
-        {/* ── Grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8">
 
-          {/* ── Left Sidebar ── */}
-          <div className="lg:col-span-4 space-y-4">
+                    <div className="lg:col-span-4 space-y-4">
 
             {/* Order Summary Card */}
             <div className="bg-white rounded-xl border border-purple-100 p-4 sm:p-6 shadow-sm">
@@ -304,16 +298,17 @@ export default function OrderReviewPage() {
                   </div>
                 </div>
 
-                {/* Order details */}
+                {/* Print options */}
                 <div className="space-y-2.5 py-3 border-b border-gray-100 text-sm">
                   <p className="text-[11px] font-bold text-[#5123d4] uppercase tracking-wide mb-2">Print Options</p>
                   {[
-                    { label: "Paper Size", value: orderData.paperType || "A4" },
-                    { label: "Print Layout", value: orderData.printLayout || "—" },
-                    { label: "Orientation", value: orderData.orientation || "—" },
-                    { label: "Finishing", value: orderData.finishingOption || "None" },
-                    { label: "Express", value: isExpress ? "Yes (+50%)" : "No" },
-                  ].map(({ label, value }) => (
+                    { label: "Paper Size",    value: orderData.paperType   || "A4" },
+                    { label: "Print Layout",  value: orderData.printLayout || "—" },
+                    { label: "Orientation",   value: orderData.orientation || "—" },
+                    { label: "Finishing",     value: orderData.finishingOption || "None" },
+                    { label: "Express",       value: isExpress ? "Yes (+50%)" : "No" },
+                    { label: "Deadline",      value: orderData.deadline    || "Standard (3hrs - 5hrs)" },
+                  ].filter(({ value }) => value && value !== "—").map(({ label, value }) => (
                     <div key={label} className="flex justify-between gap-2">
                       <p className="font-semibold text-black shrink-0">{label}</p>
                       <p className="text-gray-700 text-right">{value}</p>
@@ -328,13 +323,33 @@ export default function OrderReviewPage() {
                     <p className="font-semibold text-black shrink-0">Method</p>
                     <p className="text-gray-700 text-right">{orderData.deliveryMethod || "—"}</p>
                   </div>
-                  {orderData.deliveryMethod === "Doorstep" && (
+                  {/* Doorstep — use deliveryDetails field */}
+                  {orderData.deliveryMethod === "Doorstep" && orderData.deliveryDetails && (
                     <div className="flex justify-between gap-2">
                       <p className="font-semibold text-black shrink-0">Address</p>
-                      <p className="text-gray-700 text-right max-w-40">
-                        {[orderData.pickupLocation, orderData.pickupCity, orderData.pickupState].filter(Boolean).join(", ") || "—"}
-                      </p>
+                      <p className="text-gray-700 text-right max-w-40">{orderData.deliveryDetails}</p>
                     </div>
+                  )}
+                  {/* Pick Up — show store location */}
+                  {orderData.deliveryMethod === "Pick Up" && (
+                    <>
+                      {orderData.pickupState    && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">State</p><p className="text-gray-700 text-right">{orderData.pickupState}</p></div>}
+                      {orderData.pickupCity     && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">City / Area</p><p className="text-gray-700 text-right">{orderData.pickupCity}</p></div>}
+                      {orderData.pickupLocation && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">Location</p><p className="text-gray-700 text-right max-w-40">{orderData.pickupLocation}</p></div>}
+                    </>
+                  )}
+                  {/* Hardcopy Pickup */}
+                  {orderData.deliveryMethod === "Hardcopy Pickup" && (
+                    <>
+                      {orderData.hardcopyPickupDate  && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">Pickup Date</p><p className="text-gray-700 text-right">{orderData.hardcopyPickupDate}</p></div>}
+                      {orderData.hardcopyPickupTime  && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">Pickup Time</p><p className="text-gray-700 text-right">{orderData.hardcopyPickupTime}</p></div>}
+                      {orderData.hardcopyState       && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">State</p><p className="text-gray-700 text-right">{orderData.hardcopyState}</p></div>}
+                      {orderData.hardcopyCity        && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">City</p><p className="text-gray-700 text-right">{orderData.hardcopyCity}</p></div>}
+                      {orderData.hardcopyContactName && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">Contact</p><p className="text-gray-700 text-right">{orderData.hardcopyContactName}</p></div>}
+                      {orderData.hardcopyContactPhone && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">Contact Phone</p><p className="text-gray-700 text-right">{orderData.hardcopyContactPhone}</p></div>}
+                      {orderData.hardcopyDocCount    && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">Doc Count</p><p className="text-gray-700 text-right">{orderData.hardcopyDocCount}</p></div>}
+                      {orderData.hardcopyInstructions && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">Instructions</p><p className="text-gray-700 text-right max-w-40">{orderData.hardcopyInstructions}</p></div>}
+                    </>
                   )}
                   {orderData.specificInstruction && (
                     <div className="flex justify-between gap-2">
@@ -408,8 +423,7 @@ export default function OrderReviewPage() {
             </div>
           </div>
 
-          {/* ── Right Side: Preview ── */}
-          <div className="lg:col-span-8 flex flex-col min-h-125">
+                    <div className="lg:col-span-8 flex flex-col min-h-125">
 
             {/* Preview toolbar */}
             <div className="bg-[#1e1e1e] rounded-t-xl p-2 sm:p-3 flex items-center justify-between text-white border-b border-gray-800 gap-2">

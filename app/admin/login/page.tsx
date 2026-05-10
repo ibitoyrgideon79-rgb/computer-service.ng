@@ -48,8 +48,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* ── Left panel ── */}
-      <div className="hidden lg:flex lg:w-[44%] bg-[#0f0720] flex-col justify-between p-12 relative overflow-hidden">
+            <div className="hidden lg:flex lg:w-[44%] bg-[#0f0720] flex-col justify-between p-12 relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -96,8 +95,7 @@ export default function AdminLoginPage() {
         <p className="relative z-10 text-white/25 text-xs">©2026 computerservice.ng</p>
       </div>
 
-      {/* ── Right panel ── */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+            <div className="flex-1 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-100">
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 flex justify-center">

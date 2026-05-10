@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Package, Clock, Loader2, TrendingUp, CheckCircle,
   Truck, XCircle, Search, RefreshCw, X, ChevronDown,
-  Phone, Mail, MapPin, Layers, MessageCircle, Trash2, Download, LogOut,
+  Phone, Mail, MapPin, Layers, MessageCircle, Trash2, Download, LogOut, ExternalLink,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,6 @@ function authHeaders(): HeadersInit {
   return { authorization: `Bearer ${getToken()}` };
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Order {
   id: string;
@@ -47,6 +46,8 @@ interface Order {
   pickup_location: string;
   delivery_details: string;
   paystack_ref: string;
+  file_url: string | null;
+  document_text: string | null;
   created_at: string;
 }
 
@@ -71,7 +72,6 @@ interface Stats {
   revenue: number;
 }
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
   "Pending Approval":    { badge: "bg-gray-100    text-gray-600    border-gray-200",   dot: "bg-gray-400"    },
@@ -93,7 +93,6 @@ const STATUS_LIST = [
 
 const TABS = ["All", "Pending Approval", "Approved for Payment", "Pending", "In Progress", "In Transit", "Completed", "Delivered", "Cancelled"];
 
-// ─── Stat card ─────────────────────────────────────────────────────────────────
 
 function StatCard({
   label, value, icon: Icon, color,
@@ -111,7 +110,6 @@ function StatCard({
   );
 }
 
-// ─── Status badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
   const s = STATUS_STYLES[status] ?? STATUS_STYLES.Pending;
@@ -123,7 +121,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─── Status updater ────────────────────────────────────────────────────────────
 
 function StatusUpdater({ order, onUpdate }: { order: Order; onUpdate: (id: string, status: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -185,7 +182,6 @@ function StatusUpdater({ order, onUpdate }: { order: Order; onUpdate: (id: strin
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (v: string | null | undefined) => v || "—";
 
@@ -231,15 +227,35 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-// ─── Order detail panel ────────────────────────────────────────────────────────
 
 function DetailPanel({ order, onClose, onDelete }: { order: Order; onClose: () => void; onDelete: (id: string) => void }) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete,  setConfirmDelete]  = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError,    setDeleteError]    = useState("");
+  const [deleting,       setDeleting]       = useState(false);
+
+  const cancelDelete = () => {
+    setConfirmDelete(false);
+    setDeletePassword("");
+    setDeleteError("");
+  };
 
   const handleDelete = async () => {
-    setDeleting(true);
+    if (!deletePassword) { setDeleteError("Please enter your admin password to confirm."); return; }
+    setDeleting(true); setDeleteError("");
     try {
+      // Verify admin password first
+      const verifyRes = await fetch("/api/admin/verify-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      if (!verifyRes.ok) {
+        setDeleteError("Incorrect password. Please try again.");
+        setDeleting(false);
+        return;
+      }
+      // Password confirmed — proceed with delete
       const res = await fetch(`/api/admin/orders/${order.id}`, { method: "DELETE", headers: authHeaders() });
       if (!res.ok) throw new Error();
       onDelete(order.id);
@@ -249,7 +265,6 @@ function DetailPanel({ order, onClose, onDelete }: { order: Order; onClose: () =
       toast.error("Failed to delete order");
     } finally {
       setDeleting(false);
-      setConfirmDelete(false);
     }
   };
 
@@ -387,22 +402,27 @@ function DetailPanel({ order, onClose, onDelete }: { order: Order; onClose: () =
 
           {/* Delete */}
           {confirmDelete ? (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(false)}
-                className="flex-1 border border-gray-200 rounded-xl py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting}
-                className="flex-1 bg-red-500 hover:bg-red-600 rounded-xl py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
-              >
-                {deleting ? "Deleting…" : "Yes, Delete"}
-              </button>
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500 font-medium">Enter your admin password to confirm deletion:</p>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(""); }}
+                placeholder="Admin password"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
+                autoFocus
+              />
+              {deleteError && <p className="text-red-500 text-xs">{deleteError}</p>}
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={cancelDelete}
+                  className="flex-1 border border-gray-200 rounded-xl py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+                <button type="button" onClick={handleDelete} disabled={deleting || !deletePassword}
+                  className="flex-1 bg-red-500 hover:bg-red-600 rounded-xl py-2 text-sm font-medium text-white transition-colors disabled:opacity-50">
+                  {deleting ? "Deleting…" : "Confirm Delete"}
+                </button>
+              </div>
             </div>
           ) : (
             <button
@@ -419,7 +439,6 @@ function DetailPanel({ order, onClose, onDelete }: { order: Order; onClose: () =
   );
 }
 
-// ─── Main Dashboard ────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -435,12 +454,12 @@ export default function AdminDashboard() {
   const [partnersLoading, setPartnersLoading] = useState(false);
   const prevCountRef                          = useRef(0);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem("admin_token");
-    router.push("/admin/login");
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/admin/login";
   };
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
 
   const fetchStats = useCallback(async () => {
     try {
@@ -477,7 +496,6 @@ export default function AdminDashboard() {
   useEffect(() => { void fetchOrders(); }, [fetchOrders]);
   useEffect(() => { void fetchStats();  }, [fetchStats]);
 
-  // ── Poll for new orders every 30 s ───────────────────────────────────────
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -501,7 +519,6 @@ export default function AdminDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Update handler ────────────────────────────────────────────────────────
 
   const handleStatusUpdate = useCallback((id: string, status: string) => {
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
@@ -543,7 +560,6 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  // ── Stats config ──────────────────────────────────────────────────────────
 
   const statCards = stats
     ? [
@@ -557,7 +573,6 @@ export default function AdminDashboard() {
       ]
     : [];
 
-  // ── Tab counts ──
 
   const tabCount = (tab: string): number => {
     if (!stats) return 0;
@@ -573,15 +588,13 @@ export default function AdminDashboard() {
     return map[tab] ?? 0;
   };
 
-  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <>
       <Toaster position="top-right" />
 
       <div className="min-h-screen bg-[#f4f5f7]">
-        {/* ── Header ── */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-20">
+                <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-20">
           <div>
             <h1 className="text-lg font-bold text-black">Dashboard</h1>
             <p className="text-xs text-gray-400">computerservice.ng — Admin Portal</p>
@@ -614,8 +627,7 @@ export default function AdminDashboard() {
         </header>
 
         <div className="p-6 space-y-6">
-          {/* ── Stats ── */}
-          {statsLoading ? (
+                    {statsLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
               {Array.from({ length: 7 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm h-20 animate-pulse" />
@@ -629,8 +641,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ── Orders table ── */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             {/* Table toolbar */}
             <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <h2 className="text-base font-bold text-black">Orders</h2>
@@ -652,7 +663,7 @@ export default function AdminDashboard() {
                   placeholder="Search ID or name…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                  className="w-full pl-9 pr-4 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
                 />
               </div>
             </div>
@@ -757,14 +768,38 @@ export default function AdminDashboard() {
                           {format(new Date(order.created_at), "d MMM")}
                         </td>
                         <td className="px-5 py-3.5">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedOrder(order)}
-                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-gray-100 transition-all text-gray-400 hover:text-gray-700"
-                            title="View details"
-                          >
-                            <Layers className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {/* Quick-peek panel */}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedOrder(order)}
+                              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700"
+                              title="Quick view"
+                            >
+                              <Layers className="w-4 h-4" />
+                            </button>
+                            {/* Full project details + download */}
+                            <button
+                              type="button"
+                              onClick={() => router.push(`/admin/dashboard/orders/${order.id}`)}
+                              className="p-1.5 rounded-lg hover:bg-[#f0ebff] transition-colors text-gray-400 hover:text-[#5123d4]"
+                              title="View project details & download"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </button>
+                            {/* Direct download (only when file attached) */}
+                            {order.file_url && (
+                              <a
+                                href={order.file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-1.5 rounded-lg hover:bg-green-50 transition-colors text-gray-400 hover:text-green-600"
+                                title="Download file"
+                              >
+                                <Download className="w-4 h-4" />
+                              </a>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -781,8 +816,7 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
-          {/* ── Partner Applications ── */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <div>
                 <h2 className="text-base font-bold text-black">Partner Applications</h2>
@@ -890,8 +924,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ── Order detail panel ── */}
-      {selectedOrder && (
+            {selectedOrder && (
         <DetailPanel order={selectedOrder} onClose={() => setSelectedOrder(null)} onDelete={handleDeleteOrder} />
       )}
     </>
