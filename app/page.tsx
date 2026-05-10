@@ -187,7 +187,7 @@ export default function Home() {
               onClick={() => setRecallModalOpen(true)}
               className="hidden md:block bg-[#0047FF] hover:bg-blue-700 text-white px-6 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
             >
-              Enter your Order ID
+              Recall/Track
             </button>
             <button
               type="button"
@@ -220,7 +220,7 @@ export default function Home() {
               onClick={() => { setMobileMenuOpen(false); setRecallModalOpen(true); }}
               className="w-full bg-[#0047FF] hover:bg-blue-700 text-white px-6 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm text-left"
             >
-              Enter your Order ID
+              Recall/Track
             </button>
           </div>
         )}

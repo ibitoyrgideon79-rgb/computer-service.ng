@@ -636,6 +636,28 @@ function TrackingContent() {
             Enter your Order ID above to track your order.
           </div>
         )}
+
+        {/* Need Help Section */}
+        <div className="bg-gradient-to-r from-[#5123d4]/10 to-purple-100/10 rounded-2xl border border-[#5123d4]/20 p-6 sm:p-8 mt-8">
+          <div className="flex items-start gap-4 sm:gap-6">
+            <div className="flex-shrink-0">
+              <Phone className="w-8 h-8 text-[#5123d4]" />
+            </div>
+            <div className="flex-grow text-left">
+              <h3 className="text-lg font-bold text-black mb-2">Need Help?</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                If you have any questions about your order or need assistance, please don't hesitate to reach out to our customer support team.
+              </p>
+              <a 
+                href="tel:+234803567112"
+                className="inline-flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                Call us: +234 803 567 1112
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
             {showRecall && order && (
