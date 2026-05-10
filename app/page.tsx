@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useOrderStore } from "@/store/useOrderStore";
 import RecallModal from "@/app/components/RecallModal";
-import PartnerModal from "@/app/components/PartnerModal";
 import {
   ArrowRight,
   ChevronDown,
@@ -36,7 +35,6 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [recallModalOpen, setRecallModalOpen] = useState(false);
-  const [partnerModalOpen, setPartnerModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Load saved order data on page load
@@ -441,13 +439,12 @@ export default function Home() {
             </p>
             
             <div className="mt-8">
-              <button
-                type="button"
-                onClick={() => setPartnerModalOpen(true)}
+              <Link
+                href="/partners/onboarding"
                 className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-10 py-3.5 rounded font-medium inline-flex items-center gap-2 transition-colors text-base shadow-sm"
               >
                 Become a Partner <ArrowRight className="w-4 h-4" />
-              </button>
+              </Link>
             </div>
           </div>
         </section>
@@ -585,9 +582,6 @@ export default function Home() {
       />
 
       {/* Partner Modal */}
-      {partnerModalOpen && (
-        <PartnerModal onClose={() => setPartnerModalOpen(false)} />
-      )}
     </div>
   );
 }

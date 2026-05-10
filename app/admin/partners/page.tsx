@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { CheckCircle, XCircle, Clock, ChevronDown } from "lucide-react";
 
 interface PartnerApplication {
@@ -22,11 +22,7 @@ export default function PartnersAdmin() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
-
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/partners");
       if (!res.ok) throw new Error("Failed to fetch");
@@ -37,7 +33,11 @@ export default function PartnersAdmin() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
 
   const updateStatus = async (id: string, newStatus: string, rejectionReason?: string) => {
     setUpdatingId(id);
@@ -50,7 +50,7 @@ export default function PartnersAdmin() {
       if (res.ok) {
         setApplications((prev) =>
           prev.map((app) =>
-            app.id === id ? { ...app, status: newStatus as any, rejectionReason } : app
+            app.id === id ? { ...app, status: newStatus as "Pending" | "Reviewed" | "Approved" | "Rejected", rejectionReason } : app
           )
         );
       }
@@ -85,7 +85,7 @@ export default function PartnersAdmin() {
         {["all", "pending", "approved", "rejected"].map((tab) => (
           <button
             key={tab}
-            onClick={() => setFilter(tab as any)}
+            onClick={() => setFilter(tab as "all" | "pending" | "approved" | "rejected")}
             className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
               filter === tab
                 ? "bg-[#5123d4] text-white"

@@ -472,7 +472,6 @@ export default function AdminDashboard() {
     } finally {
       setStatsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchOrders = useCallback(async () => {
@@ -490,7 +489,6 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, search]);
 
   useEffect(() => { void fetchOrders(); }, [fetchOrders]);

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import Image from "next/image";
 import { ArrowLeft, Upload, CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,11 +60,9 @@ export default function PartnerOnboarding() {
   const [submitted, setSubmitted] = useState(false);
   const [showNdaFull, setShowNdaFull] = useState(false);
 
-  const fileInputRefs = {
-    office: useRef<HTMLInputElement>(null),
-    personal: useRef<HTMLInputElement>(null),
-    idCard: useRef<HTMLInputElement>(null),
-  };
+  const officeInputRef = useRef<HTMLInputElement>(null);
+  const personalInputRef = useRef<HTMLInputElement>(null);
+  const idCardInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (field: keyof Omit<FormData, "officePhotos" | "personalPhoto" | "idCardPhoto" | "selectedServices" | "agreedToTerms" | "agreedToPrivacy" | "agreedToNda">, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -226,7 +225,7 @@ export default function PartnerOnboarding() {
       setTimeout(() => {
         router.push("/");
       }, 3000);
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
@@ -432,9 +431,11 @@ export default function PartnerOnboarding() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
                   {formData.officePhotos.map((photo, idx) => (
                     <div key={idx} className="relative">
-                      <img
+                      <Image
                         src={URL.createObjectURL(photo)}
                         alt={`Office photo ${idx + 1}`}
+                        width={128}
+                        height={128}
                         className="w-full h-32 object-cover rounded-lg"
                       />
                       <button
@@ -449,14 +450,14 @@ export default function PartnerOnboarding() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => fileInputRefs.office.current?.click()}
+                  onClick={() => officeInputRef.current?.click()}
                   className="w-full bg-[#F1F5F9] hover:bg-gray-100 border-2 border-dashed border-[#5123d4] text-[#5123d4] px-4 py-6 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   <Upload className="w-4 h-4" />
                   Click to upload more office photos (4+ required)
                 </button>
                 <input
-                  ref={fileInputRefs.office}
+                  ref={officeInputRef}
                   type="file"
                   multiple
                   accept="image/*"
@@ -471,23 +472,25 @@ export default function PartnerOnboarding() {
                 </label>
                 {formData.personalPhoto && (
                   <div className="relative mb-3">
-                    <img
+                    <Image
                       src={URL.createObjectURL(formData.personalPhoto)}
                       alt="Personal photo"
+                      width={400}
+                      height={160}
                       className="w-full h-40 object-cover rounded-lg"
                     />
                   </div>
                 )}
                 <button
                   type="button"
-                  onClick={() => fileInputRefs.personal.current?.click()}
+                  onClick={() => personalInputRef.current?.click()}
                   className="w-full bg-[#F1F5F9] hover:bg-gray-100 border-2 border-dashed border-[#5123d4] text-[#5123d4] px-4 py-6 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   <Upload className="w-4 h-4" />
                   {formData.personalPhoto ? "Change personal photo" : "Upload personal photo"}
                 </button>
                 <input
-                  ref={fileInputRefs.personal}
+                  ref={personalInputRef}
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileUpload("personal", e.target.files)}
@@ -501,23 +504,25 @@ export default function PartnerOnboarding() {
                 </label>
                 {formData.idCardPhoto && (
                   <div className="relative mb-3">
-                    <img
+                    <Image
                       src={URL.createObjectURL(formData.idCardPhoto)}
                       alt="ID card"
+                      width={400}
+                      height={160}
                       className="w-full h-40 object-cover rounded-lg"
                     />
                   </div>
                 )}
                 <button
                   type="button"
-                  onClick={() => fileInputRefs.idCard.current?.click()}
+                  onClick={() => idCardInputRef.current?.click()}
                   className="w-full bg-[#F1F5F9] hover:bg-gray-100 border-2 border-dashed border-[#5123d4] text-[#5123d4] px-4 py-6 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
                 >
                   <Upload className="w-4 h-4" />
                   {formData.idCardPhoto ? "Change ID card" : "Upload ID card"}
                 </button>
                 <input
-                  ref={fileInputRefs.idCard}
+                  ref={idCardInputRef}
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileUpload("idCard", e.target.files)}

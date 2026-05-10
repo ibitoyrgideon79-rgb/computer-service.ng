@@ -31,7 +31,7 @@ export default function OrderReviewPage() {
   const [submitting, setSubmitting] = useState(false);
   const [approved, setApproved] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [submittedOrderId, setSubmittedOrderId] = useState<string | null>(null);
+  const [submittedOrderId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState("");
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -152,7 +152,6 @@ export default function OrderReviewPage() {
       }
 
       const savedOrderId = orderJson.id; // UUID for Prisma, used for PATCH
-      const displayId    = orderJson.orderId; // CSN-YYYYMMDD-XXXX
 
       // 2. Initialize Paystack server-side to get access_code
       const payRes = await fetch("/api/payment/initialize", {

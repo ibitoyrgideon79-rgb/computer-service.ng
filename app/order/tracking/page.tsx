@@ -83,13 +83,7 @@ function RecallOtpModal({ order, onClose, onSuccess }: RecallModalProps) {
   const [error,   setError]   = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Auto-send OTP to the order's phone when modal opens
-  useEffect(() => {
-    void sendOtp();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const sendOtp = async () => {
+  const sendOtp = useCallback(async () => {
     setLoading(true); setError("");
     try {
       const res  = await fetch("/api/send-otp", {
@@ -105,7 +99,12 @@ function RecallOtpModal({ order, onClose, onSuccess }: RecallModalProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [order.phoneNumber]);
+
+  // Auto-send OTP to the order's phone when modal opens
+  useEffect(() => {
+    void sendOtp();
+  }, [sendOtp]);
 
   const verifyOtp = async () => {
     if (otp.length < 4) { setError("Please enter the full verification code"); return; }
@@ -646,7 +645,7 @@ function TrackingContent() {
             <div className="flex-grow text-left">
               <h3 className="text-lg font-bold text-black mb-2">Need Help?</h3>
               <p className="text-gray-600 text-sm mb-4">
-                If you have any questions about your order or need assistance, please don't hesitate to reach out to our customer support team.
+                If you have any questions about your order or need assistance, please don&apos;t hesitate to reach out to our customer support team.
               </p>
               <a 
                 href="tel:+234803567112"

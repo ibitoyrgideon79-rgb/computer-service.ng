@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   Printer, Book, Truck, ArrowRight, Menu, X,
-  FileText, Palette, CreditCard, Monitor, Wrench,
+  FileText, Palette, CreditCard, Wrench,
   GraduationCap, Fingerprint, Wifi, Building2, Clock,
 } from "lucide-react";
 

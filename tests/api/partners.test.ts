@@ -45,12 +45,14 @@ describe("POST /api/partners", () => {
   });
 
   it("returns 400 when fullName is missing", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { fullName: _, ...withoutName } = VALID_BODY;
     const res = await POST(makeReq(withoutName));
     expect(res.status).toBe(400);
   });
 
   it("returns 400 when email is missing", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { email: _, ...withoutEmail } = VALID_BODY;
     const res = await POST(makeReq(withoutEmail));
     expect(res.status).toBe(400);
@@ -58,6 +60,7 @@ describe("POST /api/partners", () => {
 
   it("allows services to be empty/omitted", async () => {
     (prisma.partnerApplication.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "y" });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { services: _, ...withoutServices } = VALID_BODY;
     const res = await POST(makeReq(withoutServices));
     expect(res.status).toBe(201);
