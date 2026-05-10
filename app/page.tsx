@@ -575,8 +575,7 @@ export default function Home() {
       <RecallModal
         isOpen={recallModalOpen}
         onClose={() => setRecallModalOpen(false)}
-        onVerified={(phoneNumber) => {
-          console.log("Verified phone:", phoneNumber);
+        onVerified={() => {
           router.push("/order/details");
         }}
       />

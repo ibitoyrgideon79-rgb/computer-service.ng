@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: "Failed to send email" }, { status: 500 });
       }
     } else {
-      console.log(`[DEV] Email OTP for ${identifier}: ${otp}`);
+      // Email service not configured in development
     }
 
     return NextResponse.json({ message: "Verification code sent to your email" });

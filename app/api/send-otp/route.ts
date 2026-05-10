@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
                || await trySendSms(identifier, message, apiKey, "dnd");
       if (!sent) console.error("All Termii channels failed for", identifier);
     } else {
-      console.log(`[DEV] SMS OTP for ${identifier}: ${otp}`);
+      // SMS provider not configured in development
     }
 
     return NextResponse.json({ message: "Verification code sent" });
