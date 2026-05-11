@@ -11,9 +11,8 @@ export function serializeOrder(o: any) {
     service:              o.service,
     category:             o.category     ?? "",
     location:             o.location ||
-                          (o.deliveryMethod === "Pick Up"
-                            ? [o.pickupCity, o.pickupState].filter(Boolean).join(", ")
-                            : o.deliveryDetails || [o.pickupCity, o.pickupState].filter(Boolean).join(", ") || ""),
+                          [o.pickupCity, o.pickupState].filter(Boolean).join(", ") ||
+                          o.deliveryDetails || "",
     delivery_method:      o.deliveryMethod ?? "",
     delivery_details:     o.deliveryDetails ?? "",
     pickup_state:         o.pickupState  ?? "",
@@ -45,14 +44,19 @@ export function serializeOrder(o: any) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function serializePartner(p: any) {
   return {
-    id:           p.id,
-    full_name:    p.fullName,
-    company_name: p.companyName,
-    email:        p.email,
-    address:      p.address  ?? "",
-    status:       p.status,
-    created_at:   p.createdAt instanceof Date
-                    ? p.createdAt.toISOString()
-                    : (p.createdAt ?? new Date().toISOString()),
+    id:               p.id,
+    full_name:        p.fullName,
+    company_name:     p.companyName,
+    email:            p.email,
+    address:          p.address          ?? "",
+    phone_number:     p.phoneNumber      ?? "",
+    position:         p.position         ?? "",
+    business_details: p.businessDetails  ?? "",
+    services:         p.services         ?? "",
+    photo_count:      p.photoCount       ?? 0,
+    status:           p.status,
+    created_at:       p.createdAt instanceof Date
+                        ? p.createdAt.toISOString()
+                        : (p.createdAt ?? new Date().toISOString()),
   };
 }

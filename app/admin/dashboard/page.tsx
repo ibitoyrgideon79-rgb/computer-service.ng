@@ -57,6 +57,11 @@ interface PartnerApplication {
   company_name: string;
   email: string;
   address: string;
+  phone_number: string;
+  position: string;
+  business_details: string;
+  services: string;
+  photo_count: number;
   status: string;
   created_at: string;
 }
@@ -345,12 +350,29 @@ function DetailPanel({ order, onClose, onDelete }: { order: Order; onClose: () =
             <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Delivery / Pickup</h3>
             <div className="grid grid-cols-1 gap-3">
               <DetailRow label="Method" value={fmt(order.delivery_method)} />
-              {order.delivery_method === "Pick Up" ? (
+              {["Express Delivery", "Standard Delivery", "Economy Delivery"].includes(order.delivery_method) ? (
                 <>
                   {order.pickup_location && <DetailRow label="Street / Landmark" value={order.pickup_location} />}
-                  {order.pickup_city && <DetailRow label="City / Area" value={order.pickup_city} />}
-                  {order.pickup_state && <DetailRow label="State" value={order.pickup_state} />}
+                  {order.pickup_city     && <DetailRow label="City / Area"        value={order.pickup_city} />}
+                  {order.pickup_state    && <DetailRow label="State"              value={order.pickup_state} />}
                 </>
+              ) : order.delivery_method === "Schedule Delivery" && order.delivery_details ? (
+                (() => {
+                  try {
+                    const stops = JSON.parse(order.delivery_details) as { address: string; date: string; time: string }[];
+                    return (
+                      <>
+                        {stops.map((s, i) => (
+                          <DetailRow key={i} label={`Stop ${i + 1}`} value={`${s.address} — ${s.date} at ${s.time}`} />
+                        ))}
+                      </>
+                    );
+                  } catch {
+                    return <DetailRow label="Delivery Details" value={order.delivery_details} />;
+                  }
+                })()
+              ) : order.delivery_method === "Special Submission" ? (
+                <DetailRow label="Action" value="Submitar.com submission" />
               ) : (
                 order.delivery_details && <DetailRow label="Delivery Address" value={order.delivery_details} />
               )}
@@ -846,6 +868,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-medium">Full Name</th>
                       <th className="text-left px-5 py-3 font-medium">Company / Org</th>
                       <th className="text-left px-5 py-3 font-medium">Email</th>
+                      <th className="text-left px-5 py-3 font-medium">Services</th>
                       <th className="text-left px-5 py-3 font-medium">Address</th>
                       <th className="text-left px-5 py-3 font-medium">Status</th>
                       <th className="text-left px-5 py-3 font-medium">Date</th>
@@ -860,6 +883,7 @@ export default function AdminDashboard() {
                         <td className="px-5 py-3.5">
                           <a href={`mailto:${p.email}`} className="text-[#5123d4] hover:underline text-sm">{p.email}</a>
                         </td>
+                        <td className="px-5 py-3.5 text-gray-500 max-w-48 truncate" title={p.services}>{p.services || "—"}</td>
                         <td className="px-5 py-3.5 text-gray-500 max-w-48 truncate" title={p.address}>{p.address}</td>
                         <td className="px-5 py-3.5">
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${

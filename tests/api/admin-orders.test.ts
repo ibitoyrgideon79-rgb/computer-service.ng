@@ -13,7 +13,7 @@ const SECRET = "test-secret-key";
 const TOKEN  = jwt.sign({ id: "admin-1", email: "admin@test.com" }, Buffer.from(SECRET));
 const AUTH   = `Bearer ${TOKEN}`;
 
-function makeReq(url: string, opts: RequestInit = {}) {
+function makeReq(url: string, opts: Omit<RequestInit, "signal"> & { signal?: AbortSignal } = {}) {
   return new NextRequest(url, opts);
 }
 
