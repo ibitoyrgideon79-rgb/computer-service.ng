@@ -687,14 +687,22 @@ export default function OrderDetailsContent() {
                         value={stop.address}
                         onChange={(v) => updateStop(idx, "address", v)}
                       />
-                      <TextInput
-                        label="State"
-                        name={`stop_state_${idx}`}
-                        required
-                        placeholder="e.g. Abuja, Lagos"
-                        value={stop.state}
-                        onChange={(v) => updateStop(idx, "state", v)}
-                      />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          State <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          title={`Stop ${idx + 1} state`}
+                          value={stop.state}
+                          onChange={(e) => updateStop(idx, "state", e.target.value)}
+                          className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                        >
+                          <option value="">Select state</option>
+                          {["Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","FCT - Abuja","Gombe","Imo","Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa","Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara"].map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -433,33 +433,32 @@ export default function Home() {
         {/* Partners Section */}
         <section className="py-24 bg-gray-50 border-t border-gray-100">
           <div className="container mx-auto px-4 lg:px-8 text-center">
-            <h2 className="text-[2rem] font-bold mb-6 text-black">Our Partners</h2>
-            <p className="text-gray-500 mb-8 max-w-2xl mx-auto text-lg">
-              Join our network of trusted partners and help us deliver exceptional computer services across the country.
-            </p>
-            
-            {/* Partner logos */}
-            <div className="flex flex-wrap items-center justify-center gap-8 mb-10 mt-2">
+
+            {/* Partner logos — above heading */}
+            <div className="flex flex-wrap items-center justify-center gap-10 mb-10">
               {[
-                { src: "/Deallock logo.jpg",  alt: "Deallock"  },
-                { src: "/Idcode logo 2.JPG",  alt: "Idcode"    },
-                { src: "/Vasset logo.jpg",    alt: "Vasset"    },
-                { src: "/ADETEK.jpeg",        alt: "Adetek"    },
+                { src: "/deallock-logo.jpg", alt: "Deallock" },
+                { src: "/idcode-logo.jpg",   alt: "Idcode"   },
+                { src: "/vasset-logo.jpg",   alt: "Vasset"   },
+                { src: "/adetek-logo.jpg",   alt: "Adetek"   },
               ].map(({ src, alt }) => (
-                <div key={alt} className="relative h-14 w-32 grayscale hover:grayscale-0 transition-all duration-300">
+                <div key={alt} className="relative h-16 w-36 grayscale hover:grayscale-0 transition-all duration-300">
                   <Image src={src} alt={alt} fill className="object-contain" />
                 </div>
               ))}
             </div>
 
-            <div className="mt-2">
-              <Link
-                href="/partners/onboarding"
-                className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-10 py-3.5 rounded font-medium inline-flex items-center gap-2 transition-colors text-base shadow-sm"
-              >
-                Become a Partner <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
+            <h2 className="text-[2rem] font-bold mb-6 text-black">Our Partners</h2>
+            <p className="text-gray-500 mb-8 max-w-2xl mx-auto text-lg">
+              Join our network of trusted partners and help us deliver exceptional computer services across the country.
+            </p>
+
+            <Link
+              href="/partners/onboarding"
+              className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-10 py-3.5 rounded font-medium inline-flex items-center gap-2 transition-colors text-base shadow-sm"
+            >
+              Become a Partner <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </section>
       </main>
