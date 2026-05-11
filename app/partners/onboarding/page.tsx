@@ -673,7 +673,7 @@ export default function PartnerOnboarding() {
 
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase mb-2">Documents Uploaded</p>
-                  <ul className="space-y-1 text-sm">
+                  <ul className="space-y-1 text-sm text-gray-800">
                     <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                       Office Photos ({formData.officePhotos.length})
@@ -691,7 +691,7 @@ export default function PartnerOnboarding() {
 
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase mb-2">Agreements</p>
-                  <ul className="space-y-1 text-sm">
+                  <ul className="space-y-1 text-sm text-gray-800">
                     <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                       Terms & Conditions
