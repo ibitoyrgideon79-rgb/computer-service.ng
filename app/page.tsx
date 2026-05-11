@@ -169,7 +169,7 @@ export default function Home() {
             <div className="relative h-12 w-48 sm:h-16 sm:w-64 md:h-20 md:w-80">
               <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
             </div>
-            <span className="text-white text-xs font-semibold tracking-widest ml-1 -mt-1">RC: 9511799</span>
+            <span className="text-white text-xs font-semibold tracking-widest ml-4 -mt-1">RC: 9511799</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-white">
@@ -450,6 +450,7 @@ export default function Home() {
                 { src: "/vasset-logo.jpg",         alt: "Vasset"         },
                 { src: "/adetek-logo.jpg",         alt: "Adetek"         },
                 { src: "/waju-dynamics-logo.jpg",  alt: "Waju Dynamics"  },
+                { src: "/submitar-logo.png",       alt: "Submitar"       },
               ].map(({ src, alt }) => (
                 <motion.div
                   key={alt}

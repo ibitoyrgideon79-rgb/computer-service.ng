@@ -33,6 +33,7 @@ interface FormData {
   officePhotos: File[];
   personalPhoto: File | null;
   idCardPhoto: File | null;
+  idType: string;
   agreedToTerms: boolean;
   agreedToPrivacy: boolean;
   agreedToNda: boolean;
@@ -54,6 +55,7 @@ export default function PartnerOnboarding() {
     officePhotos: [],
     personalPhoto: null,
     idCardPhoto: null,
+    idType: "",
     agreedToTerms: false,
     agreedToPrivacy: false,
     agreedToNda: false,
@@ -133,16 +135,22 @@ export default function PartnerOnboarding() {
   };
 
   const validateUploadStep = (): boolean => {
-    if (formData.officePhotos.length < 4) {
-      setError(`Please upload at least 4 office photos (${formData.officePhotos.length}/4)`);
-      return false;
+    if (entityType === "company") {
+      if (formData.officePhotos.length < 4) {
+        setError(`Please upload at least 4 office photos (${formData.officePhotos.length}/4)`);
+        return false;
+      }
     }
     if (!formData.personalPhoto) {
       setError("Please upload your personal photo");
       return false;
     }
     if (!formData.idCardPhoto) {
-      setError("Please upload your ID card photo");
+      setError("Please upload your means of identification");
+      return false;
+    }
+    if (entityType === "individual" && !formData.idType) {
+      setError("Please select your ID type");
       return false;
     }
     return true;
@@ -234,10 +242,11 @@ export default function PartnerOnboarding() {
       const appId = data.id as string;
 
       // Upload photos one at a time to avoid large payloads
+      const idLabel = entityType === "individual" ? (formData.idType || "ID Document") : "ID Card";
       const photosToUpload: { file: File; label: string }[] = [
-        ...formData.officePhotos.map((f, i) => ({ file: f, label: `Office Photo ${i + 1}` })),
+        ...(entityType === "company" ? formData.officePhotos.map((f, i) => ({ file: f, label: `Office Photo ${i + 1}` })) : []),
         ...(formData.personalPhoto ? [{ file: formData.personalPhoto, label: "Personal Photo" }] : []),
-        ...(formData.idCardPhoto    ? [{ file: formData.idCardPhoto,   label: "ID Card" }]        : []),
+        ...(formData.idCardPhoto    ? [{ file: formData.idCardPhoto,   label: idLabel }]          : []),
       ];
 
       for (const { file, label } of photosToUpload) {
@@ -506,50 +515,39 @@ export default function PartnerOnboarding() {
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-black mb-6">Upload Documents</h2>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Office/Shop Photos <span className="text-red-500">*</span>
-                  <span className="text-xs text-gray-500 ml-1">
-                    ({formData.officePhotos.length}/4 minimum)
-                  </span>
-                </label>
-                {formData.officePhotos.length > 0 && (
-                  <div className="space-y-1.5 mb-3">
-                    {formData.officePhotos.map((photo, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                        <span className="text-sm text-green-700 font-medium">📎 {photo.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeOfficePhoto(idx)}
-                          className="text-xs text-red-400 hover:text-red-600 ml-2"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => officeInputRef.current?.click()}
-                  className="w-full bg-[#F1F5F9] hover:bg-gray-100 border-2 border-dashed border-[#5123d4] text-[#5123d4] px-4 py-6 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  Click to upload more office photos (4+ required)
-                </button>
-                <input
-                  ref={officeInputRef}
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload("office", e.target.files)}
-                  className="hidden"
-                />
-              </div>
+              {/* Office photos — companies only */}
+              {entityType === "company" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Office/Shop Photos <span className="text-red-500">*</span>
+                    <span className="text-xs text-gray-500 ml-1">({formData.officePhotos.length}/4 minimum)</span>
+                  </label>
+                  {formData.officePhotos.length > 0 && (
+                    <div className="space-y-1.5 mb-3">
+                      {formData.officePhotos.map((photo, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                          <span className="text-sm text-green-700 font-medium">📎 {photo.name}</span>
+                          <button type="button" onClick={() => removeOfficePhoto(idx)} className="text-xs text-red-400 hover:text-red-600 ml-2">Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => officeInputRef.current?.click()}
+                    className="w-full bg-[#F1F5F9] hover:bg-gray-100 border-2 border-dashed border-[#5123d4] text-[#5123d4] px-4 py-6 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Click to upload office photos (4+ required)
+                  </button>
+                  <input ref={officeInputRef} type="file" multiple accept="image/*" title="Upload office photos" onChange={(e) => handleFileUpload("office", e.target.files)} className="hidden" />
+                </div>
+              )}
 
+              {/* Personal photo — both */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Personal Photo (Live Capture) <span className="text-red-500">*</span>
+                  Personal Photo <span className="text-red-500">*</span>
                 </label>
                 {formData.personalPhoto && (
                   <div className="flex items-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3">
@@ -564,19 +562,41 @@ export default function PartnerOnboarding() {
                   <Upload className="w-4 h-4" />
                   {formData.personalPhoto ? "Change personal photo" : "Upload personal photo"}
                 </button>
-                <input
-                  ref={personalInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload("personal", e.target.files)}
-                  className="hidden"
-                />
+                <input ref={personalInputRef} type="file" accept="image/*" title="Upload personal photo" onChange={(e) => handleFileUpload("personal", e.target.files)} className="hidden" />
               </div>
 
+              {/* ID section — different label/options per entity type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Office ID Card <span className="text-red-500">*</span>
-                </label>
+                {entityType === "individual" ? (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Means of Identification <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex gap-3 mb-3">
+                      {["NIN", "International Passport", "Driver's License"].map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, idType: type }))}
+                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                            formData.idType === type
+                              ? "bg-[#5123d4] text-white border-[#5123d4]"
+                              : "bg-white text-gray-600 border-gray-200 hover:border-[#5123d4]"
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                    {formData.idType && (
+                      <p className="text-xs text-gray-500 mb-3">Upload a clear photo of your <strong>{formData.idType}</strong></p>
+                    )}
+                  </>
+                ) : (
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Office ID Card <span className="text-red-500">*</span>
+                  </label>
+                )}
                 {formData.idCardPhoto && (
                   <div className="flex items-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3">
                     <span className="text-sm text-green-700 font-medium">📎 {formData.idCardPhoto.name}</span>
@@ -585,18 +605,17 @@ export default function PartnerOnboarding() {
                 <button
                   type="button"
                   onClick={() => idCardInputRef.current?.click()}
-                  className="w-full bg-[#F1F5F9] hover:bg-gray-100 border-2 border-dashed border-[#5123d4] text-[#5123d4] px-4 py-6 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                  disabled={entityType === "individual" && !formData.idType}
+                  className="w-full bg-[#F1F5F9] hover:bg-gray-100 border-2 border-dashed border-[#5123d4] text-[#5123d4] px-4 py-6 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Upload className="w-4 h-4" />
-                  {formData.idCardPhoto ? "Change ID card" : "Upload ID card"}
+                  {formData.idCardPhoto
+                    ? `Change ${entityType === "individual" ? formData.idType || "ID" : "ID card"}`
+                    : entityType === "individual"
+                      ? formData.idType ? `Upload ${formData.idType}` : "Select an ID type above first"
+                      : "Upload ID card"}
                 </button>
-                <input
-                  ref={idCardInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload("idCard", e.target.files)}
-                  className="hidden"
-                />
+                <input ref={idCardInputRef} type="file" accept="image/*" title="Upload identification document" onChange={(e) => handleFileUpload("idCard", e.target.files)} className="hidden" />
               </div>
             </div>
           )}
@@ -756,17 +775,19 @@ export default function PartnerOnboarding() {
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase mb-2">Documents Uploaded</p>
                   <ul className="space-y-1 text-sm text-gray-800">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      Office Photos ({formData.officePhotos.length})
-                    </li>
+                    {entityType === "company" && (
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        Office Photos ({formData.officePhotos.length})
+                      </li>
+                    )}
                     <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                       Personal Photo
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-600" />
-                      ID Card
+                      {entityType === "individual" ? (formData.idType || "ID Document") : "ID Card"}
                     </li>
                   </ul>
                 </div>

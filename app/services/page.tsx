@@ -150,7 +150,7 @@ export default function ServicesPage() {
             <div className="relative h-12 w-48 md:h-16 md:w-64">
               <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
             </div>
-            <span className="text-white text-xs font-semibold tracking-widest ml-1 -mt-1">RC: 9511799</span>
+            <span className="text-white text-xs font-semibold tracking-widest ml-4 -mt-1">RC: 9511799</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white">
