@@ -41,6 +41,7 @@ interface FormData {
 export default function PartnerOnboarding() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<"form" | "upload" | "agreements" | "review">("form");
+  const [entityType, setEntityType] = useState<"company" | "individual">("company");
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     companyName: "",
@@ -175,11 +176,26 @@ export default function PartnerOnboarding() {
     }
   };
 
-  const fileToDataUrl = (file: File): Promise<string> =>
+  const compressAndEncode = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload  = () => resolve(reader.result as string);
       reader.onerror = reject;
+      reader.onload = () => {
+        const img = new window.Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const MAX = 1200;
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width  = Math.round(img.width  * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { resolve(reader.result as string); return; }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.7));
+        };
+        img.src = reader.result as string;
+      };
       reader.readAsDataURL(file);
     });
 
@@ -225,7 +241,7 @@ export default function PartnerOnboarding() {
       ];
 
       for (const { file, label } of photosToUpload) {
-        const dataUrl = await fileToDataUrl(file);
+        const dataUrl = await compressAndEncode(file);
         await fetch(`/api/partners/${appId}/photos`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -339,16 +355,55 @@ export default function PartnerOnboarding() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Name or Individual <span className="text-red-500">*</span>
+                  Are you a Company or an Individual? <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.companyName}
-                  onChange={(e) => handleInputChange("companyName", e.target.value)}
-                  placeholder="Your company name or your full name"
-                  className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-                />
+                {/* Toggle */}
+                <div className="flex rounded-lg overflow-hidden border border-gray-200 mb-3 w-fit">
+                  <button
+                    type="button"
+                    onClick={() => setEntityType("company")}
+                    className={`px-5 py-2 text-sm font-medium transition-colors ${
+                      entityType === "company"
+                        ? "bg-[#5123d4] text-white"
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Company
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEntityType("individual");
+                      if (!formData.companyName) handleInputChange("companyName", formData.fullName);
+                    }}
+                    className={`px-5 py-2 text-sm font-medium transition-colors ${
+                      entityType === "individual"
+                        ? "bg-[#5123d4] text-white"
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Individual
+                  </button>
+                </div>
+                {entityType === "company" ? (
+                  <input
+                    type="text"
+                    required
+                    value={formData.companyName}
+                    onChange={(e) => handleInputChange("companyName", e.target.value)}
+                    placeholder="Enter your company name"
+                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    value={formData.companyName}
+                    onChange={(e) => handleInputChange("companyName", e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                  />
+                )}
               </div>
 
               <div>
@@ -670,7 +725,7 @@ export default function PartnerOnboarding() {
                     <p className="text-gray-900 font-semibold">{formData.position}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 font-medium uppercase">Company</p>
+                    <p className="text-xs text-gray-500 font-medium uppercase">{entityType === "company" ? "Company" : "Individual"}</p>
                     <p className="text-gray-900 font-semibold">{formData.companyName}</p>
                   </div>
                   <div>

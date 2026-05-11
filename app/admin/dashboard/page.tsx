@@ -994,26 +994,51 @@ export default function AdminDashboard() {
                                 </div>
                                 {/* Photos */}
                                 <div className="col-span-2 sm:col-span-3">
-                                  <p className="text-xs text-gray-400 uppercase font-medium mb-2">Application Photos</p>
+                                  <p className="text-xs text-gray-400 uppercase font-medium mb-3">Application Photos</p>
                                   {photosLoading === p.id ? (
                                     <div className="flex items-center gap-2 text-gray-400 text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Loading photos…</div>
                                   ) : (partnerPhotos[p.id] ?? []).length === 0 ? (
                                     <p className="text-gray-400 text-sm">No photos uploaded.</p>
-                                  ) : (
-                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                                      {(partnerPhotos[p.id] ?? []).map(photo => (
-                                        <div key={photo.id} className="flex flex-col items-center gap-1">
-                                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                                          <img
-                                            src={photo.dataUrl}
-                                            alt={photo.label}
-                                            className="w-full h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
-                                          />
-                                          <span className="text-xs text-gray-500 text-center">{photo.label}</span>
+                                  ) : (() => {
+                                    const photos = partnerPhotos[p.id] ?? [];
+                                    const officePhotos   = photos.filter(ph => ph.label.startsWith("Office Photo"));
+                                    const personalPhoto  = photos.find(ph => ph.label === "Personal Photo");
+                                    const idCard         = photos.find(ph => ph.label === "ID Card");
+                                    return (
+                                      <div className="space-y-4">
+                                        {officePhotos.length > 0 && (
+                                          <div>
+                                            <p className="text-xs text-gray-500 font-semibold mb-2">Office Photos ({officePhotos.length})</p>
+                                            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                                              {officePhotos.map(photo => (
+                                                <div key={photo.id} className="flex flex-col items-center gap-1">
+                                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                  <img src={photo.dataUrl} alt={photo.label} className="w-full h-24 object-cover rounded-lg border border-gray-200 shadow-sm" />
+                                                  <span className="text-xs text-gray-400">{photo.label}</span>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                        <div className="grid grid-cols-2 gap-4">
+                                          {personalPhoto && (
+                                            <div>
+                                              <p className="text-xs text-gray-500 font-semibold mb-2">Personal Photo</p>
+                                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                                              <img src={personalPhoto.dataUrl} alt="Personal Photo" className="w-full h-36 object-cover rounded-lg border border-gray-200 shadow-sm" />
+                                            </div>
+                                          )}
+                                          {idCard && (
+                                            <div>
+                                              <p className="text-xs text-gray-500 font-semibold mb-2">ID Card</p>
+                                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                                              <img src={idCard.dataUrl} alt="ID Card" className="w-full h-36 object-cover rounded-lg border border-gray-200 shadow-sm" />
+                                            </div>
+                                          )}
                                         </div>
-                                      ))}
-                                    </div>
-                                  )}
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             </td>
