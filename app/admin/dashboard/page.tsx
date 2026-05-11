@@ -483,6 +483,7 @@ export default function AdminDashboard() {
   const [expandedPartnerId, setExpandedPartnerId] = useState<string | null>(null);
   const [partnerPhotos, setPartnerPhotos] = useState<Record<string, PartnerPhoto[]>>({});
   const [photosLoading, setPhotosLoading] = useState<string | null>(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState<{ dataUrl: string; label: string } | null>(null);
   const prevCountRef                          = useRef(0);
 
   const handleLogout = async () => {
@@ -998,44 +999,73 @@ export default function AdminDashboard() {
                                   {photosLoading === p.id ? (
                                     <div className="flex items-center gap-2 text-gray-400 text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Loading photos…</div>
                                   ) : (partnerPhotos[p.id] ?? []).length === 0 ? (
-                                    <p className="text-gray-400 text-sm">No photos uploaded.</p>
+                                    <p className="text-gray-400 text-sm italic">No photos uploaded.</p>
                                   ) : (() => {
                                     const photos = partnerPhotos[p.id] ?? [];
-                                    const officePhotos   = photos.filter(ph => ph.label.startsWith("Office Photo"));
-                                    const personalPhoto  = photos.find(ph => ph.label === "Personal Photo");
-                                    const idCard         = photos.find(ph => ph.label === "ID Card");
+                                    const officePhotos  = photos.filter(ph => ph.label.startsWith("Office Photo"));
+                                    const personalPhoto = photos.find(ph => ph.label === "Personal Photo");
+                                    const idPhoto       = photos.find(ph => !ph.label.startsWith("Office Photo") && ph.label !== "Personal Photo");
                                     return (
-                                      <div className="space-y-4">
+                                      <div className="space-y-5">
+                                        {/* Personal + ID side by side — bigger cards */}
+                                        {(personalPhoto || idPhoto) && (
+                                          <div className="grid grid-cols-2 gap-4">
+                                            {personalPhoto && (
+                                              <button
+                                                type="button"
+                                                onClick={() => setLightboxPhoto({ dataUrl: personalPhoto.dataUrl, label: personalPhoto.label })}
+                                                className="group relative bg-gray-50 border border-gray-200 rounded-xl overflow-hidden hover:border-[#5123d4]/50 hover:shadow-md transition-all text-left"
+                                              >
+                                                <div className="bg-gray-800 flex items-center justify-center min-h-44">
+                                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                  <img src={personalPhoto.dataUrl} alt="Personal Photo" className="max-w-full max-h-52 object-contain" />
+                                                </div>
+                                                <div className="px-3 py-2 flex items-center justify-between">
+                                                  <span className="text-xs font-semibold text-gray-700">Personal Photo</span>
+                                                  <span className="text-[10px] text-[#5123d4] group-hover:underline">Click to enlarge</span>
+                                                </div>
+                                              </button>
+                                            )}
+                                            {idPhoto && (
+                                              <button
+                                                type="button"
+                                                onClick={() => setLightboxPhoto({ dataUrl: idPhoto.dataUrl, label: idPhoto.label })}
+                                                className="group relative bg-gray-50 border border-gray-200 rounded-xl overflow-hidden hover:border-[#5123d4]/50 hover:shadow-md transition-all text-left"
+                                              >
+                                                <div className="bg-gray-800 flex items-center justify-center min-h-44">
+                                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                  <img src={idPhoto.dataUrl} alt={idPhoto.label} className="max-w-full max-h-52 object-contain" />
+                                                </div>
+                                                <div className="px-3 py-2 flex items-center justify-between">
+                                                  <span className="text-xs font-semibold text-gray-700">{idPhoto.label}</span>
+                                                  <span className="text-[10px] text-[#5123d4] group-hover:underline">Click to enlarge</span>
+                                                </div>
+                                              </button>
+                                            )}
+                                          </div>
+                                        )}
+                                        {/* Office photos grid */}
                                         {officePhotos.length > 0 && (
                                           <div>
                                             <p className="text-xs text-gray-500 font-semibold mb-2">Office Photos ({officePhotos.length})</p>
-                                            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2.5">
                                               {officePhotos.map(photo => (
-                                                <div key={photo.id} className="flex flex-col items-center gap-1">
+                                                <button
+                                                  key={photo.id}
+                                                  type="button"
+                                                  onClick={() => setLightboxPhoto({ dataUrl: photo.dataUrl, label: photo.label })}
+                                                  className="group relative bg-gray-800 rounded-lg overflow-hidden border border-gray-200 hover:border-[#5123d4]/50 hover:shadow-md transition-all aspect-square"
+                                                >
                                                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                  <img src={photo.dataUrl} alt={photo.label} className="w-full h-24 object-cover rounded-lg border border-gray-200 shadow-sm" />
-                                                  <span className="text-xs text-gray-400">{photo.label}</span>
-                                                </div>
+                                                  <img src={photo.dataUrl} alt={photo.label} className="w-full h-full object-contain" />
+                                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                                    <span className="opacity-0 group-hover:opacity-100 text-white text-[10px] font-medium bg-black/60 px-2 py-0.5 rounded-full transition-opacity">View</span>
+                                                  </div>
+                                                </button>
                                               ))}
                                             </div>
                                           </div>
                                         )}
-                                        <div className="grid grid-cols-2 gap-4">
-                                          {personalPhoto && (
-                                            <div>
-                                              <p className="text-xs text-gray-500 font-semibold mb-2">Personal Photo</p>
-                                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                                              <img src={personalPhoto.dataUrl} alt="Personal Photo" className="w-full h-36 object-cover rounded-lg border border-gray-200 shadow-sm" />
-                                            </div>
-                                          )}
-                                          {idCard && (
-                                            <div>
-                                              <p className="text-xs text-gray-500 font-semibold mb-2">ID Card</p>
-                                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                                              <img src={idCard.dataUrl} alt="ID Card" className="w-full h-36 object-cover rounded-lg border border-gray-200 shadow-sm" />
-                                            </div>
-                                          )}
-                                        </div>
                                       </div>
                                     );
                                   })()}
@@ -1063,6 +1093,35 @@ export default function AdminDashboard() {
 
             {selectedOrder && (
         <DetailPanel order={selectedOrder} onClose={() => setSelectedOrder(null)} onDelete={handleDeleteOrder} />
+      )}
+
+      {/* Photo lightbox */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex flex-col items-center justify-center p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <div className="relative max-w-3xl w-full" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-white font-semibold text-sm">{lightboxPhoto.label}</span>
+              <button
+                type="button"
+                onClick={() => setLightboxPhoto(null)}
+                className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightboxPhoto.dataUrl}
+              alt={lightboxPhoto.label}
+              className="w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
+            />
+            <p className="text-white/40 text-xs text-center mt-3">Click outside to close</p>
+          </div>
+        </div>
       )}
     </>
   );
