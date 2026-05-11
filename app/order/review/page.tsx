@@ -65,9 +65,23 @@ export default function OrderReviewPage() {
   const finishing   = FINISHING_COST[orderData.finishingOption ?? "None"] ?? 0;
   const isExpress   = orderData.expressService === true || orderData.deadline === "Express (1hr - 2hrs)";
   const expressExtra = isExpress ? Math.round(baseDoc * 0.5) : 0;
-  const deliveryFee = orderData.deliveryMethod === "Doorstep" ? 3000 : 0;
+  const isLamination = orderData.service === "Lamination";
+  const LAMINATION_FEE = 700;
+
+  const getDeliveryFee = () => {
+    const method = orderData.deliveryMethod || "";
+    if (method === "Express Delivery")  return 3000;
+    if (method === "Standard Delivery") return 2000;
+    if (method === "Economy Delivery")  return 1000;
+    if (method === "Schedule Delivery") return 5000 * Math.max((orderData.scheduledStops?.length) || 0, 1);
+    return 0;
+  };
+
+  const deliveryFee = getDeliveryFee();
   const serviceFee  = SERVICE_FEE;
-  const total       = baseDoc + finishing + expressExtra + deliveryFee + serviceFee;
+  const total       = isLamination
+    ? LAMINATION_FEE + deliveryFee
+    : baseDoc + finishing + expressExtra + deliveryFee + serviceFee;
 
   // Preview logic
   const hasCustomHtml = !!(orderData.customDocumentHtml?.trim());
@@ -123,7 +137,9 @@ export default function OrderReviewPage() {
           pickup_state:         orderData.pickupState        || null,
           pickup_city:          orderData.pickupCity         || null,
           pickup_location:      orderData.pickupLocation     || null,
-          delivery_details:     orderData.deliveryDetails    || null,
+          delivery_details:     orderData.deliveryMethod === "Schedule Delivery" && orderData.scheduledStops
+            ? JSON.stringify(orderData.scheduledStops)
+            : orderData.deliveryDetails || null,
           deadline:             orderData.deadline           || null,
           express_service:      orderData.expressService     ?? false,
           print_color:          orderData.printColor         || null,
@@ -322,20 +338,27 @@ export default function OrderReviewPage() {
                     <p className="font-semibold text-black shrink-0">Method</p>
                     <p className="text-gray-700 text-right">{orderData.deliveryMethod || "—"}</p>
                   </div>
-                  {/* Doorstep — use deliveryDetails field */}
-                  {orderData.deliveryMethod === "Doorstep" && orderData.deliveryDetails && (
-                    <div className="flex justify-between gap-2">
-                      <p className="font-semibold text-black shrink-0">Address</p>
-                      <p className="text-gray-700 text-right max-w-40">{orderData.deliveryDetails}</p>
-                    </div>
-                  )}
-                  {/* Pick Up — show store location */}
-                  {orderData.deliveryMethod === "Pick Up" && (
+                  {/* Address-based methods */}
+                  {["Express Delivery", "Standard Delivery", "Economy Delivery"].includes(orderData.deliveryMethod || "") && (
                     <>
                       {orderData.pickupState    && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">State</p><p className="text-gray-700 text-right">{orderData.pickupState}</p></div>}
                       {orderData.pickupCity     && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">City / Area</p><p className="text-gray-700 text-right">{orderData.pickupCity}</p></div>}
-                      {orderData.pickupLocation && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">Location</p><p className="text-gray-700 text-right max-w-40">{orderData.pickupLocation}</p></div>}
+                      {orderData.pickupLocation && <div className="flex justify-between gap-2"><p className="font-semibold text-black shrink-0">Address</p><p className="text-gray-700 text-right max-w-40">{orderData.pickupLocation}</p></div>}
                     </>
+                  )}
+                  {/* Scheduled stops */}
+                  {orderData.deliveryMethod === "Schedule Delivery" && orderData.scheduledStops && orderData.scheduledStops.map((stop, idx) => (
+                    <div key={idx} className="border border-gray-100 rounded-lg p-2.5 space-y-1">
+                      <p className="text-xs font-bold text-[#5123d4]">Stop {idx + 1}</p>
+                      <p className="text-xs text-gray-600">{stop.address}</p>
+                      <p className="text-xs text-gray-500">{stop.date} at {stop.time}</p>
+                    </div>
+                  ))}
+                  {/* Special Submission info */}
+                  {orderData.deliveryMethod === "Special Submission" && (
+                    <div className="bg-blue-50 rounded-lg p-2.5 text-xs text-blue-700">
+                      After payment, visit <strong>Submitar.com</strong> and enter your order number to complete submission.
+                    </div>
                   )}
                   {/* Hardcopy Pickup */}
                   {orderData.deliveryMethod === "Hardcopy Pickup" && (
@@ -360,29 +383,38 @@ export default function OrderReviewPage() {
 
                 {/* Pricing */}
                 <div className="space-y-2.5 py-3 text-sm">
-                  <div className="flex justify-between">
-                    <p className="font-semibold text-black">{pages}pg × {copies} {copies === 1 ? "copy" : "copies"} ({color}, {paper})</p>
-                    <p className="text-gray-700">₦{baseDoc.toLocaleString()}</p>
-                  </div>
-                  {finishing > 0 && (
+                  {isLamination ? (
                     <div className="flex justify-between">
-                      <p className="font-semibold text-black">Finishing — {orderData.finishingOption}</p>
-                      <p className="text-gray-700">₦{finishing.toLocaleString()}</p>
+                      <p className="font-semibold text-black">Lamination</p>
+                      <p className="text-gray-700">₦{LAMINATION_FEE.toLocaleString()}</p>
                     </div>
-                  )}
-                  {expressExtra > 0 && (
-                    <div className="flex justify-between">
-                      <p className="font-semibold text-amber-700">Express surcharge (+50%)</p>
-                      <p className="text-amber-700">₦{expressExtra.toLocaleString()}</p>
-                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <p className="font-semibold text-black">{pages}pg × {copies} {copies === 1 ? "copy" : "copies"} ({color}, {paper})</p>
+                        <p className="text-gray-700">₦{baseDoc.toLocaleString()}</p>
+                      </div>
+                      {finishing > 0 && (
+                        <div className="flex justify-between">
+                          <p className="font-semibold text-black">Finishing — {orderData.finishingOption}</p>
+                          <p className="text-gray-700">₦{finishing.toLocaleString()}</p>
+                        </div>
+                      )}
+                      {expressExtra > 0 && (
+                        <div className="flex justify-between">
+                          <p className="font-semibold text-amber-700">Express surcharge (+50%)</p>
+                          <p className="text-amber-700">₦{expressExtra.toLocaleString()}</p>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <p className="font-semibold text-black">Service fee</p>
+                        <p className="text-gray-700">₦{serviceFee.toLocaleString()}</p>
+                      </div>
+                    </>
                   )}
                   <div className="flex justify-between">
                     <p className="font-semibold text-black">Delivery</p>
                     <p className="text-gray-700">{deliveryFee > 0 ? `₦${deliveryFee.toLocaleString()}` : "Free"}</p>
-                  </div>
-                  <div className="flex justify-between">
-                    <p className="font-semibold text-black">Service fee</p>
-                    <p className="text-gray-700">₦{serviceFee.toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between pt-2 mt-1 border-t border-gray-100">
                     <p className="text-base font-bold text-[#5123d4]">Total</p>

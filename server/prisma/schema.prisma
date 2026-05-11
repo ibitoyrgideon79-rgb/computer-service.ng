@@ -65,14 +65,18 @@ model Order {
 }
 
 model PartnerApplication {
-  id          String   @id @default(uuid())
-  fullName    String   @map("full_name")
-  companyName String   @map("company_name")
-  email       String
-  address     String
-  services    String?
-  status      String   @default("Pending")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id              String   @id @default(uuid())
+  fullName        String   @map("full_name")
+  companyName     String   @map("company_name")
+  email           String
+  phoneNumber     String?  @map("phone_number")
+  address         String
+  position        String?
+  businessDetails String?  @map("business_details")
+  services        String?
+  photoCount      Int      @default(0) @map("photo_count")
+  status          String   @default("Pending")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   @@map("partner_applications")
 }

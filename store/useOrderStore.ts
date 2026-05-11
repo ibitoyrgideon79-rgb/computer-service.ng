@@ -1,5 +1,11 @@
 import { create } from 'zustand';
 
+export interface ScheduledStop {
+  address: string;
+  date: string;
+  time: string;
+}
+
 export interface OrderData {
   // Service (from homepage form)
   service: string;
@@ -36,13 +42,14 @@ export interface OrderData {
   backCover: 'Plain' | 'Cardboard' | '';
 
   // Delivery
-  deliveryMethod: 'Pick Up' | 'Doorstep' | 'Hardcopy Pickup' | '';
+  deliveryMethod: 'Express Delivery' | 'Standard Delivery' | 'Economy Delivery' | 'Schedule Delivery' | 'Special Submission' | 'Hardcopy Pickup' | '';
+  scheduledStops?: ScheduledStop[];
   specificInstruction: string;
   deadline: 'Standard (3hrs - 5hrs)' | 'Express (1hr - 2hrs)' | 'Custom (Date Picker)' | '';
   customDeadlineDate?: string;
   deliveryDetails: string;
 
-  // Pick Up specifics
+  // Pick Up / Doorstep address
   pickupState: string;
   pickupCity: string;
   pickupLocation: string;

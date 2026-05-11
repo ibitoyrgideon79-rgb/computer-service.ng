@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import Image from "next/image";
 import { ArrowLeft, Upload, CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,6 +16,8 @@ const AVAILABLE_SERVICES = [
   "Business Cards",
   "Flyers & Brochures",
   "Reports & Proposals",
+  "Tech Support",
+  "Logistics",
 ];
 
 interface FormData {
@@ -55,6 +56,7 @@ export default function PartnerOnboarding() {
     agreedToPrivacy: false,
     agreedToNda: false,
   });
+  const [otherServiceText, setOtherServiceText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -177,20 +179,9 @@ export default function PartnerOnboarding() {
     setError("");
 
     try {
-      const convertFileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-        });
-      };
-
-      const officePhotosBase64 = await Promise.all(
-        formData.officePhotos.map(convertFileToBase64)
-      );
-      const personalPhotoBase64 = await convertFileToBase64(formData.personalPhoto!);
-      const idCardPhotoBase64 = await convertFileToBase64(formData.idCardPhoto!);
+      const allServices = formData.selectedServices.includes("Other") && otherServiceText.trim()
+        ? [...formData.selectedServices.filter(s => s !== "Other"), otherServiceText.trim()]
+        : formData.selectedServices;
 
       const response = await fetch("/api/partners", {
         method: "POST",
@@ -203,14 +194,8 @@ export default function PartnerOnboarding() {
           address: formData.address,
           position: formData.position,
           businessDetails: formData.businessDetails,
-          services: formData.selectedServices,
-          officePhotos: officePhotosBase64,
-          personalPhoto: personalPhotoBase64,
-          idCardPhoto: idCardPhotoBase64,
-          agreedToTerms: formData.agreedToTerms,
-          agreedToPrivacy: formData.agreedToPrivacy,
-          agreedToNda: formData.agreedToNda,
-          ndaAgreedDate: new Date(),
+          services: allServices,
+          photoCount: formData.officePhotos.length,
         }),
       });
 
@@ -411,7 +396,25 @@ export default function PartnerOnboarding() {
                       <span className="text-sm text-gray-700">{service}</span>
                     </label>
                   ))}
+                  <label className="flex items-center gap-2 cursor-pointer col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.selectedServices.includes("Other")}
+                      onChange={() => toggleService("Other")}
+                      className="w-4 h-4 text-[#5123d4] rounded focus:ring-[#5123d4]"
+                    />
+                    <span className="text-sm text-gray-700">Other / Custom</span>
+                  </label>
                 </div>
+                {formData.selectedServices.includes("Other") && (
+                  <input
+                    type="text"
+                    placeholder="Describe your other services…"
+                    value={otherServiceText}
+                    onChange={(e) => setOtherServiceText(e.target.value)}
+                    className="mt-3 w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                  />
+                )}
                 <p className="text-xs text-gray-500 mt-2">Select all services you currently offer</p>
               </div>
             </div>
@@ -428,26 +431,22 @@ export default function PartnerOnboarding() {
                     ({formData.officePhotos.length}/4 minimum)
                   </span>
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-                  {formData.officePhotos.map((photo, idx) => (
-                    <div key={idx} className="relative">
-                      <Image
-                        src={URL.createObjectURL(photo)}
-                        alt={`Office photo ${idx + 1}`}
-                        width={128}
-                        height={128}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeOfficePhoto(idx)}
-                        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                {formData.officePhotos.length > 0 && (
+                  <div className="space-y-1.5 mb-3">
+                    {formData.officePhotos.map((photo, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                        <span className="text-sm text-green-700 font-medium">📎 {photo.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeOfficePhoto(idx)}
+                          className="text-xs text-red-400 hover:text-red-600 ml-2"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => officeInputRef.current?.click()}
@@ -471,14 +470,8 @@ export default function PartnerOnboarding() {
                   Personal Photo (Live Capture) <span className="text-red-500">*</span>
                 </label>
                 {formData.personalPhoto && (
-                  <div className="relative mb-3">
-                    <Image
-                      src={URL.createObjectURL(formData.personalPhoto)}
-                      alt="Personal photo"
-                      width={400}
-                      height={160}
-                      className="w-full h-40 object-cover rounded-lg"
-                    />
+                  <div className="flex items-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3">
+                    <span className="text-sm text-green-700 font-medium">📎 {formData.personalPhoto.name}</span>
                   </div>
                 )}
                 <button
@@ -503,14 +496,8 @@ export default function PartnerOnboarding() {
                   Office ID Card <span className="text-red-500">*</span>
                 </label>
                 {formData.idCardPhoto && (
-                  <div className="relative mb-3">
-                    <Image
-                      src={URL.createObjectURL(formData.idCardPhoto)}
-                      alt="ID card"
-                      width={400}
-                      height={160}
-                      className="w-full h-40 object-cover rounded-lg"
-                    />
+                  <div className="flex items-center bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3">
+                    <span className="text-sm text-green-700 font-medium">📎 {formData.idCardPhoto.name}</span>
                   </div>
                 )}
                 <button

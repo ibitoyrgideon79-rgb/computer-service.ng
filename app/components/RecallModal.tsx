@@ -42,7 +42,7 @@ export default function RecallModal({ isOpen, onClose }: RecallModalProps) {
 
         <form onSubmit={handleTrack} className="space-y-4">
           <p className="text-gray-600 text-sm">
-            Enter your Order ID to track or recall your project. A verification code will be sent to your registered phone number.
+            Enter your Order ID to track or recall your project.
           </p>
 
           <div>

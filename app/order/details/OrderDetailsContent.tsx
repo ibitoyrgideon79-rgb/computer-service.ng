@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useOrderStore, OrderData } from "@/store/useOrderStore";
-import { UploadCloud, AlertCircle } from "lucide-react";
+import { useOrderStore, OrderData, ScheduledStop } from "@/store/useOrderStore";
+import { UploadCloud, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
 const RATE: Record<string, Record<string, number>> = {
@@ -14,9 +14,51 @@ const FINISHING_COST: Record<string, number> = {
   None: 0, Stapled: 200, "Spiral Binding": 500, "Hardcover Binding": 2000,
 };
 const SERVICE_FEE = 2000;
-const DELIVERY_FEE = 3000;
+const LAMINATION_FEE = 700;
 const EXPRESS_MULTIPLIER = 1.5;
 
+const DELIVERY_OPTIONS = [
+  {
+    value: "Express Delivery",
+    title: "Express Delivery ⚡",
+    subtitle: "30 Minutes – 2 Hours",
+    price: "₦3,000",
+    fee: 3000,
+    description: "Priority rapid-response delivery.",
+  },
+  {
+    value: "Standard Delivery",
+    title: "Standard Delivery 🚚",
+    subtitle: "2 Hours – 12 Hours",
+    price: "₦2,000",
+    fee: 2000,
+    description: "Affordable same-day delivery.",
+  },
+  {
+    value: "Economy Delivery",
+    title: "Economy Delivery 🚚",
+    subtitle: "Within 24 Hours",
+    price: "₦1,000",
+    fee: 1000,
+    description: "Available for selected services and locations within the 24-hour delivery window.",
+  },
+  {
+    value: "Schedule Delivery",
+    title: "Schedule Delivery",
+    subtitle: "Custom time, multiple stops, or business needs",
+    price: "₦5,000/stop",
+    feePerStop: 5000,
+    description: "Custom delivery based on your preferred time, multiple stops, or business needs.",
+  },
+  {
+    value: "Special Submission",
+    title: "Special Submission",
+    subtitle: "Government & Private Organization",
+    price: "Free",
+    fee: 0,
+    description: "Need your document submitted to a Government or Private organization? After receiving your order number, visit Submitar.com to complete your request.",
+  },
+];
 
 const NIGERIAN_STATES = [
   "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
@@ -94,7 +136,6 @@ export default function OrderDetailsContent() {
   const serviceParam   = searchParams.get("service") || "";
   const categoryParam  = searchParams.get("category") || "";
 
-  // Determine which field groups to show based on the service
   const isPrintService    = ["Printing", "Photocopy", "Scanning"].includes(serviceParam);
   const isBindingService  = serviceParam === "Binding";
   const showPrintOptions  = isPrintService || isBindingService || !serviceParam;
@@ -130,6 +171,12 @@ export default function OrderDetailsContent() {
     hardcopyInstructions: orderData.hardcopyInstructions || "",
   });
 
+  const [scheduledStops, setScheduledStops] = useState<ScheduledStop[]>(
+    (orderData.scheduledStops && orderData.scheduledStops.length > 0)
+      ? orderData.scheduledStops
+      : [{ address: "", date: "", time: "" }]
+  );
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadMode, setUploadMode] = useState<"file" | "text" | "hardcopy">(
     orderData.deliveryMethod === "Hardcopy Pickup" ? "hardcopy" : orderData.documentText ? "text" : "file"
@@ -155,8 +202,31 @@ export default function OrderDetailsContent() {
     setErrors(prev => ({ ...prev, [field]: "" }));
   };
 
+  const updateStop = (idx: number, field: keyof ScheduledStop, value: string) => {
+    setScheduledStops(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
+    setErrors(prev => ({ ...prev, scheduledStops: "" }));
+  };
+
+  const addStop = () => {
+    setScheduledStops(prev => [...prev, { address: "", date: "", time: "" }]);
+  };
+
+  const removeStop = (idx: number) => {
+    setScheduledStops(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const getDeliveryFee = (): number => {
+    const method = formData.deliveryMethod || "";
+    if (method === "Express Delivery")  return 3000;
+    if (method === "Standard Delivery") return 2000;
+    if (method === "Economy Delivery")  return 1000;
+    if (method === "Schedule Delivery") return 5000 * Math.max(scheduledStops.length, 1);
+    return 0;
+  };
+
   const calculateTotal = (): number => {
-    if (!isPrintService) return SERVICE_FEE + (formData.deliveryMethod === "Doorstep" ? DELIVERY_FEE : 0);
+    if (formData.service === "Lamination") return LAMINATION_FEE + getDeliveryFee();
+    if (!isPrintService) return SERVICE_FEE + getDeliveryFee();
 
     const sizeKey = (formData.paperType || "A4") as keyof typeof RATE["Black & white"];
     const rate = RATE[formData.printColor || "Black & white"]?.[sizeKey] || 0;
@@ -164,9 +234,10 @@ export default function OrderDetailsContent() {
     const pagesCost = (formData.pages ?? 0) * rate;
     const totalBeforeDelivery = pagesCost + finishingCost + SERVICE_FEE;
     const express = formData.expressService ? totalBeforeDelivery * (EXPRESS_MULTIPLIER - 1) : 0;
-    const delivery = formData.deliveryMethod === "Doorstep" ? DELIVERY_FEE : 0;
-    return Math.max(totalBeforeDelivery + express + delivery, SERVICE_FEE);
+    return Math.max(totalBeforeDelivery + express + getDeliveryFee(), SERVICE_FEE);
   };
+
+  const needsAddress = ["Express Delivery", "Standard Delivery", "Economy Delivery"].includes(formData.deliveryMethod || "");
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -174,20 +245,31 @@ export default function OrderDetailsContent() {
     if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required";
     if (!formData.service) newErrors.service = "Service is required";
     if (uploadMode !== "hardcopy" && !formData.deliveryMethod) newErrors.deliveryMethod = "Delivery method is required";
-    if (formData.deliveryMethod === "Doorstep") {
-      if (!formData.pickupState) newErrors.pickupState = "State is required";
-      if (!formData.pickupCity) newErrors.pickupCity = "City is required";
+
+    if (needsAddress) {
+      if (!formData.pickupState)    newErrors.pickupState    = "State is required";
+      if (!formData.pickupCity)     newErrors.pickupCity     = "City is required";
       if (!formData.pickupLocation) newErrors.pickupLocation = "Street address or landmark is required";
     }
+
+    if (formData.deliveryMethod === "Schedule Delivery") {
+      const valid = scheduledStops.every(s => s.address && s.date && s.time);
+      if (scheduledStops.length === 0 || !valid) newErrors.scheduledStops = "Please fill in all stop details";
+    }
+
     if (uploadMode === "hardcopy") {
-      if (!formData.hardcopyState)       newErrors.hardcopyState       = "State is required";
-      if (!formData.hardcopyCity)        newErrors.hardcopyCity        = "City is required";
-      if (!formData.hardcopyPickupDate)  newErrors.hardcopyPickupDate  = "Pickup date is required";
-      if (!formData.hardcopyPickupTime)  newErrors.hardcopyPickupTime  = "Pickup time is required";
-      if (!formData.hardcopyContactName) newErrors.hardcopyContactName = "Contact person name is required";
+      if (!formData.hardcopyState)        newErrors.hardcopyState       = "State is required";
+      if (!formData.hardcopyCity)         newErrors.hardcopyCity        = "City is required";
+      if (!formData.hardcopyPickupDate)   newErrors.hardcopyPickupDate  = "Pickup date is required";
+      if (!formData.hardcopyPickupTime)   newErrors.hardcopyPickupTime  = "Pickup time is required";
+      if (!formData.hardcopyContactName)  newErrors.hardcopyContactName = "Contact person name is required";
       if (!formData.hardcopyContactPhone) newErrors.hardcopyContactPhone = "Contact phone number is required";
     }
-    if (uploadMode !== "hardcopy" && !formData.document && !formData.documentText) newErrors.document = "Please upload a file or type/paste your document text";
+
+    if (uploadMode !== "hardcopy" && !formData.document && !formData.documentText) {
+      newErrors.document = "Please upload a file or type/paste your document text";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -195,14 +277,12 @@ export default function OrderDetailsContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-
-    setOrderData(formData as OrderData);
+    setOrderData({ ...formData, scheduledStops } as OrderData);
     router.push("/order/review");
   };
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] text-black">
-      {/* Sticky header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 lg:px-8 max-w-4xl h-14 sm:h-16 flex items-center justify-between">
           <h1 className="text-lg sm:text-xl font-bold text-[#5123d4]">Order Details</h1>
@@ -212,17 +292,14 @@ export default function OrderDetailsContent() {
         </div>
       </div>
 
-      {/* Form */}
       <div className="container mx-auto px-4 lg:px-8 max-w-4xl py-6 sm:py-10">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Personal Information */}
           <SectionCard title="Personal Information">
             <TextInput label="Name" name="name" required value={formData.name || ""} onChange={(v) => handleInputChange("name", v)} error={errors.name} />
             <TextInput label="Email (Optional)" name="email" type="email" value={formData.email || ""} onChange={(v) => handleInputChange("email", v)} />
             <TextInput label="Phone Number" name="phoneNumber" type="tel" required value={formData.phoneNumber || ""} onChange={(v) => handleInputChange("phoneNumber", v)} error={errors.phoneNumber} />
           </SectionCard>
 
-          {/* Service Details */}
           <SectionCard title="Service Details">
             <RadioRow
               label="Service"
@@ -248,7 +325,6 @@ export default function OrderDetailsContent() {
 
             {showPrintOptions && ["Printing", "Photocopy"].includes(formData.service || "") && (
               <>
-                {/* Color — with per-page price badges */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Color <span className="text-red-500">*</span>
@@ -301,9 +377,7 @@ export default function OrderDetailsContent() {
             )}
           </SectionCard>
 
-          {/* Document section — three-tab toggle */}
           <SectionCard title="Document">
-            {/* Tab switcher */}
             <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
               <button
                 type="button"
@@ -345,10 +419,8 @@ export default function OrderDetailsContent() {
               </button>
             </div>
 
-            {/* Demarcation */}
             <div className="border-t border-gray-200" />
 
-            {/* Tab content */}
             {uploadMode === "hardcopy" ? (
               <div className="space-y-4 pt-1">
                 <p className="text-xs text-gray-500">
@@ -500,7 +572,6 @@ export default function OrderDetailsContent() {
                   />
                   <p className="text-xs text-gray-400 mt-1">{(formData.documentText || "").length} characters</p>
                 </div>
-                {/* Live text preview */}
                 {formData.documentText && (
                   <div className="border border-gray-200 rounded-xl overflow-hidden">
                     <p className="text-xs font-medium text-gray-500 px-3 pt-2 pb-1 border-b border-gray-100 bg-gray-50">Preview</p>
@@ -518,66 +589,213 @@ export default function OrderDetailsContent() {
             )}
           </SectionCard>
 
-          {/* Delivery Information */}
-          <SectionCard title="Delivery Information">
-            <RadioRow label="Delivery Method" name="deliveryMethod" required options={["Doorstep"]} value={formData.deliveryMethod || ""} onChange={(v) => handleInputChange("deliveryMethod", v as OrderData["deliveryMethod"])} error={errors.deliveryMethod} />
-
-            {formData.deliveryMethod === "Doorstep" && (
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-gray-700">Pickup Address <span className="text-red-500">*</span></p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      State <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="pickupState"
-                      aria-label="State"
-                      value={formData.pickupState || ""}
-                      onChange={(e) => handleInputChange("pickupState", e.target.value)}
-                      className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 ${errors.pickupState ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"} text-sm`}
-                    >
-                      <option value="">Select state…</option>
-                      {NIGERIAN_STATES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                    {errors.pickupState && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupState}</p>}
-                  </div>
-                  <TextInput label="City / Area" name="pickupCity" required placeholder="e.g. Wuse Zone 2" value={formData.pickupCity || ""} onChange={(v) => handleInputChange("pickupCity", v)} error={errors.pickupCity} />
+          {uploadMode !== "hardcopy" && (
+            <SectionCard title="Delivery">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Delivery Method <span className="text-red-500">*</span>
+                </label>
+                <div className="space-y-2.5">
+                  {DELIVERY_OPTIONS.map((opt) => {
+                    const selected = formData.deliveryMethod === opt.value;
+                    return (
+                      <label
+                        key={opt.value}
+                        className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${selected ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-200 bg-gray-50 hover:border-[#5123d4]/40"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="deliveryMethod"
+                          value={opt.value}
+                          checked={selected}
+                          onChange={() => handleInputChange("deliveryMethod", opt.value as OrderData["deliveryMethod"])}
+                          className="mt-0.5 w-4 h-4 text-[#5123d4] focus:ring-[#5123d4] shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-gray-900">{opt.title}</span>
+                            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border shrink-0 ${selected ? "bg-[#5123d4] text-white border-[#5123d4]" : "bg-white text-[#5123d4] border-[#5123d4]/30"}`}>
+                              {opt.price}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5">{opt.subtitle}</p>
+                          <p className="text-xs text-gray-400 mt-1 leading-relaxed">{opt.description}</p>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
-                <TextInput label="Street Address / Landmark" name="pickupLocation" required placeholder="e.g. No. 5 Ibrahim Tahir Road, beside GTB" value={formData.pickupLocation || ""} onChange={(v) => handleInputChange("pickupLocation", v)} error={errors.pickupLocation} />
+                {errors.deliveryMethod && (
+                  <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.deliveryMethod}</p>
+                )}
               </div>
-            )}
 
+              {needsAddress && (
+                <div className="space-y-3 pt-1">
+                  <p className="text-sm font-medium text-gray-700">Delivery Address <span className="text-red-500">*</span></p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        State <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="pickupState"
+                        aria-label="State"
+                        value={formData.pickupState || ""}
+                        onChange={(e) => handleInputChange("pickupState", e.target.value)}
+                        className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 ${errors.pickupState ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"} text-sm`}
+                      >
+                        <option value="">Select state…</option>
+                        {NIGERIAN_STATES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      {errors.pickupState && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupState}</p>}
+                    </div>
+                    <TextInput label="City / Area" name="pickupCity" required placeholder="e.g. Wuse Zone 2" value={formData.pickupCity || ""} onChange={(v) => handleInputChange("pickupCity", v)} error={errors.pickupCity} />
+                  </div>
+                  <TextInput label="Street Address / Landmark" name="pickupLocation" required placeholder="e.g. No. 5 Ibrahim Tahir Road, beside GTB" value={formData.pickupLocation || ""} onChange={(v) => handleInputChange("pickupLocation", v)} error={errors.pickupLocation} />
+                </div>
+              )}
 
-            <TextInput label="Full Address (Optional)" name="specificInstruction" placeholder="Landmark, building number, nearest bus-stop…" value={formData.specificInstruction || ""} onChange={(v) => handleInputChange("specificInstruction", v)} />
-          </SectionCard>
+              {formData.deliveryMethod === "Schedule Delivery" && (
+                <div className="space-y-3 pt-1">
+                  <p className="text-sm font-medium text-gray-700">Delivery Stops</p>
+                  {scheduledStops.map((stop, idx) => (
+                    <div key={idx} className="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-700">Stop {idx + 1}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-[#5123d4]">₦5,000</span>
+                          {idx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => removeStop(idx)}
+                              className="text-red-400 hover:text-red-600 transition-colors"
+                              aria-label="Remove stop"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <TextInput
+                        label="Address"
+                        name={`stop_address_${idx}`}
+                        required
+                        placeholder="Full delivery address"
+                        value={stop.address}
+                        onChange={(v) => updateStop(idx, "address", v)}
+                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Date <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="date"
+                            title={`Stop ${idx + 1} date`}
+                            value={stop.date}
+                            min={new Date().toISOString().split("T")[0]}
+                            onChange={(e) => updateStop(idx, "date", e.target.value)}
+                            className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Time <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="time"
+                            title={`Stop ${idx + 1} time`}
+                            value={stop.time}
+                            onChange={(e) => updateStop(idx, "time", e.target.value)}
+                            className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {errors.scheduledStops && (
+                    <p className="text-red-500 text-xs flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.scheduledStops}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={addStop}
+                    className="flex items-center gap-2 text-sm font-semibold text-[#5123d4] border border-[#5123d4]/30 rounded-xl px-4 py-2.5 hover:bg-[#f0ebff] transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Add Stop
+                  </button>
+                </div>
+              )}
 
-          {/* Order Summary */}
+              {formData.deliveryMethod === "Special Submission" && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+                  <p className="text-sm font-semibold text-blue-800">Government & Private Organization Submission</p>
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    Follow-up, representation, retrieval, and acknowledgement collection are also available.
+                  </p>
+                  <p className="text-xs text-blue-700 font-medium">
+                    After receiving your order number, visit <strong>Submitar.com</strong> and enter the order number there to complete your request.
+                  </p>
+                  <p className="text-xs text-blue-400">Powered by Submitar</p>
+                </div>
+              )}
+
+              <TextInput
+                label="Additional Notes (Optional)"
+                name="specificInstruction"
+                placeholder="Landmark, building number, nearest bus-stop…"
+                value={formData.specificInstruction || ""}
+                onChange={(v) => handleInputChange("specificInstruction", v)}
+              />
+            </SectionCard>
+          )}
+
           <SectionCard title="Order Summary">
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span>Service Fee:</span><span>₦2,000</span></div>
-              {isPrintService && formData.pages && (
+              {formData.service === "Lamination" ? (
+                <>
+                  <div className="flex justify-between"><span>Lamination:</span><span>₦700</span></div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between"><span>Service Fee:</span><span>₦2,000</span></div>
+                  {isPrintService && formData.pages && (
+                    <div className="flex justify-between">
+                      <span>Printing ({formData.pages} pages):</span>
+                      <span>₦{formData.pages * (RATE[formData.printColor || "Black & white"]?.[formData.paperType as keyof typeof RATE["Black & white"] || "A4"] || 0)}</span>
+                    </div>
+                  )}
+                  {formData.finishingOption && formData.finishingOption !== "None" && (
+                    <div className="flex justify-between"><span>{formData.finishingOption}:</span><span>₦{FINISHING_COST[formData.finishingOption]}</span></div>
+                  )}
+                  {formData.expressService && (
+                    <div className="flex justify-between text-blue-600"><span>Express Service:</span><span>+50%</span></div>
+                  )}
+                </>
+              )}
+              {formData.deliveryMethod && formData.deliveryMethod !== "Special Submission" && formData.deliveryMethod !== "Hardcopy Pickup" && (
                 <div className="flex justify-between">
-                  <span>Printing ({formData.pages} pages):</span>
-                  <span>₦{formData.pages * (RATE[formData.printColor || "Black & white"]?.[formData.paperType as keyof typeof RATE["Black & white"] || "A4"] || 0)}</span>
+                  <span>Delivery ({formData.deliveryMethod}):</span>
+                  <span>
+                    {formData.deliveryMethod === "Schedule Delivery"
+                      ? `₦${(5000 * scheduledStops.length).toLocaleString()} (${scheduledStops.length} stop${scheduledStops.length !== 1 ? "s" : ""})`
+                      : `₦${getDeliveryFee().toLocaleString()}`
+                    }
+                  </span>
                 </div>
               )}
-              {formData.finishingOption && formData.finishingOption !== "None" && (
-                <div className="flex justify-between"><span>{formData.finishingOption}:</span><span>₦{FINISHING_COST[formData.finishingOption]}</span></div>
+              {formData.deliveryMethod === "Special Submission" && (
+                <div className="flex justify-between text-green-700"><span>Special Submission:</span><span>Free</span></div>
               )}
-              {formData.expressService && (
-                <div className="flex justify-between text-blue-600"><span>Express Service:</span><span>+50%</span></div>
-              )}
-              {formData.deliveryMethod === "Doorstep" && (
-                <div className="flex justify-between"><span>Delivery:</span><span>₦3,000</span></div>
-              )}
-              <div className="pt-2 border-t border-gray-200 font-bold flex justify-between"><span>Total:</span><span className="text-[#5123d4]">₦{calculateTotal()}</span></div>
+              <div className="pt-2 border-t border-gray-200 font-bold flex justify-between">
+                <span>Total:</span>
+                <span className="text-[#5123d4]">₦{calculateTotal().toLocaleString()}</span>
+              </div>
             </div>
           </SectionCard>
 
-          {/* Submit Button */}
           <button type="submit" className="w-full bg-[#5123d4] hover:bg-[#401AA0] text-white py-3 rounded-lg font-medium transition-colors">
             Continue to Review
           </button>
