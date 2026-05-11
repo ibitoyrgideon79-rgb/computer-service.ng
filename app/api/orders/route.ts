@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         email:               data.email                 || null,
         service:             data.service               || "Unspecified",
         category:            data.category              || null,
-        deliveryMethod:      data.delivery_method       || "Pick Up",
+        deliveryMethod:      data.delivery_method       || "",
         pickupState:         data.pickup_state          || null,
         pickupCity:          data.pickup_city           || null,
         pickupLocation:      data.pickup_location       || null,

@@ -369,7 +369,7 @@ function TrackingContent() {
       finishingOption:     (order.finishingOption as "None" | "Spiral Binding" | "Stapled" | "Hardcover Binding" | "") || "None",
       expressService:      order.expressService     ?? false,
       deadline:            (order.deadline as "Standard (3hrs - 5hrs)" | "Express (1hr - 2hrs)" | "Custom (Date Picker)" | "") || "",
-      deliveryMethod:      (order.deliveryMethod as "Pick Up" | "Doorstep" | "Hardcopy Pickup" | "") || "Pick Up",
+      deliveryMethod:      (order.deliveryMethod as "Express Delivery" | "Standard Delivery" | "Economy Delivery" | "Schedule Delivery" | "Special Submission" | "Hardcopy Pickup" | "") || "",
       deliveryDetails:     order.deliveryDetails    || "",
       pickupState:         order.pickupState        || "",
       pickupCity:          order.pickupCity         || "",
