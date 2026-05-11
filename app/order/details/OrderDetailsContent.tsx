@@ -754,6 +754,9 @@ export default function OrderDetailsContent() {
                   <p className="text-xs text-blue-700 font-medium">
                     After receiving your order number, visit <strong>Submitar.com</strong> and enter the order number there to complete your request.
                   </p>
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    We deliver your package to Submitar at no cost, while Submitar handles the submission service based on your selected request and applicable service charges.
+                  </p>
                   <p className="text-xs text-blue-400">Powered by Submitar</p>
                 </div>
               )}
