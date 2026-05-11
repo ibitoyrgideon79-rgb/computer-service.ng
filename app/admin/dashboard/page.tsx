@@ -474,6 +474,7 @@ export default function AdminDashboard() {
   const [liveCount, setLiveCount]             = useState(0);
   const [partners, setPartners]               = useState<PartnerApplication[]>([]);
   const [partnersLoading, setPartnersLoading] = useState(false);
+  const [expandedPartnerId, setExpandedPartnerId] = useState<string | null>(null);
   const prevCountRef                          = useRef(0);
 
   const handleLogout = async () => {
@@ -877,59 +878,100 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {partners.map((p) => (
-                      <tr key={p.id} className="border-b border-gray-50 hover:bg-[#f8f7ff] transition-colors">
-                        <td className="px-5 py-3.5 font-medium text-black">{p.full_name}</td>
-                        <td className="px-5 py-3.5 text-gray-700">{p.company_name}</td>
-                        <td className="px-5 py-3.5">
-                          <a href={`mailto:${p.email}`} className="text-[#5123d4] hover:underline text-sm">{p.email}</a>
-                        </td>
-                        <td className="px-5 py-3.5 text-gray-500 max-w-48 truncate" title={p.services}>{p.services || "—"}</td>
-                        <td className="px-5 py-3.5 text-gray-500 max-w-48 truncate" title={p.address}>{p.address}</td>
-                        <td className="px-5 py-3.5">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                            p.status === "Approved"  ? "bg-green-100 text-green-700 border-green-200" :
-                            p.status === "Rejected"  ? "bg-red-100 text-red-700 border-red-200" :
-                            p.status === "Reviewed"  ? "bg-blue-100 text-blue-700 border-blue-200" :
-                                                       "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          }`}>
-                            {p.status}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 text-gray-400 text-xs whitespace-nowrap">
-                          {format(new Date(p.created_at), "d MMM yyyy")}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-1">
-                            {p.status === "Pending" && (
-                              <button
-                                type="button"
-                                onClick={() => handlePartnerStatus(p.id, "Reviewed")}
-                                className="text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium transition-colors"
-                              >
-                                Mark Reviewed
-                              </button>
-                            )}
-                            {p.status !== "Approved" && (
-                              <button
-                                type="button"
-                                onClick={() => handlePartnerStatus(p.id, "Approved")}
-                                className="text-xs px-2.5 py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 font-medium transition-colors"
-                              >
-                                Approve
-                              </button>
-                            )}
-                            {p.status !== "Rejected" && p.status !== "Approved" && (
-                              <button
-                                type="button"
-                                onClick={() => handlePartnerStatus(p.id, "Rejected")}
-                                className="text-xs px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-medium transition-colors"
-                              >
-                                Reject
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
+                      <>
+                        <tr
+                          key={p.id}
+                          className="border-b border-gray-50 hover:bg-[#f8f7ff] transition-colors cursor-pointer"
+                          onClick={() => setExpandedPartnerId(expandedPartnerId === p.id ? null : p.id)}
+                        >
+                          <td className="px-5 py-3.5 font-medium text-black flex items-center gap-1.5">
+                            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${expandedPartnerId === p.id ? "rotate-180" : ""}`} />
+                            {p.full_name}
+                          </td>
+                          <td className="px-5 py-3.5 text-gray-700">{p.company_name}</td>
+                          <td className="px-5 py-3.5">
+                            <a href={`mailto:${p.email}`} onClick={e => e.stopPropagation()} className="text-[#5123d4] hover:underline text-sm">{p.email}</a>
+                          </td>
+                          <td className="px-5 py-3.5 text-gray-500 max-w-48 truncate" title={p.services}>{p.services || "—"}</td>
+                          <td className="px-5 py-3.5 text-gray-500 max-w-48 truncate" title={p.address}>{p.address}</td>
+                          <td className="px-5 py-3.5">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                              p.status === "Approved"  ? "bg-green-100 text-green-700 border-green-200" :
+                              p.status === "Rejected"  ? "bg-red-100 text-red-700 border-red-200" :
+                              p.status === "Reviewed"  ? "bg-blue-100 text-blue-700 border-blue-200" :
+                                                         "bg-yellow-100 text-yellow-700 border-yellow-200"
+                            }`}>
+                              {p.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 text-gray-400 text-xs whitespace-nowrap">
+                            {format(new Date(p.created_at), "d MMM yyyy")}
+                          </td>
+                          <td className="px-5 py-3.5" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center gap-1">
+                              {p.status === "Pending" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePartnerStatus(p.id, "Reviewed")}
+                                  className="text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium transition-colors"
+                                >
+                                  Mark Reviewed
+                                </button>
+                              )}
+                              {p.status !== "Approved" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePartnerStatus(p.id, "Approved")}
+                                  className="text-xs px-2.5 py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 font-medium transition-colors"
+                                >
+                                  Approve
+                                </button>
+                              )}
+                              {p.status !== "Rejected" && p.status !== "Approved" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePartnerStatus(p.id, "Rejected")}
+                                  className="text-xs px-2.5 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-medium transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                        {expandedPartnerId === p.id && (
+                          <tr key={`${p.id}-detail`} className="bg-[#f8f7ff] border-b border-purple-100">
+                            <td colSpan={8} className="px-6 py-4">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-3 text-sm">
+                                <div>
+                                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Phone</p>
+                                  <a href={`tel:${p.phone_number}`} className="text-gray-800 font-medium hover:text-[#5123d4]">{p.phone_number || "—"}</a>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Position</p>
+                                  <p className="text-gray-800 font-medium">{p.position || "—"}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Photos Uploaded</p>
+                                  <p className="text-gray-800 font-medium">{p.photo_count}</p>
+                                </div>
+                                <div className="col-span-2 sm:col-span-3">
+                                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Business Details</p>
+                                  <p className="text-gray-700 leading-relaxed">{p.business_details || "—"}</p>
+                                </div>
+                                <div className="col-span-2 sm:col-span-3">
+                                  <p className="text-xs text-gray-400 uppercase font-medium mb-0.5">Services Offered</p>
+                                  <div className="flex flex-wrap gap-1.5 mt-1">
+                                    {p.services ? p.services.split(",").map(s => (
+                                      <span key={s.trim()} className="px-2.5 py-0.5 bg-[#5123d4]/10 text-[#5123d4] rounded-full text-xs font-medium">{s.trim()}</span>
+                                    )) : <span className="text-gray-400">—</span>}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     ))}
                   </tbody>
                 </table>

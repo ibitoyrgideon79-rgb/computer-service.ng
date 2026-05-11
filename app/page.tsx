@@ -438,7 +438,21 @@ export default function Home() {
               Join our network of trusted partners and help us deliver exceptional computer services across the country.
             </p>
             
-            <div className="mt-8">
+            {/* Partner logos */}
+            <div className="flex flex-wrap items-center justify-center gap-8 mb-10 mt-2">
+              {[
+                { src: "/Deallock logo.jpg",  alt: "Deallock"  },
+                { src: "/Idcode logo 2.JPG",  alt: "Idcode"    },
+                { src: "/Vasset logo.jpg",    alt: "Vasset"    },
+                { src: "/ADETEK.jpeg",        alt: "Adetek"    },
+              ].map(({ src, alt }) => (
+                <div key={alt} className="relative h-14 w-32 grayscale hover:grayscale-0 transition-all duration-300">
+                  <Image src={src} alt={alt} fill className="object-contain" />
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-2">
               <Link
                 href="/partners/onboarding"
                 className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-10 py-3.5 rounded font-medium inline-flex items-center gap-2 transition-colors text-base shadow-sm"

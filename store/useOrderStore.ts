@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export interface ScheduledStop {
   address: string;
+  state: string;
   date: string;
   time: string;
 }

@@ -584,11 +584,11 @@ function TrackingContent() {
                         <div className="bg-white rounded-2xl border border-purple-100 shadow-sm p-5 sm:p-6 mb-6">
               <h3 className="text-sm font-bold mb-4 text-black">Need Help?</h3>
               <div className="flex flex-col sm:flex-row gap-3">
-                <a href="tel:+2348035671112" className="flex-1 flex items-center gap-3 p-3 bg-[#f8f5ff] rounded-xl hover:bg-[#efe9ff] transition-colors">
+                <a href="tel:+2348166027757" className="flex-1 flex items-center gap-3 p-3 bg-[#f8f5ff] rounded-xl hover:bg-[#efe9ff] transition-colors">
                   <Phone className="w-5 h-5 text-[#5123d4]" />
                   <div>
                     <p className="text-xs text-gray-500">Call us</p>
-                    <p className="text-sm font-medium text-black">+234 803 567 1112</p>
+                    <p className="text-sm font-medium text-black">+234 8166027757</p>
                   </div>
                 </a>
                 <a href="mailto:support@computerservice.ng" className="flex-1 flex items-center gap-3 p-3 bg-[#f8f5ff] rounded-xl hover:bg-[#efe9ff] transition-colors">
@@ -648,11 +648,11 @@ function TrackingContent() {
                 If you have any questions about your order or need assistance, please don&apos;t hesitate to reach out to our customer support team.
               </p>
               <a 
-                href="tel:+234803567112"
+                href="tel:+2348166027757"
                 className="inline-flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors"
               >
                 <Phone className="w-4 h-4" />
-                Call us: +234 803 567 1112
+                Call us: +234 8166027757
               </a>
             </div>
           </div>

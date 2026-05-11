@@ -18,6 +18,7 @@ const AVAILABLE_SERVICES = [
   "Reports & Proposals",
   "Tech Support",
   "Logistics",
+  "Agent/Coordinator",
 ];
 
 interface FormData {
@@ -312,14 +313,14 @@ export default function PartnerOnboarding() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Name <span className="text-red-500">*</span>
+                  Company Name or Individual <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.companyName}
                   onChange={(e) => handleInputChange("companyName", e.target.value)}
-                  placeholder="Your company name"
+                  placeholder="Your company name or your full name"
                   className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
                 />
               </div>

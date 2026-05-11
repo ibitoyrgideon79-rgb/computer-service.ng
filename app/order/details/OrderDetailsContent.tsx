@@ -174,7 +174,7 @@ export default function OrderDetailsContent() {
   const [scheduledStops, setScheduledStops] = useState<ScheduledStop[]>(
     (orderData.scheduledStops && orderData.scheduledStops.length > 0)
       ? orderData.scheduledStops
-      : [{ address: "", date: "", time: "" }]
+      : [{ address: "", state: "", date: "", time: "" }]
   );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -208,7 +208,7 @@ export default function OrderDetailsContent() {
   };
 
   const addStop = () => {
-    setScheduledStops(prev => [...prev, { address: "", date: "", time: "" }]);
+    setScheduledStops(prev => [...prev, { address: "", state: "", date: "", time: "" }]);
   };
 
   const removeStop = (idx: number) => {
@@ -253,7 +253,7 @@ export default function OrderDetailsContent() {
     }
 
     if (formData.deliveryMethod === "Schedule Delivery") {
-      const valid = scheduledStops.every(s => s.address && s.date && s.time);
+      const valid = scheduledStops.every(s => s.address && s.state && s.date && s.time);
       if (scheduledStops.length === 0 || !valid) newErrors.scheduledStops = "Please fill in all stop details";
     }
 
@@ -686,6 +686,14 @@ export default function OrderDetailsContent() {
                         placeholder="Full delivery address"
                         value={stop.address}
                         onChange={(v) => updateStop(idx, "address", v)}
+                      />
+                      <TextInput
+                        label="State"
+                        name={`stop_state_${idx}`}
+                        required
+                        placeholder="e.g. Abuja, Lagos"
+                        value={stop.state}
+                        onChange={(v) => updateStop(idx, "state", v)}
                       />
                       <div className="grid grid-cols-2 gap-3">
                         <div>
