@@ -165,10 +165,11 @@ export default function Home() {
       {/* Navbar */}
       <header className="w-full border-b border-gray-900 sticky top-0 bg-black z-50">
         <div className="container mx-auto px-4 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex flex-col items-start">
             <div className="relative h-12 w-48 sm:h-16 sm:w-64 md:h-20 md:w-80">
               <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
             </div>
+            <span className="text-white text-xs font-semibold tracking-widest ml-1 -mt-1">RC: 9511799</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-white">
@@ -499,8 +500,11 @@ export default function Home() {
           <div className="container mx-auto px-4 lg:px-8">
             {/* Logo + Social Icons Row */}
             <div className="mb-12 flex items-center justify-between">
-              <div className="relative h-24 w-96">
-                <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" quality={100} />
+              <div className="flex flex-col items-start">
+                <div className="relative h-24 w-96">
+                  <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" quality={100} />
+                </div>
+                <span className="text-white text-xs font-semibold tracking-widest ml-1 -mt-2">RC: 9511799</span>
               </div>
               {/* Social Icons */}
               <div className="flex items-center gap-3">
