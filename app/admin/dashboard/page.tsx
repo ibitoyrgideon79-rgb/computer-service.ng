@@ -51,6 +51,12 @@ interface Order {
   created_at: string;
 }
 
+interface PartnerPhoto {
+  id: string;
+  label: string;
+  dataUrl: string;
+}
+
 interface PartnerApplication {
   id: string;
   full_name: string;
@@ -475,6 +481,8 @@ export default function AdminDashboard() {
   const [partners, setPartners]               = useState<PartnerApplication[]>([]);
   const [partnersLoading, setPartnersLoading] = useState(false);
   const [expandedPartnerId, setExpandedPartnerId] = useState<string | null>(null);
+  const [partnerPhotos, setPartnerPhotos] = useState<Record<string, PartnerPhoto[]>>({});
+  const [photosLoading, setPhotosLoading] = useState<string | null>(null);
   const prevCountRef                          = useRef(0);
 
   const handleLogout = async () => {
@@ -565,6 +573,19 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => { void fetchPartners(); }, [fetchPartners]);
+
+  const fetchPartnerPhotos = useCallback(async (id: string) => {
+    if (partnerPhotos[id]) return;
+    setPhotosLoading(id);
+    try {
+      const res = await fetch(`/api/admin/partners/${id}/photos`, { headers: authHeaders() });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setPartnerPhotos(prev => ({ ...prev, [id]: data }));
+    } catch { /* silent */ } finally {
+      setPhotosLoading(null);
+    }
+  }, [partnerPhotos]);
 
   const handlePartnerStatus = useCallback(async (id: string, status: string) => {
     try {
@@ -882,7 +903,11 @@ export default function AdminDashboard() {
                         <tr
                           key={p.id}
                           className="border-b border-gray-50 hover:bg-[#f8f7ff] transition-colors cursor-pointer"
-                          onClick={() => setExpandedPartnerId(expandedPartnerId === p.id ? null : p.id)}
+                          onClick={() => {
+                            const next = expandedPartnerId === p.id ? null : p.id;
+                            setExpandedPartnerId(next);
+                            if (next) fetchPartnerPhotos(next);
+                          }}
                         >
                           <td className="px-5 py-3.5 font-medium text-black flex items-center gap-1.5">
                             <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${expandedPartnerId === p.id ? "rotate-180" : ""}`} />
@@ -966,6 +991,29 @@ export default function AdminDashboard() {
                                       <span key={s.trim()} className="px-2.5 py-0.5 bg-[#5123d4]/10 text-[#5123d4] rounded-full text-xs font-medium">{s.trim()}</span>
                                     )) : <span className="text-gray-400">—</span>}
                                   </div>
+                                </div>
+                                {/* Photos */}
+                                <div className="col-span-2 sm:col-span-3">
+                                  <p className="text-xs text-gray-400 uppercase font-medium mb-2">Application Photos</p>
+                                  {photosLoading === p.id ? (
+                                    <div className="flex items-center gap-2 text-gray-400 text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Loading photos…</div>
+                                  ) : (partnerPhotos[p.id] ?? []).length === 0 ? (
+                                    <p className="text-gray-400 text-sm">No photos uploaded.</p>
+                                  ) : (
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                                      {(partnerPhotos[p.id] ?? []).map(photo => (
+                                        <div key={photo.id} className="flex flex-col items-center gap-1">
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                                          <img
+                                            src={photo.dataUrl}
+                                            alt={photo.label}
+                                            className="w-full h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                                          />
+                                          <span className="text-xs text-gray-500 text-center">{photo.label}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </td>

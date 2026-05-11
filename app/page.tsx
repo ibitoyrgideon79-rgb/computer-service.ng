@@ -435,14 +435,15 @@ export default function Home() {
           <div className="container mx-auto px-4 lg:px-8 text-center">
 
             {/* Partner logos — above heading */}
-            <div className="flex flex-wrap items-center justify-center gap-10 mb-10">
+            <div className="flex flex-wrap items-center justify-center gap-12 mb-12">
               {[
-                { src: "/deallock-logo.jpg", alt: "Deallock" },
-                { src: "/idcode-logo.jpg",   alt: "Idcode"   },
-                { src: "/vasset-logo.jpg",   alt: "Vasset"   },
-                { src: "/adetek-logo.jpg",   alt: "Adetek"   },
+                { src: "/deallock-logo.jpg",      alt: "Deallock"       },
+                { src: "/idcode-logo.jpg",         alt: "Idcode"         },
+                { src: "/vasset-logo.jpg",         alt: "Vasset"         },
+                { src: "/adetek-logo.jpg",         alt: "Adetek"         },
+                { src: "/waju-dynamics-logo.jpg",  alt: "Waju Dynamics"  },
               ].map(({ src, alt }) => (
-                <div key={alt} className="relative h-16 w-36 grayscale hover:grayscale-0 transition-all duration-300">
+                <div key={alt} className="relative h-24 w-48 transition-all duration-300">
                   <Image src={src} alt={alt} fill className="object-contain" />
                 </div>
               ))}

@@ -175,6 +175,14 @@ export default function PartnerOnboarding() {
     }
   };
 
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const handleSubmit = async () => {
     setLoading(true);
     setError("");
@@ -205,6 +213,24 @@ export default function PartnerOnboarding() {
       if (!response.ok) {
         setError(data.error || "Failed to submit application");
         return;
+      }
+
+      const appId = data.id as string;
+
+      // Upload photos one at a time to avoid large payloads
+      const photosToUpload: { file: File; label: string }[] = [
+        ...formData.officePhotos.map((f, i) => ({ file: f, label: `Office Photo ${i + 1}` })),
+        ...(formData.personalPhoto ? [{ file: formData.personalPhoto, label: "Personal Photo" }] : []),
+        ...(formData.idCardPhoto    ? [{ file: formData.idCardPhoto,   label: "ID Card" }]        : []),
+      ];
+
+      for (const { file, label } of photosToUpload) {
+        const dataUrl = await fileToDataUrl(file);
+        await fetch(`/api/partners/${appId}/photos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ label, dataUrl }),
+        });
       }
 
       setSubmitted(true);
