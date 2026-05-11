@@ -249,7 +249,7 @@ export default function ServicesPage() {
         {/* CTA */}
         <section className="py-16 bg-[#0f0720] text-white text-center">
           <div className="container mx-auto px-4 lg:px-8 max-w-2xl">
-            <h2 className="text-3xl font-bold mb-4">Not sure which service you need?</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Not sure which service you need?</h2>
             <p className="text-white/60 mb-8">Just tell us what you want and we will figure out the rest for you.</p>
             <Link href="/order/details" className="inline-flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3.5 rounded-lg font-medium text-base transition-colors shadow-sm">
               Get Started <ArrowRight className="w-4 h-4" />

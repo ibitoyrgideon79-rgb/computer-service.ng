@@ -228,19 +228,19 @@ export default function Home() {
 
       <main className="grow">
         {/* Hero Section */}
-        <section className="container mx-auto px-4 lg:px-8 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="flex flex-col gap-6 max-w-xl">
-            <h1 className="text-5xl lg:text-[4.5rem] font-bold tracking-tight leading-[1.05] text-black">
+        <section className="container mx-auto px-4 lg:px-8 py-10 sm:py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          <div className="flex flex-col gap-5 sm:gap-6">
+            <h1 className="text-3xl sm:text-4xl lg:text-[4.5rem] font-bold tracking-tight leading-[1.1] lg:leading-[1.05] text-black">
               We Bring Computer Services to your doorstep.
             </h1>
-            <p className="text-lg text-gray-600 mt-2">
+            <p className="text-base sm:text-lg text-gray-600">
               Request any document or computer services online and we will deliver quality result to you.
             </p>
-            <div className="flex items-center gap-4 mt-6">
-              <Link href="/order/details" className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3 rounded-md font-medium flex items-center gap-2 transition-colors shadow-sm">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-2 sm:mt-4">
+              <Link href="/order/details" className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3 rounded-md font-medium flex items-center justify-center gap-2 transition-colors shadow-sm">
                 Get Started <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="#learn-more" className="bg-white border border-gray-300 text-black px-8 py-3 rounded-md font-medium hover:bg-gray-50 transition-colors">
+              <Link href="#learn-more" className="bg-white border border-gray-300 text-black px-8 py-3 rounded-md font-medium hover:bg-gray-50 transition-colors text-center">
                 Learn more
               </Link>
             </div>
@@ -251,13 +251,13 @@ export default function Home() {
         </section>
 
         {/* Services Section */}
-        <section className="py-20 bg-gray-50 border-y border-gray-100" id="services">
+        <section className="py-14 sm:py-20 bg-gray-50 border-y border-gray-100" id="services">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-black mb-3">Our Services</h2>
               <p className="text-gray-500 max-w-xl mx-auto">Everything you need handled quickly, professionally, and delivered to you.</p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
               {[
                 { name: "Printing", icon: Printer, desc: "A4, A3, colour & B&W printing", iconBg: "bg-purple-50", iconColor: "text-[#5123d4]" },
                 { name: "Photocopy", icon: Copy, desc: "Fast bulk or single photocopying", iconBg: "bg-blue-50", iconColor: "text-blue-600" },
@@ -271,8 +271,8 @@ export default function Home() {
                 { name: "Technical Support", icon: Wrench, desc: "Laptop repair, software & setup", iconBg: "bg-cyan-50", iconColor: "text-cyan-600" },
                 { name: "Lamination", icon: Layers, desc: "A4, A3, ID card & photo lamination", iconBg: "bg-violet-50", iconColor: "text-violet-600" },
               ].map((service, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-5 border border-gray-100 hover:border-[#5123d4]/30 hover:shadow-md transition-all cursor-pointer flex flex-col">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${service.iconBg}`}>
+                <div key={idx} className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 hover:border-[#5123d4]/30 hover:shadow-md transition-all cursor-pointer flex flex-col">
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center mb-3 sm:mb-4 ${service.iconBg}`}>
                     <service.icon className={`w-6 h-6 ${service.iconColor}`} />
                   </div>
                   <h3 className="font-semibold text-sm text-black mb-1.5 leading-tight">{service.name}</h3>
@@ -284,11 +284,11 @@ export default function Home() {
         </section>
 
         {/* How It Works Section */}
-        <section className="py-24 bg-white" id="how-it-works">
+        <section className="py-16 sm:py-24 bg-white" id="how-it-works">
           <div className="container mx-auto px-4 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-16">How It works</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10 sm:mb-16">How It works</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6">
               {[
                 {
                   num: "1",
@@ -343,9 +343,9 @@ export default function Home() {
         </section>
 
         {/* Get Started Form Section */}
-        <section className="py-24 bg-white">
+        <section className="py-16 sm:py-24 bg-white">
           <div className="container mx-auto px-4 lg:px-8 max-w-176 flex flex-col items-center text-center">
-            <h2 className="text-[2rem] font-bold mb-3 text-black">Get started</h2>
+            <h2 className="text-2xl sm:text-[2rem] font-bold mb-3 text-black">Get started</h2>
             <p className="text-gray-500 mb-12">Tell us what you need and we will take care of the rest</p>
             
             <form onSubmit={handleFormSubmit} className="w-full flex flex-col gap-5">
@@ -424,7 +424,7 @@ export default function Home() {
               )}
 
               <div className="pt-6">
-                <button type="submit" className="inline-flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-10 py-3.5 rounded font-medium text-base transition-colors">
+                <button type="submit" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-10 py-3.5 rounded font-medium text-base transition-colors">
                   Proceed <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -433,12 +433,12 @@ export default function Home() {
         </section>
 
         {/* Partners Section */}
-        <section className="py-24 bg-gray-50 border-t border-gray-100">
+        <section className="py-16 sm:py-24 bg-gray-50 border-t border-gray-100">
           <div className="container mx-auto px-4 lg:px-8 text-center">
 
             {/* Partner logos — above heading */}
             <motion.div
-              className="flex flex-wrap items-center justify-center gap-12 mb-12"
+              className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 lg:gap-12 mb-8 sm:mb-12"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
@@ -454,7 +454,7 @@ export default function Home() {
               ].map(({ src, alt }) => (
                 <motion.div
                   key={alt}
-                  className="relative h-24 w-48"
+                  className="relative h-16 w-32 sm:h-20 sm:w-40 lg:h-24 lg:w-48"
                   variants={{
                     hidden:  { opacity: 0, y: 24, scale: 0.9 },
                     visible: { opacity: 1, y: 0,  scale: 1,
@@ -467,14 +467,14 @@ export default function Home() {
               ))}
             </motion.div>
 
-            <h2 className="text-[2rem] font-bold mb-6 text-black">Our Partners</h2>
-            <p className="text-gray-500 mb-8 max-w-2xl mx-auto text-lg">
+            <h2 className="text-2xl sm:text-[2rem] font-bold mb-4 sm:mb-6 text-black">Our Partners</h2>
+            <p className="text-gray-500 mb-6 sm:mb-8 max-w-2xl mx-auto text-base sm:text-lg">
               Join our network of trusted partners and help us deliver exceptional computer services across the country.
             </p>
 
             <Link
               href="/partners/onboarding"
-              className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-10 py-3.5 rounded font-medium inline-flex items-center gap-2 transition-colors text-base shadow-sm"
+              className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 sm:px-10 py-3.5 rounded font-medium inline-flex items-center gap-2 transition-colors text-base shadow-sm"
             >
               Become a Partner <ArrowRight className="w-4 h-4" />
             </Link>
@@ -500,12 +500,12 @@ export default function Home() {
         <div className="bg-black border-t border-gray-900 py-16">
           <div className="container mx-auto px-4 lg:px-8">
             {/* Logo + Social Icons Row */}
-            <div className="mb-12 flex items-center justify-between">
+            <div className="mb-8 sm:mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
               <div className="flex flex-col items-start">
-                <div className="relative h-24 w-96">
+                <div className="relative h-16 w-52 sm:h-20 sm:w-72 lg:h-24 lg:w-96">
                   <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" quality={100} />
                 </div>
-                <span className="text-white text-xs font-semibold tracking-widest ml-1 -mt-2">RC: 9511799</span>
+                <span className="text-white text-xs font-semibold tracking-widest ml-1 -mt-1">RC: 9511799</span>
               </div>
               {/* Social Icons */}
               <div className="flex items-center gap-3">
@@ -527,7 +527,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8 lg:gap-10">
               <div>
                 <h4 className="font-bold text-sm mb-4 text-white">Secure and Reliable</h4>
                 <p className="text-xs text-white/70 leading-relaxed max-w-50">

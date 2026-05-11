@@ -298,28 +298,42 @@ export default function PartnerOnboarding() {
           <h1 className="text-3xl font-bold text-black mb-2">Become a Partner</h1>
           <p className="text-gray-600 mb-8">Complete the partnership form and agree to our terms</p>
 
-          <div className="flex items-center justify-between mb-8">
-            {["form", "upload", "agreements", "review"].map((step, idx, arr) => (
-              <div key={step} className="flex items-center flex-1">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
-                    arr.indexOf(currentStep) >= idx
-                      ? "bg-[#5123d4] text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {idx + 1}
-                </div>
-                {idx < arr.length - 1 && (
-                  <div
-                    className={`flex-1 h-1 mx-2 transition-colors ${
-                      arr.indexOf(currentStep) > idx ? "bg-[#5123d4]" : "bg-gray-200"
-                    }`}
-                  />
-                )}
+          {(() => {
+            const STEPS = [
+              { key: "form",       label: "Info"   },
+              { key: "upload",     label: "Photos" },
+              { key: "agreements", label: "Agree"  },
+              { key: "review",     label: "Review" },
+            ];
+            const activeIdx = STEPS.findIndex(s => s.key === currentStep);
+            return (
+              <div className="flex items-center justify-between mb-8">
+                {STEPS.map(({ key, label }, idx) => (
+                  <div key={key} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center gap-1">
+                      <div
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-colors ${
+                          activeIdx >= idx ? "bg-[#5123d4] text-white" : "bg-gray-200 text-gray-600"
+                        }`}
+                      >
+                        {idx + 1}
+                      </div>
+                      <span className={`text-[10px] font-medium ${activeIdx >= idx ? "text-[#5123d4]" : "text-gray-400"}`}>
+                        {label}
+                      </span>
+                    </div>
+                    {idx < STEPS.length - 1 && (
+                      <div
+                        className={`flex-1 h-1 mx-1.5 sm:mx-2 mb-4 transition-colors ${
+                          activeIdx > idx ? "bg-[#5123d4]" : "bg-gray-200"
+                        }`}
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            );
+          })()}
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-start gap-3">
@@ -572,13 +586,13 @@ export default function PartnerOnboarding() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Means of Identification <span className="text-red-500">*</span>
                     </label>
-                    <div className="flex gap-3 mb-3">
+                    <div className="flex flex-wrap gap-2 mb-3">
                       {["NIN", "International Passport", "Driver's License"].map((type) => (
                         <button
                           key={type}
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, idType: type }))}
-                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                          className={`py-2 px-4 rounded-lg text-sm font-medium border transition-colors ${
                             formData.idType === type
                               ? "bg-[#5123d4] text-white border-[#5123d4]"
                               : "bg-white text-gray-600 border-gray-200 hover:border-[#5123d4]"

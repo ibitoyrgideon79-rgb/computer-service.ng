@@ -636,16 +636,16 @@ export default function AdminDashboard() {
       <Toaster position="top-right" />
 
       <div className="min-h-screen bg-[#f4f5f7]">
-                <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-20">
+                <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20">
           <div>
             <h1 className="text-lg font-bold text-black">Dashboard</h1>
             <p className="text-xs text-gray-400">computerservice.ng — Admin Portal</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Live indicator */}
-            <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-3 py-1.5 rounded-full">
+            <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-full">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Live
+              <span className="hidden sm:inline">Live</span>
               {liveCount > 0 && <span className="bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">{liveCount}</span>}
             </div>
             <button
@@ -659,16 +659,16 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 border border-red-200 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 border border-red-200 transition-colors"
               title="Sign out"
             >
               <LogOut className="w-3.5 h-3.5" />
-              Sign Out
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
                     {statsLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
               {Array.from({ length: 7 }).map((_, i) => (
