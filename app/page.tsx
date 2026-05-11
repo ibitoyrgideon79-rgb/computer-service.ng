@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useOrderStore } from "@/store/useOrderStore";
 import RecallModal from "@/app/components/RecallModal";
 import {
@@ -435,7 +436,13 @@ export default function Home() {
           <div className="container mx-auto px-4 lg:px-8 text-center">
 
             {/* Partner logos — above heading */}
-            <div className="flex flex-wrap items-center justify-center gap-12 mb-12">
+            <motion.div
+              className="flex flex-wrap items-center justify-center gap-12 mb-12"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={{ visible: { transition: { staggerChildren: 0.15 } } }}
+            >
               {[
                 { src: "/deallock-logo.jpg",      alt: "Deallock"       },
                 { src: "/idcode-logo.jpg",         alt: "Idcode"         },
@@ -443,11 +450,20 @@ export default function Home() {
                 { src: "/adetek-logo.jpg",         alt: "Adetek"         },
                 { src: "/waju-dynamics-logo.jpg",  alt: "Waju Dynamics"  },
               ].map(({ src, alt }) => (
-                <div key={alt} className="relative h-24 w-48 transition-all duration-300">
+                <motion.div
+                  key={alt}
+                  className="relative h-24 w-48"
+                  variants={{
+                    hidden:  { opacity: 0, y: 24, scale: 0.9 },
+                    visible: { opacity: 1, y: 0,  scale: 1,
+                      transition: { type: "spring", stiffness: 200, damping: 18 } },
+                  }}
+                  whileHover={{ scale: 1.08, transition: { type: "spring", stiffness: 300, damping: 15 } }}
+                >
                   <Image src={src} alt={alt} fill className="object-contain" />
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             <h2 className="text-[2rem] font-bold mb-6 text-black">Our Partners</h2>
             <p className="text-gray-500 mb-8 max-w-2xl mx-auto text-lg">
