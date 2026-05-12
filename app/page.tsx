@@ -586,7 +586,7 @@ export default function Home() {
                 <h4 className="font-bold text-sm mb-4 text-white">Contact</h4>
                 <ul className="flex flex-col gap-3 text-xs text-white/70">
                   <li>
-                    <a href="mailto:support@computerservice.ng" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <a href="mailto:support@computerservice.ng" className="flex items-center gap-2 hover:text-white transition-colors underline underline-offset-2 decoration-white/40 hover:decoration-white">
                       <Mail className="w-3.5 h-3.5 shrink-0" />
                       support@computerservice.ng
                     </a>

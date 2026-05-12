@@ -96,7 +96,7 @@ const SERVICES = [
     icon: Wrench,
     iconBg: "bg-cyan-50",
     iconColor: "text-cyan-600",
-    desc: "Laptop & phone repairs, software installation, virus removal, and network setup.",
+    desc: "Laptop & phone repair, software installation, virus removal, and network setup.",
     categories: ["Laptop Repair", "Phone Repair", "Software Installation", "Virus Removal", "Data Recovery", "OS Reinstallation"],
     cta: "/order/details?service=Technical+Support",
   },
