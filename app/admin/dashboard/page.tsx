@@ -229,6 +229,16 @@ function exportCSV(orders: Order[]) {
   URL.revokeObjectURL(url);
 }
 
+function downloadPhoto(dataUrl: string, label: string) {
+  const a = document.createElement("a");
+  a.href = dataUrl;
+  const ext = dataUrl.includes("image/png") ? "png" : "jpg";
+  a.download = `${label.toLowerCase().replace(/\s+/g, "-")}.${ext}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -526,6 +536,12 @@ export default function AdminDashboard() {
   useEffect(() => { void fetchOrders(); }, [fetchOrders]);
   useEffect(() => { void fetchStats();  }, [fetchStats]);
 
+  useEffect(() => {
+    document.title = liveCount > 0
+      ? `(${liveCount}) Dashboard — computerservice.ng`
+      : "Dashboard — computerservice.ng";
+  }, [liveCount]);
+
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -644,11 +660,16 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Live indicator */}
-            <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <button
+              type="button"
+              onClick={() => liveCount > 0 ? setLiveCount(0) : undefined}
+              className={`flex items-center gap-1.5 border text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded-full transition-colors ${liveCount > 0 ? "bg-[#5123d4] border-[#401AA0] text-white" : "bg-green-50 border-green-200 text-green-700"}`}
+              title={liveCount > 0 ? "Click to clear notifications" : "Live"}
+            >
+              <span className={`w-2 h-2 rounded-full animate-pulse ${liveCount > 0 ? "bg-white" : "bg-green-500"}`} />
               <span className="hidden sm:inline">Live</span>
-              {liveCount > 0 && <span className="bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">{liveCount}</span>}
-            </div>
+              {liveCount > 0 && <span className="bg-white text-[#5123d4] rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">{liveCount}</span>}
+            </button>
             <button
               type="button"
               onClick={() => { fetchOrders(); fetchStats(); }}
@@ -1011,36 +1032,60 @@ export default function AdminDashboard() {
                                         {(personalPhoto || idPhoto) && (
                                           <div className="grid grid-cols-2 gap-4">
                                             {personalPhoto && (
-                                              <button
-                                                type="button"
-                                                onClick={() => setLightboxPhoto({ dataUrl: personalPhoto.dataUrl, label: personalPhoto.label })}
-                                                className="group relative bg-gray-50 border border-gray-200 rounded-xl overflow-hidden hover:border-[#5123d4]/50 hover:shadow-md transition-all text-left"
-                                              >
-                                                <div className="bg-gray-800 flex items-center justify-center min-h-44">
+                                              <div className="group relative bg-gray-50 border border-gray-200 rounded-xl overflow-hidden hover:border-[#5123d4]/50 hover:shadow-md transition-all">
+                                                <div
+                                                  className="bg-gray-800 flex items-center justify-center min-h-44 cursor-pointer"
+                                                  onClick={() => setLightboxPhoto({ dataUrl: personalPhoto.dataUrl, label: personalPhoto.label })}
+                                                >
                                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                                   <img src={personalPhoto.dataUrl} alt="Personal Photo" className="max-w-full max-h-52 object-contain" />
                                                 </div>
                                                 <div className="px-3 py-2 flex items-center justify-between">
                                                   <span className="text-xs font-semibold text-gray-700">Personal Photo</span>
-                                                  <span className="text-[10px] text-[#5123d4] group-hover:underline">Click to enlarge</span>
+                                                  <div className="flex items-center gap-1.5">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => downloadPhoto(personalPhoto.dataUrl, personalPhoto.label)}
+                                                      className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700"
+                                                      title="Download"
+                                                    >
+                                                      <Download className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <span
+                                                      className="text-[10px] text-[#5123d4] group-hover:underline cursor-pointer"
+                                                      onClick={() => setLightboxPhoto({ dataUrl: personalPhoto.dataUrl, label: personalPhoto.label })}
+                                                    >Click to enlarge</span>
+                                                  </div>
                                                 </div>
-                                              </button>
+                                              </div>
                                             )}
                                             {idPhoto && (
-                                              <button
-                                                type="button"
-                                                onClick={() => setLightboxPhoto({ dataUrl: idPhoto.dataUrl, label: idPhoto.label })}
-                                                className="group relative bg-gray-50 border border-gray-200 rounded-xl overflow-hidden hover:border-[#5123d4]/50 hover:shadow-md transition-all text-left"
-                                              >
-                                                <div className="bg-gray-800 flex items-center justify-center min-h-44">
+                                              <div className="group relative bg-gray-50 border border-gray-200 rounded-xl overflow-hidden hover:border-[#5123d4]/50 hover:shadow-md transition-all">
+                                                <div
+                                                  className="bg-gray-800 flex items-center justify-center min-h-44 cursor-pointer"
+                                                  onClick={() => setLightboxPhoto({ dataUrl: idPhoto.dataUrl, label: idPhoto.label })}
+                                                >
                                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                                   <img src={idPhoto.dataUrl} alt={idPhoto.label} className="max-w-full max-h-52 object-contain" />
                                                 </div>
                                                 <div className="px-3 py-2 flex items-center justify-between">
                                                   <span className="text-xs font-semibold text-gray-700">{idPhoto.label}</span>
-                                                  <span className="text-[10px] text-[#5123d4] group-hover:underline">Click to enlarge</span>
+                                                  <div className="flex items-center gap-1.5">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => downloadPhoto(idPhoto.dataUrl, idPhoto.label)}
+                                                      className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700"
+                                                      title="Download"
+                                                    >
+                                                      <Download className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <span
+                                                      className="text-[10px] text-[#5123d4] group-hover:underline cursor-pointer"
+                                                      onClick={() => setLightboxPhoto({ dataUrl: idPhoto.dataUrl, label: idPhoto.label })}
+                                                    >Click to enlarge</span>
+                                                  </div>
                                                 </div>
-                                              </button>
+                                              </div>
                                             )}
                                           </div>
                                         )}
@@ -1050,18 +1095,25 @@ export default function AdminDashboard() {
                                             <p className="text-xs text-gray-500 font-semibold mb-2">Office Photos ({officePhotos.length})</p>
                                             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2.5">
                                               {officePhotos.map(photo => (
-                                                <button
+                                                <div
                                                   key={photo.id}
-                                                  type="button"
+                                                  className="group relative bg-gray-800 rounded-lg overflow-hidden border border-gray-200 hover:border-[#5123d4]/50 hover:shadow-md transition-all aspect-square cursor-pointer"
                                                   onClick={() => setLightboxPhoto({ dataUrl: photo.dataUrl, label: photo.label })}
-                                                  className="group relative bg-gray-800 rounded-lg overflow-hidden border border-gray-200 hover:border-[#5123d4]/50 hover:shadow-md transition-all aspect-square"
                                                 >
                                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                                   <img src={photo.dataUrl} alt={photo.label} className="w-full h-full object-contain" />
-                                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center gap-2">
                                                     <span className="opacity-0 group-hover:opacity-100 text-white text-[10px] font-medium bg-black/60 px-2 py-0.5 rounded-full transition-opacity">View</span>
+                                                    <button
+                                                      type="button"
+                                                      onClick={(e) => { e.stopPropagation(); downloadPhoto(photo.dataUrl, photo.label); }}
+                                                      className="opacity-0 group-hover:opacity-100 p-1 rounded-full bg-black/60 text-white hover:bg-black/80 transition-all"
+                                                      title="Download"
+                                                    >
+                                                      <Download className="w-3 h-3" />
+                                                    </button>
                                                   </div>
-                                                </button>
+                                                </div>
                                               ))}
                                             </div>
                                           </div>
@@ -1104,14 +1156,24 @@ export default function AdminDashboard() {
           <div className="relative max-w-3xl w-full" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-white font-semibold text-sm">{lightboxPhoto.label}</span>
-              <button
-                type="button"
-                onClick={() => setLightboxPhoto(null)}
-                className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => downloadPhoto(lightboxPhoto.dataUrl, lightboxPhoto.label)}
+                  className="flex items-center gap-1.5 text-white/70 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-xs font-medium"
+                  title="Download photo"
+                >
+                  <Download className="w-4 h-4" /> Download
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightboxPhoto(null)}
+                  className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

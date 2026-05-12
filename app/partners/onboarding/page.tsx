@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { ArrowLeft, Upload, CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Upload, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +23,9 @@ const AVAILABLE_SERVICES = [
 
 interface FormData {
   fullName: string;
+  firstName: string;
+  lastName: string;
+  employmentType: string;
   companyName: string;
   email: string;
   phoneNumber: string;
@@ -45,6 +48,9 @@ export default function PartnerOnboarding() {
   const [entityType, setEntityType] = useState<"company" | "individual">("company");
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
+    firstName: "",
+    lastName: "",
+    employmentType: "",
     companyName: "",
     email: "",
     phoneNumber: "",
@@ -64,16 +70,28 @@ export default function PartnerOnboarding() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [showNdaFull, setShowNdaFull] = useState(false);
+  const [ndaRead, setNdaRead] = useState(false);
 
   const officeInputRef = useRef<HTMLInputElement>(null);
   const personalInputRef = useRef<HTMLInputElement>(null);
   const idCardInputRef = useRef<HTMLInputElement>(null);
+  const ndaScrollRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = (field: keyof Omit<FormData, "officePhotos" | "personalPhoto" | "idCardPhoto" | "selectedServices" | "agreedToTerms" | "agreedToPrivacy" | "agreedToNda">, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError("");
   };
+
+  const handleNdaScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 40) {
+      setNdaRead(true);
+    }
+  };
+
+  const resolvedFullName = entityType === "individual"
+    ? `${formData.firstName} ${formData.lastName}`.trim()
+    : formData.fullName;
 
   const toggleService = (service: string) => {
     setFormData((prev) => ({
@@ -108,7 +126,22 @@ export default function PartnerOnboarding() {
   };
 
   const validateFormStep = (): boolean => {
-    if (!formData.fullName.trim() || !formData.companyName.trim() || !formData.email.trim() || 
+    if (entityType === "individual") {
+      if (!formData.firstName.trim() || !formData.lastName.trim()) {
+        setError("Please enter your first and last name");
+        return false;
+      }
+      if (!formData.employmentType.trim()) {
+        setError("Please select your employment type");
+        return false;
+      }
+    } else {
+      if (!formData.fullName.trim()) {
+        setError("Please fill in all required fields");
+        return false;
+      }
+    }
+    if (!formData.companyName.trim() || !formData.email.trim() ||
         !formData.phoneNumber.trim() || !formData.address.trim() || !formData.position.trim() ||
         !formData.businessDetails.trim()) {
       setError("Please fill in all required fields");
@@ -220,7 +253,7 @@ export default function PartnerOnboarding() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullName: formData.fullName,
+          fullName: resolvedFullName,
           companyName: formData.companyName,
           email: formData.email,
           phoneNumber: formData.phoneNumber,
@@ -344,37 +377,107 @@ export default function PartnerOnboarding() {
 
           {currentStep === "form" && (
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-black mb-6">Business Information</h2>
+              <h2 className="text-xl font-bold text-black mb-6">
+                {entityType === "individual" ? "Personal Information" : "Business Information"}
+              </h2>
 
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.fullName}
-                    onChange={(e) => handleInputChange("fullName", e.target.value)}
-                    placeholder="Your full name"
-                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-                  />
+              {entityType === "company" ? (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.fullName}
+                      onChange={(e) => handleInputChange("fullName", e.target.value)}
+                      placeholder="Your full name"
+                      className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Position / Role <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.position}
+                      onChange={(e) => handleInputChange("position", e.target.value)}
+                      placeholder="e.g., Manager, Director"
+                      className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                    />
+                  </div>
                 </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        First Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange("firstName", e.target.value)}
+                        placeholder="First name"
+                        className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        placeholder="Last name"
+                        className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Position <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.position}
-                    onChange={(e) => handleInputChange("position", e.target.value)}
-                    placeholder="e.g., Manager, Director"
-                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Employment Status <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {["Self-Employed", "Freelancer", "Student", "Employee", "Unemployed"].map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => handleInputChange("employmentType", type)}
+                          className={`py-2 px-4 rounded-lg text-sm font-medium border transition-colors ${
+                            formData.employmentType === type
+                              ? "bg-[#5123d4] text-white border-[#5123d4]"
+                              : "bg-white text-gray-600 border-gray-200 hover:border-[#5123d4]/50"
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Occupation / Role <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.position}
+                      onChange={(e) => handleInputChange("position", e.target.value)}
+                      placeholder="e.g., Graphic Designer, IT Technician"
+                      className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -670,75 +773,83 @@ export default function PartnerOnboarding() {
                 </label>
               </div>
 
-              <div className="border-2 border-[#5123d4] rounded-lg p-4 bg-blue-50">
-                <div className="mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowNdaFull(!showNdaFull)}
-                    className="flex items-center gap-2 text-[#5123d4] font-semibold text-sm mb-3 hover:text-[#401AA0]"
-                  >
-                    {showNdaFull ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    {showNdaFull ? "Hide" : "Show"} Full NDA
-                  </button>
-
-                  {showNdaFull && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 max-h-96 overflow-y-auto text-xs text-gray-700 space-y-3">
-                      <h3 className="font-bold text-sm">Non-Disclosure Agreement (NDA)</h3>
-                      <p className="font-semibold">🔐 CONFIDENTIALITY REQUIREMENTS</p>
-                      <p>
-                        All partners must agree to maintain strict confidentiality regarding customer files, projects, documents, credentials, and personal information processed through computerservice.ng.
-                      </p>
-
-                      <p className="font-semibold">PROHIBITED ACTIONS:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Unauthorized disclosure of customer information</li>
-                        <li>Duplication of customer projects or documents</li>
-                        <li>Misuse of customer credentials or sensitive data</li>
-                        <li>Sharing of customer information with third parties</li>
-                        <li>Use of customer documents for personal gain</li>
-                      </ul>
-
-                      <p className="font-semibold">PENALTIES FOR VIOLATION:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>⛔ Immediate suspension or termination of partnership</li>
-                        <li>⛔ Permanent removal from the platform</li>
-                        <li>⛔ Financial liability for damages caused</li>
-                        <li>⛔ Possible legal action where necessary</li>
-                      </ul>
-
-                      <p className="font-semibold">PARTNER OBLIGATIONS:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Protect all customer information with industry-standard security measures</li>
-                        <li>Only access customer data necessary to perform services</li>
-                        <li>Immediately report any data breaches or unauthorized access</li>
-                        <li>Comply with all applicable data protection laws (GDPR, CCPA, etc.)</li>
-                        <li>Maintain confidentiality even after partnership termination</li>
-                      </ul>
-
-                      <p className="font-semibold">DURATION:</p>
-                      <p>This agreement remains in effect during the partnership and for 3 years following termination.</p>
-                    </div>
-                  )}
+              <div className="border-2 border-[#5123d4] rounded-xl overflow-hidden">
+                {/* NDA header */}
+                <div className="bg-[#5123d4] px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-bold text-sm">📋 Non-Disclosure Agreement (NDA)</span>
+                  </div>
+                  {ndaRead
+                    ? <span className="text-xs bg-white/20 text-white px-2.5 py-1 rounded-full font-medium">✓ Read</span>
+                    : <span className="text-xs bg-white/20 text-white/80 px-2.5 py-1 rounded-full animate-pulse">Scroll to read ↓</span>
+                  }
                 </div>
 
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.agreedToNda}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, agreedToNda: e.target.checked }))
-                    }
-                    className="w-5 h-5 text-[#5123d4] rounded mt-1 flex-shrink-0"
-                  />
-                  <div className="text-sm">
-                    <p className="text-gray-700">
-                      I have read and agree to the <span className="font-semibold">Non-Disclosure Agreement (NDA)</span>
+                {/* Scrollable NDA body — must scroll to bottom to unlock */}
+                <div
+                  ref={ndaScrollRef}
+                  onScroll={handleNdaScroll}
+                  className="bg-white px-4 py-4 max-h-52 overflow-y-auto text-xs text-gray-700 space-y-3 border-b border-gray-200"
+                >
+                  <p className="font-bold text-gray-900">🔐 CONFIDENTIALITY REQUIREMENTS</p>
+                  <p>
+                    All partners must agree to maintain strict confidentiality regarding customer files, projects, documents, credentials, and personal information processed through computerservice.ng.
+                  </p>
+
+                  <p className="font-semibold text-gray-800">PROHIBITED ACTIONS:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    <li>Unauthorized disclosure of customer information</li>
+                    <li>Duplication of customer projects or documents</li>
+                    <li>Misuse of customer credentials or sensitive data</li>
+                    <li>Sharing of customer information with third parties</li>
+                    <li>Use of customer documents for personal gain</li>
+                  </ul>
+
+                  <p className="font-semibold text-gray-800">PENALTIES FOR VIOLATION:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    <li>Immediate suspension or termination of partnership</li>
+                    <li>Permanent removal from the platform</li>
+                    <li>Financial liability for damages caused</li>
+                    <li>Possible legal action where necessary</li>
+                  </ul>
+
+                  <p className="font-semibold text-gray-800">PARTNER OBLIGATIONS:</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    <li>Protect all customer information with industry-standard security measures</li>
+                    <li>Only access customer data necessary to perform services</li>
+                    <li>Immediately report any data breaches or unauthorized access</li>
+                    <li>Comply with all applicable data protection laws and Nigerian regulations</li>
+                    <li>Maintain confidentiality even after partnership termination</li>
+                  </ul>
+
+                  <p className="font-semibold text-gray-800">DURATION:</p>
+                  <p className="text-gray-600">This agreement remains in effect during the partnership and for 3 years following termination.</p>
+
+                  {/* Invisible anchor at bottom */}
+                  <div className="h-1" />
+                </div>
+
+                {/* Agreement checkbox — locked until NDA is read */}
+                <div className={`px-4 py-4 transition-colors ${ndaRead ? "bg-[#f0ebff]" : "bg-gray-50"}`}>
+                  {!ndaRead && (
+                    <p className="text-xs text-amber-600 font-medium mb-3 flex items-center gap-1.5">
+                      <span>⚠️</span> Please scroll through and read the full NDA above before agreeing.
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      I understand the confidentiality requirements and penalties for violation
-                    </p>
-                  </div>
-                </label>
+                  )}
+                  <label className={`flex items-start gap-3 ${ndaRead ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
+                    <input
+                      type="checkbox"
+                      checked={formData.agreedToNda}
+                      disabled={!ndaRead}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, agreedToNda: e.target.checked }))}
+                      className="w-5 h-5 text-[#5123d4] rounded mt-0.5 flex-shrink-0"
+                    />
+                    <div className="text-sm">
+                      <p className="font-semibold text-gray-900">I have read and agree to the Non-Disclosure Agreement</p>
+                      <p className="text-xs text-gray-500 mt-0.5">I understand the confidentiality requirements and penalties for violation</p>
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
           )}
@@ -749,12 +860,29 @@ export default function PartnerOnboarding() {
 
               <div className="bg-gray-50 rounded-lg p-6 space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
+                  {entityType === "individual" ? (
+                    <>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium uppercase">First Name</p>
+                        <p className="text-gray-900 font-semibold">{formData.firstName}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium uppercase">Last Name</p>
+                        <p className="text-gray-900 font-semibold">{formData.lastName}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium uppercase">Employment Status</p>
+                        <p className="text-gray-900 font-semibold">{formData.employmentType}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase">Full Name</p>
+                      <p className="text-gray-900 font-semibold">{formData.fullName}</p>
+                    </div>
+                  )}
                   <div>
-                    <p className="text-xs text-gray-500 font-medium uppercase">Full Name</p>
-                    <p className="text-gray-900 font-semibold">{formData.fullName}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium uppercase">Position</p>
+                    <p className="text-xs text-gray-500 font-medium uppercase">{entityType === "company" ? "Position" : "Occupation"}</p>
                     <p className="text-gray-900 font-semibold">{formData.position}</p>
                   </div>
                   <div>
