@@ -63,6 +63,7 @@ export interface OrderData {
   hardcopyState: string;
   hardcopyCity: string;
   hardcopyContactName: string;
+  hardcopyCompany: string;
   hardcopyContactPhone: string;
   hardcopyDocCount: string;
   hardcopyDocMode: "known" | "unsure" | "custom" | "";

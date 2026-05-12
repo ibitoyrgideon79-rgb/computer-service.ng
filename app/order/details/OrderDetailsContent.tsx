@@ -166,6 +166,7 @@ export default function OrderDetailsContent() {
     hardcopyState:        orderData.hardcopyState || "",
     hardcopyCity:         orderData.hardcopyCity || "",
     hardcopyContactName:  orderData.hardcopyContactName || "",
+    hardcopyCompany:      orderData.hardcopyCompany || "",
     hardcopyContactPhone: orderData.hardcopyContactPhone || "",
     hardcopyDocCount:     orderData.hardcopyDocCount || "",
     hardcopyDocMode:      orderData.hardcopyDocMode || "",
@@ -557,26 +558,35 @@ export default function OrderDetailsContent() {
                   </div>
                 </div>
 
-                <TextInput
-                  label="Contact Person Name"
-                  name="hardcopyContactName"
-                  required
-                  placeholder="Name of person we should meet"
-                  value={formData.hardcopyContactName || ""}
-                  onChange={(v) => handleInputChange("hardcopyContactName", v)}
-                  error={errors.hardcopyContactName}
-                />
-
-                <TextInput
-                  label="Contact Person Phone Number"
-                  name="hardcopyContactPhone"
-                  type="tel"
-                  required
-                  placeholder="e.g. 08012345678"
-                  value={formData.hardcopyContactPhone || ""}
-                  onChange={(v) => handleInputChange("hardcopyContactPhone", v)}
-                  error={errors.hardcopyContactPhone}
-                />
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact at Pickup</p>
+                  <TextInput
+                    label="Contact Person Name"
+                    name="hardcopyContactName"
+                    required
+                    placeholder="Name of person we should meet"
+                    value={formData.hardcopyContactName || ""}
+                    onChange={(v) => handleInputChange("hardcopyContactName", v)}
+                    error={errors.hardcopyContactName}
+                  />
+                  <TextInput
+                    label="Company / Organisation (Optional)"
+                    name="hardcopyCompany"
+                    placeholder="e.g. ABC Enterprises, University of Lagos"
+                    value={formData.hardcopyCompany || ""}
+                    onChange={(v) => handleInputChange("hardcopyCompany", v)}
+                  />
+                  <TextInput
+                    label="Contact Phone Number"
+                    name="hardcopyContactPhone"
+                    type="tel"
+                    required
+                    placeholder="e.g. 08012345678"
+                    value={formData.hardcopyContactPhone || ""}
+                    onChange={(v) => handleInputChange("hardcopyContactPhone", v)}
+                    error={errors.hardcopyContactPhone}
+                  />
+                </div>
 
                 {/* Document count — smart selector */}
                 <div>
