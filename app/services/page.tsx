@@ -146,11 +146,11 @@ export default function ServicesPage() {
       {/* Navbar */}
       <header className="w-full border-b border-gray-900 sticky top-0 bg-black z-50">
         <div className="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-end gap-2 sm:gap-3">
+          <Link href="/" className="flex flex-col">
             <div className="relative h-12 w-44 md:h-16 md:w-60 shrink-0">
               <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
             </div>
-            <span className="mb-1 text-white text-[10px] sm:text-xs font-bold tracking-widest border border-white/25 rounded px-2 py-0.5 whitespace-nowrap">RC: 9511799</span>
+            <span className="self-end text-white text-[10px] sm:text-xs font-bold tracking-widest border border-white/25 rounded px-2 py-0.5 whitespace-nowrap">RC: 9511799</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white">

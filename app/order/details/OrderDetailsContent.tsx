@@ -184,6 +184,9 @@ export default function OrderDetailsContent() {
   const [uploadMode, setUploadMode] = useState<"file" | "text" | "hardcopy">(
     orderData.deliveryMethod === "Hardcopy Pickup" ? "hardcopy" : orderData.documentText ? "text" : "file"
   );
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>(
+    orderData.documents?.length ? orderData.documents : orderData.document ? [orderData.document] : []
+  );
   const [pagesAutoDetected, setPagesAutoDetected] = useState(false);
   const [detectingPages, setDetectingPages] = useState(false);
   const [textPagesAutoDetected, setTextPagesAutoDetected] = useState(false);
@@ -202,33 +205,45 @@ export default function OrderDetailsContent() {
     }
   };
 
+  const detectPagesForFiles = async (files: File[]): Promise<number> => {
+    setDetectingPages(true);
+    let total = 0;
+    try {
+      for (const file of files) {
+        if (file.type === "application/pdf") {
+          try {
+            const pdfjsLib = await import("pdfjs-dist");
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+            const buffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+            total += pdf.numPages;
+          } catch {
+            total += 1;
+          }
+        } else if (file.type.startsWith("image/")) {
+          total += 1;
+        } else {
+          total += 1;
+        }
+      }
+    } finally {
+      setDetectingPages(false);
+    }
+    return Math.max(total, 1);
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    multiple: false,
+    multiple: true,
     maxSize: 50 * 1024 * 1024,
-    onDropAccepted: async (files) => {
-      const file = files[0];
-      setFormData(prev => ({ ...prev, document: file }));
+    onDropAccepted: async (newFiles) => {
+      const merged = [...uploadedFiles, ...newFiles];
+      setUploadedFiles(merged);
+      setFormData(prev => ({ ...prev, document: merged[0], documents: merged }));
       setErrors(prev => ({ ...prev, document: "" }));
       setPagesAutoDetected(false);
-
-      if (file.type === "application/pdf") {
-        setDetectingPages(true);
-        try {
-          const pdfjsLib = await import("pdfjs-dist");
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-          const buffer = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
-          setFormData(prev => ({ ...prev, pages: pdf.numPages }));
-          setPagesAutoDetected(true);
-        } catch {
-          // silent — user can enter manually
-        } finally {
-          setDetectingPages(false);
-        }
-      } else if (file.type.startsWith("image/")) {
-        setFormData(prev => ({ ...prev, pages: 1 }));
-        setPagesAutoDetected(true);
-      }
+      const total = await detectPagesForFiles(merged);
+      setFormData(prev => ({ ...prev, pages: total }));
+      setPagesAutoDetected(true);
     },
     onDropRejected: (rejected) => {
       const msg = rejected[0]?.errors[0]?.code === "file-too-large"
@@ -307,7 +322,7 @@ export default function OrderDetailsContent() {
       if (!formData.hardcopyContactPhone) newErrors.hardcopyContactPhone = "Contact phone number is required";
     }
 
-    if (uploadMode !== "hardcopy" && !formData.document && !formData.documentText) {
+    if (uploadMode !== "hardcopy" && uploadedFiles.length === 0 && !formData.documentText) {
       newErrors.document = "Please upload a file or type/paste your document text";
     }
 
@@ -318,7 +333,7 @@ export default function OrderDetailsContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    setOrderData({ ...formData, scheduledStops } as OrderData);
+    setOrderData({ ...formData, documents: uploadedFiles, scheduledStops } as OrderData);
     router.push("/order/review");
   };
 
@@ -408,12 +423,6 @@ export default function OrderDetailsContent() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Number of Pages <span className="text-red-500">*</span>
-                    {detectingPages && (
-                      <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-[#5123d4] font-normal">
-                        <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                        Counting pages…
-                      </span>
-                    )}
                     {pagesAutoDetected && !detectingPages && (
                       <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-green-600 font-normal bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
                         ✓ Auto-detected
@@ -433,7 +442,7 @@ export default function OrderDetailsContent() {
                     }}
                     className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Automatically counted from your uploaded file. You can adjust if needed.</p>
+                  <p className="text-xs text-gray-400 mt-1">Auto-counted from your uploaded files. You can adjust if needed.</p>
                 </div>
               </>
             )}
@@ -455,6 +464,7 @@ export default function OrderDetailsContent() {
                   setUploadMode("file");
                   handleInputChange("documentText", "");
                   if (formData.deliveryMethod === "Hardcopy Pickup") handleInputChange("deliveryMethod", "");
+                  // Don't clear existing uploaded files when switching back
                 }}
                 className={`flex-1 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   uploadMode === "file" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"
@@ -466,7 +476,8 @@ export default function OrderDetailsContent() {
                 type="button"
                 onClick={() => {
                   setUploadMode("text");
-                  setFormData(prev => ({ ...prev, document: null }));
+                  setUploadedFiles([]);
+                  setFormData(prev => ({ ...prev, document: null, documents: [] }));
                   if (formData.deliveryMethod === "Hardcopy Pickup") handleInputChange("deliveryMethod", "");
                 }}
                 className={`flex-1 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
@@ -479,7 +490,8 @@ export default function OrderDetailsContent() {
                 type="button"
                 onClick={() => {
                   setUploadMode("hardcopy");
-                  setFormData(prev => ({ ...prev, document: null, documentText: "", deliveryMethod: "Hardcopy Pickup" }));
+                  setUploadedFiles([]);
+                  setFormData(prev => ({ ...prev, document: null, documents: [], documentText: "", deliveryMethod: "Hardcopy Pickup" }));
                 }}
                 className={`flex-1 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   uploadMode === "hardcopy" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"
@@ -685,22 +697,68 @@ export default function OrderDetailsContent() {
                   <input {...getInputProps()} />
                   <UploadCloud className={`w-12 h-12 mx-auto mb-3 transition-colors ${isDragActive ? "text-[#5123d4]" : "text-gray-400"}`} />
                   <p className="text-sm font-medium text-gray-700">
-                    {isDragActive ? "Drop your file here…" : "Drag & drop or click to browse"}
+                    {isDragActive ? "Drop files here…" : "Drag & drop or click to browse"}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">PDF, Word, images — Max 50MB</p>
+                  <p className="text-xs text-gray-400 mt-1">PDF, Word, images — Max 50MB each · Multiple files supported</p>
+                  {detectingPages && (
+                    <p className="text-xs text-[#5123d4] mt-2 flex items-center justify-center gap-1">
+                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                      Counting pages…
+                    </p>
+                  )}
                 </div>
-                {formData.document && (
-                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                    <span className="text-sm text-green-700 font-medium">✓ {formData.document.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, document: null }))}
-                      className="text-xs text-red-400 hover:text-red-600 ml-2"
-                    >
-                      Remove
-                    </button>
+
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-gray-600">
+                        {uploadedFiles.length} file{uploadedFiles.length !== 1 ? "s" : ""} selected
+                        {pagesAutoDetected && formData.pages && (
+                          <span className="ml-2 text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                            ✓ {formData.pages} page{formData.pages !== 1 ? "s" : ""} total
+                          </span>
+                        )}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUploadedFiles([]);
+                          setFormData(prev => ({ ...prev, document: null, documents: [], pages: undefined }));
+                          setPagesAutoDetected(false);
+                        }}
+                        className="text-xs text-red-400 hover:text-red-600"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                    {uploadedFiles.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                        <span className="text-sm text-green-700 font-medium truncate max-w-xs">✓ {file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = uploadedFiles.filter((_, i) => i !== idx);
+                            setUploadedFiles(updated);
+                            setFormData(prev => ({ ...prev, document: updated[0] ?? null, documents: updated }));
+                            if (updated.length === 0) {
+                              setPagesAutoDetected(false);
+                              setFormData(prev => ({ ...prev, pages: undefined }));
+                            } else {
+                              detectPagesForFiles(updated).then(p => {
+                                setFormData(prev => ({ ...prev, pages: p }));
+                                setPagesAutoDetected(true);
+                              });
+                            }
+                          }}
+                          className="text-xs text-red-400 hover:text-red-600 ml-2 shrink-0"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
+
                 {errors.document && (
                   <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3 shrink-0" />{errors.document}
@@ -734,14 +792,6 @@ export default function OrderDetailsContent() {
                     )}
                   </div>
                 </div>
-                {formData.documentText && (
-                  <div className="border border-gray-200 rounded-xl overflow-hidden">
-                    <p className="text-xs font-medium text-gray-500 px-3 pt-2 pb-1 border-b border-gray-100 bg-gray-50">Preview</p>
-                    <div className="bg-white px-4 py-4 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
-                      {formData.documentText}
-                    </div>
-                  </div>
-                )}
                 {errors.document && (
                   <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3 shrink-0" />{errors.document}

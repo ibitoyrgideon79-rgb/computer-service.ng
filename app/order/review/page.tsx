@@ -89,12 +89,16 @@ export default function OrderReviewPage() {
   const hasUploadedFile = !!fileUrl;
   const isPdf = orderData.document?.type === "application/pdf";
   const isImage = orderData.document?.type?.startsWith("image/");
+  const allFiles = orderData.documents?.length ? orderData.documents : orderData.document ? [orderData.document] : [];
+  const hasMultipleFiles = allFiles.length > 1;
 
   const docLabel = hasCustomHtml
     ? "Typed Document"
     : hasDocumentText
     ? "Pasted Text"
-    : (orderData.document?.name || "No document uploaded");
+    : allFiles.length > 0
+    ? (allFiles.length > 1 ? `${allFiles.length} Files Uploaded` : allFiles[0].name)
+    : "No document uploaded";
 
   const handleDownload = async () => {
     if (hasCustomHtml) {
@@ -525,6 +529,33 @@ export default function OrderReviewPage() {
                     {orderData.documentText}
                   </div>
                 </div>
+              ) : hasMultipleFiles ? (
+                /* Multiple files — show list + preview first previewable file */
+                <div className="w-full space-y-4 self-start">
+                  <div className="bg-white/10 rounded-xl p-4 space-y-2">
+                    <p className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-3">
+                      {allFiles.length} Files Uploaded · {pages} Pages Total
+                    </p>
+                    {allFiles.map((f, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-white/10 rounded-lg px-3 py-2.5">
+                        <FileText className="w-4 h-4 text-[#D1AFFF] shrink-0" />
+                        <span className="text-sm text-white truncate">{f.name}</span>
+                        <span className="ml-auto text-xs text-white/50 shrink-0">
+                          {f.type === "application/pdf" ? "PDF" : f.type.startsWith("image/") ? "Image" : "Doc"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Preview first PDF or image */}
+                  {allFiles[0]?.type === "application/pdf" && fileUrl ? (
+                    <PdfPreview fileUrl={fileUrl} pageNumber={pageNumber} scale={scale} onLoadSuccess={onDocumentLoadSuccess} />
+                  ) : allFiles[0]?.type?.startsWith("image/") && fileUrl ? (
+                    <div style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={fileUrl} alt="First uploaded file" className="max-w-full h-auto shadow-xl bg-white rounded" />
+                    </div>
+                  ) : null}
+                </div>
               ) : hasUploadedFile && isPdf ? (
                 <PdfPreview
                   fileUrl={fileUrl!}
@@ -536,6 +567,20 @@ export default function OrderReviewPage() {
                 <div style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={fileUrl!} alt="Uploaded document" className="max-w-full h-auto shadow-xl bg-white rounded" />
+                </div>
+              ) : hasUploadedFile ? (
+                /* Non-previewable file (e.g. Word, Excel) — show file info card */
+                <div className="flex flex-col items-center justify-center gap-4 text-center max-w-xs mx-auto py-12">
+                  <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+                    <FileText className="w-8 h-8 text-[#D1AFFF]" />
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold">{orderData.document?.name}</p>
+                    <p className="text-white/60 text-sm mt-1">
+                      {((orderData.document?.size ?? 0) / 1024).toFixed(0)} KB · {pages} page{pages !== 1 ? "s" : ""}
+                    </p>
+                    <p className="text-white/40 text-xs mt-2">Preview not available for this file type</p>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full gap-5 text-center max-w-xs mx-auto py-12">

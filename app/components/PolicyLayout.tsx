@@ -28,7 +28,7 @@ export default function PolicyLayout({ title, lastUpdated, children }: PolicyLay
       {/* Navbar */}
       <header className="w-full border-b border-gray-900 sticky top-0 bg-black z-50">
         <div className="container mx-auto px-4 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
-          <Link href="/" className="flex items-end gap-2 sm:gap-3">
+          <Link href="/" className="flex flex-col">
             <div className="relative h-12 w-44 sm:h-16 sm:w-56 md:h-20 md:w-72 shrink-0">
               <Image
                 src="/Computer service PNG 111.png"
@@ -39,7 +39,7 @@ export default function PolicyLayout({ title, lastUpdated, children }: PolicyLay
                 quality={100}
               />
             </div>
-            <span className="mb-1 text-white text-[10px] sm:text-xs font-bold tracking-widest border border-white/25 rounded px-2 py-0.5 whitespace-nowrap">
+            <span className="self-end text-white text-[10px] sm:text-xs font-bold tracking-widest border border-white/25 rounded px-2 py-0.5 whitespace-nowrap">
               RC: 9511799
             </span>
           </Link>

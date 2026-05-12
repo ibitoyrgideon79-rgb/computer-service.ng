@@ -19,6 +19,7 @@ export interface OrderData {
 
   // Document
   document: File | null;
+  documents: File[];
   documentText: string;
   customDocumentHtml?: string;
 
@@ -107,6 +108,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     const dataToSave = {
       ...orderData,
       document: null,
+      documents: [],
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   },
