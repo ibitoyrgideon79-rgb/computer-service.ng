@@ -6,10 +6,10 @@ export const dynamic = "force-dynamic";
 // POST /api/orders/[id]/documents — upload files for an order (base64)
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json() as { files: { name: string; type: string; size: number; dataUrl: string }[] };
 
     if (!body.files?.length) {

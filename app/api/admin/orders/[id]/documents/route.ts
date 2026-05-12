@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 // GET /api/admin/orders/[id]/documents — list all documents for an order
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     verifyAdminRequest(req);
@@ -16,8 +16,9 @@ export async function GET(
   }
 
   try {
+    const { id } = await params;
     const docs = await prisma.orderDocument.findMany({
-      where: { orderId: params.id },
+      where: { orderId: id },
       select: {
         id:       true,
         fileName: true,

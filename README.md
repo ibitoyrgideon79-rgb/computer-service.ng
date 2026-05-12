@@ -257,9 +257,9 @@ JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRES_IN=7d
 
 # Admin (first-time setup only)
-ADMIN_EMAIL=admin@computerservice.ng
-ADMIN_PASSWORD=password123
-ADMIN_PHONE=08166027757
+ADMIN_EMAIL=**********
+ADMIN_PASSWORD=*******
+ADMIN_PHONE=phonenumber
 
 # Email OTP (Resend)
 RESEND_API_KEY=re_...
