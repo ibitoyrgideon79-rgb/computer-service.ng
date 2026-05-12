@@ -168,6 +168,8 @@ export default function OrderDetailsContent() {
     hardcopyContactName:  orderData.hardcopyContactName || "",
     hardcopyContactPhone: orderData.hardcopyContactPhone || "",
     hardcopyDocCount:     orderData.hardcopyDocCount || "",
+    hardcopyDocMode:      orderData.hardcopyDocMode || "",
+    hardcopyCustomDesc:   orderData.hardcopyCustomDesc || "",
     hardcopyInstructions: orderData.hardcopyInstructions || "",
   });
 
@@ -183,6 +185,21 @@ export default function OrderDetailsContent() {
   );
   const [pagesAutoDetected, setPagesAutoDetected] = useState(false);
   const [detectingPages, setDetectingPages] = useState(false);
+  const [textPagesAutoDetected, setTextPagesAutoDetected] = useState(false);
+
+  const WORDS_PER_PAGE = 250;
+
+  const handleTextChange = (text: string) => {
+    handleInputChange("documentText", text);
+    const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount > 0) {
+      const estimated = Math.max(1, Math.ceil(wordCount / WORDS_PER_PAGE));
+      setFormData(prev => ({ ...prev, pages: estimated }));
+      setTextPagesAutoDetected(true);
+    } else {
+      setTextPagesAutoDetected(false);
+    }
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     multiple: false,
@@ -561,14 +578,82 @@ export default function OrderDetailsContent() {
                   error={errors.hardcopyContactPhone}
                 />
 
-                <TextInput
-                  label="Number of Documents"
-                  name="hardcopyDocCount"
-                  type="number"
-                  placeholder="How many documents to collect"
-                  value={formData.hardcopyDocCount || ""}
-                  onChange={(v) => handleInputChange("hardcopyDocCount", v)}
-                />
+                {/* Document count — smart selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Documents to Collect</label>
+                  <div className="flex gap-2 mb-3">
+                    {(["known", "unsure", "custom"] as const).map((mode) => {
+                      const labels = { known: "I know the count", unsure: "Not sure", custom: "Custom" };
+                      const active = (formData.hardcopyDocMode || "known") === mode;
+                      return (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => handleInputChange("hardcopyDocMode", mode)}
+                          className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg border transition-all ${active ? "bg-[#5123d4] text-white border-[#5123d4]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5123d4]/40"}`}
+                        >
+                          {labels[mode]}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {(formData.hardcopyDocMode === "known" || !formData.hardcopyDocMode) && (
+                    <div>
+                      <input
+                        type="number"
+                        min={1}
+                        title="Number of documents"
+                        placeholder="e.g. 3"
+                        value={formData.hardcopyDocCount || ""}
+                        onChange={(e) => handleInputChange("hardcopyDocCount", e.target.value)}
+                        className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Enter the exact number of separate documents/files.</p>
+                    </div>
+                  )}
+
+                  {formData.hardcopyDocMode === "unsure" && (() => {
+                    const rawPages = parseInt(formData.hardcopyDocCount || "0", 10);
+                    const estimatedDocs = rawPages > 0 ? Math.max(1, Math.ceil(rawPages / 20)) : null;
+                    return (
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Total number of pages (approx.)</label>
+                        <input
+                          type="number"
+                          min={1}
+                          title="Total pages"
+                          placeholder="e.g. 60"
+                          value={formData.hardcopyDocCount || ""}
+                          onChange={(e) => handleInputChange("hardcopyDocCount", e.target.value)}
+                          className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                        />
+                        {estimatedDocs !== null && (
+                          <div className="mt-2 flex items-center gap-2 bg-[#f0ebff] border border-[#5123d4]/20 rounded-lg px-3 py-2">
+                            <span className="text-xs text-[#5123d4] font-semibold">
+                              Estimated: ~{estimatedDocs} document{estimatedDocs !== 1 ? "s" : ""}
+                            </span>
+                            <span className="text-xs text-gray-400">(~20 pages each)</span>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">We will estimate based on ~20 pages per document.</p>
+                      </div>
+                    );
+                  })()}
+
+                  {formData.hardcopyDocMode === "custom" && (
+                    <div>
+                      <textarea
+                        rows={3}
+                        placeholder="Describe your documents (e.g. 2 A4 booklets, 1 large folder, 3 loose sheets)…"
+                        value={formData.hardcopyCustomDesc || ""}
+                        onChange={(e) => handleInputChange("hardcopyCustomDesc", e.target.value)}
+                        className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-none"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Describe the size, type, or quantity so our rider comes prepared.</p>
+                    </div>
+                  )}
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Additional Instructions</label>
@@ -615,14 +700,29 @@ export default function OrderDetailsContent() {
             ) : (
               <>
                 <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-sm font-medium text-gray-700">Document Content</label>
+                    {textPagesAutoDetected && formData.documentText && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-green-600 font-medium bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                        ✓ ~{formData.pages} page{(formData.pages ?? 1) !== 1 ? "s" : ""} auto-detected
+                      </span>
+                    )}
+                  </div>
                   <textarea
                     value={formData.documentText || ""}
-                    onChange={(e) => handleInputChange("documentText", e.target.value)}
+                    onChange={(e) => handleTextChange(e.target.value)}
                     placeholder="Paste or type your document content here…"
                     rows={8}
                     className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-y leading-relaxed"
                   />
-                  <p className="text-xs text-gray-400 mt-1">{(formData.documentText || "").length} characters</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-gray-400">
+                      {(formData.documentText || "").trim().split(/\s+/).filter(Boolean).length} words · {(formData.documentText || "").length} characters
+                    </p>
+                    {textPagesAutoDetected && formData.documentText && (
+                      <p className="text-xs text-gray-400">Based on ~{WORDS_PER_PAGE} words/page</p>
+                    )}
+                  </div>
                 </div>
                 {formData.documentText && (
                   <div className="border border-gray-200 rounded-xl overflow-hidden">

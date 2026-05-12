@@ -65,6 +65,8 @@ export interface OrderData {
   hardcopyContactName: string;
   hardcopyContactPhone: string;
   hardcopyDocCount: string;
+  hardcopyDocMode: "known" | "unsure" | "custom" | "";
+  hardcopyCustomDesc: string;
   hardcopyInstructions: string;
 
   // Approval flow

@@ -5,7 +5,6 @@ import {
   Package, Clock, Loader2, TrendingUp, CheckCircle,
   Truck, XCircle, Search, RefreshCw, X, ChevronDown,
   Phone, Mail, MapPin, Layers, MessageCircle, Trash2, Download, LogOut, ExternalLink,
-  Settings, Check, Pencil,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -495,10 +494,6 @@ export default function AdminDashboard() {
   const [partnerPhotos, setPartnerPhotos] = useState<Record<string, PartnerPhoto[]>>({});
   const [photosLoading, setPhotosLoading] = useState<string | null>(null);
   const [lightboxPhoto, setLightboxPhoto] = useState<{ dataUrl: string; label: string } | null>(null);
-  const [settingsPhone, setSettingsPhone]       = useState("+2348166027757");
-  const [editingPhone, setEditingPhone]         = useState(false);
-  const [editPhoneVal, setEditPhoneVal]         = useState("");
-  const [savingPhone, setSavingPhone]           = useState(false);
   const prevCountRef                          = useRef(0);
 
   const handleLogout = async () => {
@@ -595,34 +590,6 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => { void fetchPartners(); }, [fetchPartners]);
-
-  useEffect(() => {
-    fetch("/api/admin/settings", { headers: authHeaders() })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.phoneNumber) setSettingsPhone(d.phoneNumber); })
-      .catch(() => {});
-  }, []);
-
-  const savePhone = async () => {
-    if (!editPhoneVal.trim()) return;
-    setSavingPhone(true);
-    try {
-      const res = await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ phoneNumber: editPhoneVal.trim() }),
-      });
-      if (!res.ok) throw new Error();
-      const d = await res.json() as { phoneNumber: string };
-      setSettingsPhone(d.phoneNumber);
-      setEditingPhone(false);
-      toast.success("Contact number updated");
-    } catch {
-      toast.error("Failed to save number");
-    } finally {
-      setSavingPhone(false);
-    }
-  };
 
   const fetchPartnerPhotos = useCallback(async (id: string) => {
     if (partnerPhotos[id]) return;
@@ -1173,62 +1140,6 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Settings */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-              <Settings className="w-4 h-4 text-gray-400" />
-              <h2 className="text-base font-bold text-black">Settings</h2>
-            </div>
-            <div className="px-5 py-5">
-              <div className="max-w-sm">
-                <p className="text-xs text-gray-400 uppercase font-medium mb-1">Customer Contact Number</p>
-                <p className="text-xs text-gray-500 mb-3">This number appears on your website and tracking page for customers to reach you.</p>
-                {editingPhone ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="tel"
-                      value={editPhoneVal}
-                      onChange={e => setEditPhoneVal(e.target.value)}
-                      placeholder="+2348166027757"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-                      autoFocus
-                      onKeyDown={e => { if (e.key === "Enter") void savePhone(); if (e.key === "Escape") setEditingPhone(false); }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => void savePhone()}
-                      disabled={savingPhone || !editPhoneVal.trim()}
-                      className="flex items-center gap-1 px-3 py-2 bg-[#5123d4] hover:bg-[#401AA0] text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
-                    >
-                      {savingPhone ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditingPhone(false)}
-                      className="px-3 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-sm font-medium transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-semibold text-gray-800">{settingsPhone}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setEditPhoneVal(settingsPhone); setEditingPhone(true); }}
-                      className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-sm font-medium transition-colors"
-                    >
-                      <Pencil className="w-3.5 h-3.5" /> Edit
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
 
         </div>
       </div>

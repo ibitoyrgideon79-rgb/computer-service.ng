@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell, Shield, User, Save, Eye, EyeOff, CheckCircle,
-  Loader2, AlertCircle, Mail, Phone,
+  Loader2, AlertCircle, Mail, Phone, Pencil, Check,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -117,6 +117,39 @@ export default function AdminSettingsPage() {
     } catch { /* ignore */ }
   }, []);
 
+  const [contactPhone, setContactPhone]   = useState("+2348166027757");
+  const [editingPhone, setEditingPhone]   = useState(false);
+  const [editPhoneVal, setEditPhoneVal]   = useState("");
+  const [savingPhone,  setSavingPhone]    = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/settings", { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.phoneNumber) setContactPhone(d.phoneNumber); })
+      .catch(() => {});
+  }, []);
+
+  const savePhone = async () => {
+    if (!editPhoneVal.trim()) return;
+    setSavingPhone(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ phoneNumber: editPhoneVal.trim() }),
+      });
+      if (!res.ok) throw new Error();
+      const d = await res.json() as { phoneNumber: string };
+      setContactPhone(d.phoneNumber);
+      setEditingPhone(false);
+      toast.success("Contact number updated");
+    } catch {
+      toast.error("Failed to save number");
+    } finally {
+      setSavingPhone(false);
+    }
+  };
+
   return (
     <>
       <Toaster position="top-right" />
@@ -144,15 +177,55 @@ export default function AdminSettingsPage() {
                   <p className="font-medium text-black">{adminEmail || "—"}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                <Phone className="w-4 h-4 text-gray-400 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Notification Phone</p>
-                  <p className="font-medium text-black">{process.env.NEXT_PUBLIC_ADMIN_PHONE_DISPLAY || "Set ADMIN_PHONE in .env"}</p>
+              <div className="p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-2">
+                  <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+                  <p className="text-xs text-gray-400">Customer Contact Number</p>
                 </div>
+                {editingPhone ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="tel"
+                      value={editPhoneVal}
+                      onChange={e => setEditPhoneVal(e.target.value)}
+                      placeholder="+2348166027757"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                      autoFocus
+                      onKeyDown={e => { if (e.key === "Enter") void savePhone(); if (e.key === "Escape") setEditingPhone(false); }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void savePhone()}
+                      disabled={savingPhone || !editPhoneVal.trim()}
+                      className="flex items-center gap-1 px-3 py-2 bg-[#5123d4] hover:bg-[#401AA0] text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+                    >
+                      {savingPhone ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingPhone(false)}
+                      className="px-3 py-2 border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-xl text-sm font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold text-black text-sm">{contactPhone}</p>
+                    <button
+                      type="button"
+                      onClick={() => { setEditPhoneVal(contactPhone); setEditingPhone(true); }}
+                      className="flex items-center gap-1.5 text-xs text-[#5123d4] hover:text-[#401AA0] font-medium transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" /> Edit
+                    </button>
+                  </div>
+                )}
+                <p className="text-[11px] text-gray-400 mt-2">This number shows on your website and order tracking page.</p>
               </div>
               <p className="text-xs text-gray-400 px-1">
-                To change the admin email or notification phone, update the <code className="bg-gray-100 px-1 rounded">ADMIN_EMAIL</code> and <code className="bg-gray-100 px-1 rounded">ADMIN_PHONE</code> environment variables.
+                To change the admin login email, update the <code className="bg-gray-100 px-1 rounded">ADMIN_EMAIL</code> environment variable.
               </p>
             </div>
           </div>
