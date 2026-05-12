@@ -181,13 +181,36 @@ export default function OrderDetailsContent() {
   const [uploadMode, setUploadMode] = useState<"file" | "text" | "hardcopy">(
     orderData.deliveryMethod === "Hardcopy Pickup" ? "hardcopy" : orderData.documentText ? "text" : "file"
   );
+  const [pagesAutoDetected, setPagesAutoDetected] = useState(false);
+  const [detectingPages, setDetectingPages] = useState(false);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     multiple: false,
     maxSize: 50 * 1024 * 1024,
-    onDropAccepted: (files) => {
-      setFormData(prev => ({ ...prev, document: files[0] }));
+    onDropAccepted: async (files) => {
+      const file = files[0];
+      setFormData(prev => ({ ...prev, document: file }));
       setErrors(prev => ({ ...prev, document: "" }));
+      setPagesAutoDetected(false);
+
+      if (file.type === "application/pdf") {
+        setDetectingPages(true);
+        try {
+          const pdfjsLib = await import("pdfjs-dist");
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+          const buffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+          setFormData(prev => ({ ...prev, pages: pdf.numPages }));
+          setPagesAutoDetected(true);
+        } catch {
+          // silent — user can enter manually
+        } finally {
+          setDetectingPages(false);
+        }
+      } else if (file.type.startsWith("image/")) {
+        setFormData(prev => ({ ...prev, pages: 1 }));
+        setPagesAutoDetected(true);
+      }
     },
     onDropRejected: (rejected) => {
       const msg = rejected[0]?.errors[0]?.code === "file-too-large"
@@ -364,7 +387,36 @@ export default function OrderDetailsContent() {
                 </div>
 
                 <RadioRow label="Size" name="paperType" required options={["A4", "A3", "Custom type", "Passport"]} value={formData.paperType || ""} onChange={(v) => handleInputChange("paperType", v as OrderData["paperType"])} />
-                <TextInput label="Number of Pages" name="pages" type="number" required value={String(formData.pages ?? "")} onChange={(v) => handleInputChange("pages", v ? parseInt(v, 10) : undefined as unknown as number)} />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Number of Pages <span className="text-red-500">*</span>
+                    {detectingPages && (
+                      <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-[#5123d4] font-normal">
+                        <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                        Counting pages…
+                      </span>
+                    )}
+                    {pagesAutoDetected && !detectingPages && (
+                      <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-green-600 font-normal bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                        ✓ Auto-detected
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="number"
+                    name="pages"
+                    title="Number of pages"
+                    placeholder="e.g. 5"
+                    min={1}
+                    value={String(formData.pages ?? "")}
+                    onChange={(e) => {
+                      handleInputChange("pages", e.target.value ? parseInt(e.target.value, 10) : undefined as unknown as number);
+                      setPagesAutoDetected(false);
+                    }}
+                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Automatically counted from your uploaded file. You can adjust if needed.</p>
+                </div>
               </>
             )}
 
