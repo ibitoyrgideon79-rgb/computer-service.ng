@@ -118,3 +118,11 @@ model OtpCode {
   @@index([identifier])
   @@map("otp_codes")
 }
+
+model Settings {
+  id          String   @id @default("singleton")
+  phoneNumber String   @default("+2348166027757") @map("phone_number")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}

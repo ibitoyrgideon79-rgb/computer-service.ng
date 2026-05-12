@@ -37,6 +37,14 @@ export default function Home() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [recallModalOpen, setRecallModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [contactPhone, setContactPhone] = useState("+234 8166027757");
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.phoneNumber) setContactPhone(d.phoneNumber); })
+      .catch(() => {});
+  }, []);
 
   // Load saved order data on page load
   useEffect(() => {
@@ -165,11 +173,11 @@ export default function Home() {
       {/* Navbar */}
       <header className="w-full border-b border-gray-900 sticky top-0 bg-black z-50">
         <div className="container mx-auto px-4 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 sm:gap-3">
+          <Link href="/" className="flex flex-col items-start">
             <div className="relative h-12 w-44 sm:h-16 sm:w-56 md:h-20 md:w-72">
               <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
             </div>
-            <span className="text-white text-[10px] sm:text-xs font-bold tracking-widest border border-white/25 rounded px-2 py-0.5 whitespace-nowrap">RC: 9511799</span>
+            <span className="self-end -mt-1 text-white text-[10px] font-bold tracking-widest border border-white/25 rounded px-2 py-0.5 whitespace-nowrap">RC: 9511799</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-white">
@@ -584,9 +592,9 @@ export default function Home() {
                     </a>
                   </li>
                   <li>
-                    <a href="tel:08166027757" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <a href={`tel:${contactPhone.replace(/\s/g, "")}`} className="flex items-center gap-2 hover:text-white transition-colors">
                       <Phone className="w-3.5 h-3.5 shrink-0" />
-                      +234 8166027757
+                      {contactPhone}
                     </a>
                   </li>
                 </ul>
