@@ -433,16 +433,11 @@ export default function OrderDetailsContent() {
                     type="number"
                     name="pages"
                     title="Number of pages"
-                    placeholder="e.g. 5"
-                    min={1}
+                    readOnly
                     value={String(formData.pages ?? "")}
-                    onChange={(e) => {
-                      handleInputChange("pages", e.target.value ? parseInt(e.target.value, 10) : undefined as unknown as number);
-                      setPagesAutoDetected(false);
-                    }}
-                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm cursor-not-allowed opacity-70"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Auto-counted from your uploaded files. You can adjust if needed.</p>
+                  <p className="text-xs text-gray-400 mt-1">Automatically counted from your uploaded files.</p>
                 </div>
               </>
             )}

@@ -28,6 +28,7 @@ export default function OrderReviewPage() {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [selectedFileIndex, setSelectedFileIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [approved, setApproved] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -35,13 +36,23 @@ export default function OrderReviewPage() {
   const [submitError, setSubmitError] = useState("");
   const previewRef = useRef<HTMLDivElement>(null);
 
+  const allFiles = orderData.documents?.length
+    ? orderData.documents
+    : orderData.document ? [orderData.document] : [];
+
+  const activeFile = allFiles[selectedFileIndex] ?? null;
+
   useEffect(() => {
-    if (orderData.document) {
-      const url = URL.createObjectURL(orderData.document);
+    if (activeFile) {
+      const url = URL.createObjectURL(activeFile);
       setFileUrl(url);
+      setPageNumber(1);
+      setNumPages(undefined);
       return () => URL.revokeObjectURL(url);
+    } else {
+      setFileUrl(null);
     }
-  }, [orderData.document]);
+  }, [activeFile]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -87,18 +98,17 @@ export default function OrderReviewPage() {
   const hasCustomHtml = !!(orderData.customDocumentHtml?.trim());
   const hasDocumentText = !!(orderData.documentText?.trim());
   const hasUploadedFile = !!fileUrl;
-  const isPdf = orderData.document?.type === "application/pdf";
-  const isImage = orderData.document?.type?.startsWith("image/");
-  const allFiles = orderData.documents?.length ? orderData.documents : orderData.document ? [orderData.document] : [];
+  const isPdf = activeFile?.type === "application/pdf";
+  const isImage = activeFile?.type?.startsWith("image/");
   const hasMultipleFiles = allFiles.length > 1;
 
   const docLabel = hasCustomHtml
     ? "Typed Document"
     : hasDocumentText
     ? "Pasted Text"
-    : allFiles.length > 0
-    ? (allFiles.length > 1 ? `${allFiles.length} Files Uploaded` : allFiles[0].name)
-    : "No document uploaded";
+    : allFiles.length > 1
+    ? `File ${selectedFileIndex + 1} of ${allFiles.length}: ${activeFile?.name ?? ""}`
+    : (activeFile?.name || "No document uploaded");
 
   const handleDownload = async () => {
     if (hasCustomHtml) {
@@ -115,10 +125,10 @@ export default function OrderReviewPage() {
       a.download = "document.txt";
       a.click();
       URL.revokeObjectURL(url);
-    } else if (fileUrl && orderData.document) {
+    } else if (fileUrl && activeFile) {
       const a = document.createElement("a");
       a.href = fileUrl;
-      a.download = orderData.document.name;
+      a.download = activeFile.name;
       a.click();
     }
   };
@@ -173,7 +183,35 @@ export default function OrderReviewPage() {
 
       const savedOrderId = orderJson.id; // UUID for Prisma, used for PATCH
 
-      // 2. Initialize Paystack server-side to get access_code
+      // 2. Upload attached files (convert to base64 data URLs)
+      if (allFiles.length > 0) {
+        try {
+          const filePayloads = await Promise.all(
+            allFiles.map((file) =>
+              new Promise<{ name: string; type: string; size: number; dataUrl: string }>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve({
+                  name:    file.name,
+                  type:    file.type,
+                  size:    file.size,
+                  dataUrl: reader.result as string,
+                });
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+              })
+            )
+          );
+          await fetch(`/api/orders/${savedOrderId}/documents`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ files: filePayloads }),
+          });
+        } catch {
+          // Non-blocking — order is still placed even if file upload fails
+        }
+      }
+
+      // 3. Initialize Paystack server-side to get access_code
       const payRes = await fetch("/api/payment/initialize", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -460,8 +498,32 @@ export default function OrderReviewPage() {
 
                     <div className="lg:col-span-8 flex flex-col min-h-125">
 
+            {/* File tabs — shown when multiple files uploaded */}
+            {hasMultipleFiles && (
+              <div className="bg-[#181818] rounded-t-xl border-b border-gray-800 flex overflow-x-auto">
+                {allFiles.map((f, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedFileIndex(i)}
+                    className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap shrink-0 border-b-2 transition-colors ${
+                      i === selectedFileIndex
+                        ? "border-[#5123d4] text-white bg-[#1e1e1e]"
+                        : "border-transparent text-white/50 hover:text-white/80 hover:bg-white/5"
+                    }`}
+                  >
+                    <FileText className="w-3 h-3 shrink-0" />
+                    <span className="max-w-28 truncate">{f.name}</span>
+                    <span className="text-[10px] text-white/40 ml-0.5">
+                      {f.type === "application/pdf" ? "PDF" : f.type.startsWith("image/") ? "IMG" : "DOC"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Preview toolbar */}
-            <div className="bg-[#1e1e1e] rounded-t-xl p-2 sm:p-3 flex items-center justify-between text-white border-b border-gray-800 gap-2">
+            <div className={`bg-[#1e1e1e] ${hasMultipleFiles ? "" : "rounded-t-xl"} p-2 sm:p-3 flex items-center justify-between text-white border-b border-gray-800 gap-2`}>
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xs sm:text-sm font-medium truncate max-w-30 sm:max-w-50">{docLabel}</span>
                 {(hasCustomHtml || hasDocumentText) && (
@@ -529,33 +591,6 @@ export default function OrderReviewPage() {
                     {orderData.documentText}
                   </div>
                 </div>
-              ) : hasMultipleFiles ? (
-                /* Multiple files — show list + preview first previewable file */
-                <div className="w-full space-y-4 self-start">
-                  <div className="bg-white/10 rounded-xl p-4 space-y-2">
-                    <p className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-3">
-                      {allFiles.length} Files Uploaded · {pages} Pages Total
-                    </p>
-                    {allFiles.map((f, i) => (
-                      <div key={i} className="flex items-center gap-3 bg-white/10 rounded-lg px-3 py-2.5">
-                        <FileText className="w-4 h-4 text-[#D1AFFF] shrink-0" />
-                        <span className="text-sm text-white truncate">{f.name}</span>
-                        <span className="ml-auto text-xs text-white/50 shrink-0">
-                          {f.type === "application/pdf" ? "PDF" : f.type.startsWith("image/") ? "Image" : "Doc"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Preview first PDF or image */}
-                  {allFiles[0]?.type === "application/pdf" && fileUrl ? (
-                    <PdfPreview fileUrl={fileUrl} pageNumber={pageNumber} scale={scale} onLoadSuccess={onDocumentLoadSuccess} />
-                  ) : allFiles[0]?.type?.startsWith("image/") && fileUrl ? (
-                    <div style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={fileUrl} alt="First uploaded file" className="max-w-full h-auto shadow-xl bg-white rounded" />
-                    </div>
-                  ) : null}
-                </div>
               ) : hasUploadedFile && isPdf ? (
                 <PdfPreview
                   fileUrl={fileUrl!}
@@ -575,9 +610,9 @@ export default function OrderReviewPage() {
                     <FileText className="w-8 h-8 text-[#D1AFFF]" />
                   </div>
                   <div>
-                    <p className="text-white font-semibold">{orderData.document?.name}</p>
+                    <p className="text-white font-semibold">{activeFile?.name}</p>
                     <p className="text-white/60 text-sm mt-1">
-                      {((orderData.document?.size ?? 0) / 1024).toFixed(0)} KB · {pages} page{pages !== 1 ? "s" : ""}
+                      {((activeFile?.size ?? 0) / 1024).toFixed(0)} KB · {pages} page{pages !== 1 ? "s" : ""}
                     </p>
                     <p className="text-white/40 text-xs mt-2">Preview not available for this file type</p>
                   </div>

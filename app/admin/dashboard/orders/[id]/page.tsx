@@ -9,6 +9,14 @@ import {
 import { format } from "date-fns";
 
 
+interface OrderDoc {
+  id:       string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  dataUrl:  string;
+}
+
 interface Order {
   id: string;
   order_id: string;
@@ -126,9 +134,10 @@ export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router  = useRouter();
 
-  const [order,   setOrder]   = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState("");
+  const [order,     setOrder]     = useState<Order | null>(null);
+  const [orderDocs, setOrderDocs] = useState<OrderDoc[]>([]);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState("");
 
   // Status dropdown
   const [showStatusMenu, setShowStatusMenu] = useState(false);
@@ -140,11 +149,18 @@ export default function OrderDetailPage() {
 
   const fetchOrder = useCallback(async () => {
     try {
-      const res  = await fetch(`/api/admin/orders/${id}`, { headers: authHeaders() });
-      if (res.status === 401) { router.push("/admin/login"); return; }
-      if (!res.ok) { setError("Order not found."); return; }
-      const data = await res.json();
+      const [orderRes, docsRes] = await Promise.all([
+        fetch(`/api/admin/orders/${id}`,           { headers: authHeaders() }),
+        fetch(`/api/admin/orders/${id}/documents`, { headers: authHeaders() }),
+      ]);
+      if (orderRes.status === 401) { router.push("/admin/login"); return; }
+      if (!orderRes.ok) { setError("Order not found."); return; }
+      const data = await orderRes.json();
       setOrder(data);
+      if (docsRes.ok) {
+        const docs = await docsRes.json();
+        setOrderDocs(docs);
+      }
     } catch {
       setError("Failed to load order.");
     } finally {
@@ -187,7 +203,7 @@ export default function OrderDetailPage() {
       <div className="min-h-screen bg-[#f8f9fc] flex flex-col items-center justify-center gap-3">
         <XCircle className="w-12 h-12 text-red-400" />
         <p className="text-gray-600">{error || "Order not found."}</p>
-        <button onClick={() => router.back()} className="text-[#5123d4] text-sm underline">Go back</button>
+        <button type="button" onClick={() => router.back()} className="text-[#5123d4] text-sm underline">Go back</button>
       </div>
     );
   }
@@ -212,16 +228,16 @@ export default function OrderDetailPage() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-          <button onClick={() => router.push("/admin/dashboard")} className="hover:text-[#5123d4]">Orders</button>
+          <button type="button" onClick={() => router.push("/admin/dashboard")} className="hover:text-[#5123d4]">Orders</button>
           <span>/</span>
-          <button onClick={() => router.push("/admin/dashboard")} className="hover:text-[#5123d4]">All Orders</button>
+          <button type="button" onClick={() => router.push("/admin/dashboard")} className="hover:text-[#5123d4]">All Orders</button>
           <span>/</span>
           <span className="text-gray-800 font-medium">{order.order_id}</span>
         </nav>
 
         {/* Title row */}
         <div className="flex items-center gap-3 mb-2">
-          <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 mr-1">
+          <button type="button" aria-label="Go back" onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 mr-1">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <h1 className="text-3xl font-bold text-[#5123d4]">Project Details</h1>
@@ -337,23 +353,39 @@ export default function OrderDetailPage() {
             {/* Action buttons */}
             <div className="border-t border-gray-100 px-6 py-5 flex flex-wrap gap-3">
 
-              {/* Download */}
-              {(order.file_url || order.document_text) && (
+              {/* Download uploaded files */}
+              {orderDocs.map((doc) => (
                 <a
-                  href={order.file_url ?? `data:text/plain;charset=utf-8,${encodeURIComponent(order.document_text ?? "")}`}
-                  download={order.file_url ? undefined : `${order.order_id}.txt`}
-                  target={order.file_url ? "_blank" : undefined}
-                  rel="noreferrer"
+                  key={doc.id}
+                  href={doc.dataUrl}
+                  download={doc.fileName}
+                  className="flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors max-w-52 truncate"
+                  title={`Download ${doc.fileName}`}
+                >
+                  <Download className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{doc.fileName}</span>
+                  <span className="text-white/60 text-xs shrink-0">
+                    {(doc.fileSize / 1024).toFixed(0)}KB
+                  </span>
+                </a>
+              ))}
+
+              {/* Download typed text if no uploaded files */}
+              {orderDocs.length === 0 && order.document_text && (
+                <a
+                  href={`data:text/plain;charset=utf-8,${encodeURIComponent(order.document_text)}`}
+                  download={`${order.order_id}.txt`}
                   className="flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors"
                 >
                   <Download className="w-4 h-4" />
-                  Download
+                  Download Text
                 </a>
               )}
 
               {/* Update Status */}
               <div className="relative">
                 <button
+                  type="button"
                   onClick={() => setShowStatusMenu((p) => !p)}
                   disabled={updating}
                   className="flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] disabled:opacity-60 text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors"
@@ -366,6 +398,7 @@ export default function OrderDetailPage() {
                     {STATUS_LIST.filter((s) => s !== order.status).map((s) => (
                       <button
                         key={s}
+                        type="button"
                         onClick={() => updateStatus(s)}
                         className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-[#f0ebff] hover:text-[#5123d4] transition-colors flex items-center gap-2"
                       >
@@ -379,6 +412,7 @@ export default function OrderDetailPage() {
 
               {/* Forward */}
               <button
+                type="button"
                 onClick={() => setShowForward(true)}
                 className="flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white text-sm font-semibold px-6 py-2.5 rounded-lg transition-colors"
               >
@@ -431,12 +465,14 @@ export default function OrderDetailPage() {
             />
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => setShowForward(false)}
                 className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => { setShowForward(false); setForwardTo(""); }}
                 className="flex-1 bg-[#5123d4] text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-[#401AA0]"
               >

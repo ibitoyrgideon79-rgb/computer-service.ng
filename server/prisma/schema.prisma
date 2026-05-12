@@ -108,6 +108,19 @@ model DeliveryOption {
   @@map("delivery_options")
 }
 
+model OrderDocument {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  fileName  String   @map("file_name")
+  fileType  String   @map("file_type")
+  fileSize  Int      @map("file_size")
+  dataUrl   String   @map("data_url") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([orderId])
+  @@map("order_documents")
+}
+
 model OtpCode {
   id         String   @id @default(uuid())
   identifier String
