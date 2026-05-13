@@ -66,10 +66,25 @@ export interface OrderData {
   hardcopyContactName: string;
   hardcopyCompany: string;
   hardcopyContactPhone: string;
+  hardcopyOrderRef: string;
   hardcopyDocCount: string;
   hardcopyDocMode: "known" | "unsure" | "custom" | "";
   hardcopyCustomDesc: string;
   hardcopyInstructions: string;
+
+  // Additional projects (multi-service order)
+  additionalProjects?: Array<{
+    id: string;
+    service: string;
+    uploadMode: "file" | "text";
+    documents: File[];
+    documentText: string;
+    printColor: string;
+    paperType: string;
+    pages?: number;
+    finishingOption: string;
+    pagesAutoDetected: boolean;
+  }>;
 
   // Approval flow
   submittedOrderId: string;
@@ -109,6 +124,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
       ...orderData,
       document: null,
       documents: [],
+      additionalProjects: orderData.additionalProjects?.map(p => ({ ...p, documents: [] })),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   },

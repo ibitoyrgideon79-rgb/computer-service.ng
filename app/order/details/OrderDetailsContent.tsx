@@ -3,12 +3,12 @@
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOrderStore, OrderData, ScheduledStop } from "@/store/useOrderStore";
-import { UploadCloud, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { UploadCloud, AlertCircle, Plus, Trash2, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
 const RATE: Record<string, Record<string, number>> = {
   "Black & white": { A4: 300, A3: 500, "Custom type": 300, Passport: 300 },
-  Coloured:        { A4: 700, A3: 1200, "Custom type": 700, Passport: 750 },
+  Coloured:        { A4: 500, A3: 1200, "Custom type": 500, Passport: 750 },
 };
 const FINISHING_COST: Record<string, number> = {
   None: 0, Stapled: 200, "Spiral Binding": 500, "Hardcover Binding": 2000,
@@ -67,6 +67,257 @@ const NIGERIAN_STATES = [
   "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo",
   "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
 ];
+
+interface AdditionalProject {
+  id: string;
+  service: string;
+  uploadMode: "file" | "text";
+  documents: File[];
+  documentText: string;
+  printColor: "Black & white" | "Coloured" | "";
+  paperType: "A4" | "A3" | "Custom type" | "";
+  pages?: number;
+  finishingOption: "None" | "Spiral Binding" | "Stapled" | "Hardcover Binding" | "";
+  pagesAutoDetected: boolean;
+}
+
+function calculateProjectSubtotal(proj: AdditionalProject): number {
+  if (!proj.service) return 0;
+  if (proj.service === "Lamination") return LAMINATION_FEE;
+  const isPrint = ["Printing", "Photocopy"].includes(proj.service);
+  if (!isPrint) return SERVICE_FEE;
+  const sizeKey = (proj.paperType || "A4") as string;
+  const rate = RATE[proj.printColor || "Black & white"]?.[sizeKey] ?? 0;
+  const finCost = FINISHING_COST[proj.finishingOption || "None"] ?? 0;
+  return Math.max((proj.pages ?? 0) * rate + finCost + SERVICE_FEE, SERVICE_FEE);
+}
+
+function ProjectCard({
+  proj, index, onUpdate, onRemove,
+}: {
+  proj: AdditionalProject;
+  index: number;
+  onUpdate: (id: string, updates: Partial<AdditionalProject>) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [detectingPages, setDetectingPages] = useState(false);
+  const isPrint = ["Printing", "Photocopy"].includes(proj.service);
+
+  const detectPages = async (files: File[]): Promise<number> => {
+    setDetectingPages(true);
+    let total = 0;
+    try {
+      for (const file of files) {
+        if (file.type === "application/pdf") {
+          try {
+            const pdfjsLib = await import("pdfjs-dist");
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+            const buffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+            total += pdf.numPages;
+          } catch { total += 1; }
+        } else if (file.type.startsWith("image/")) {
+          total += 1;
+        } else {
+          total += 1;
+        }
+      }
+    } finally {
+      setDetectingPages(false);
+    }
+    return Math.max(total, 1);
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    multiple: true,
+    maxSize: 50 * 1024 * 1024,
+    onDropAccepted: async (newFiles) => {
+      const merged = [...proj.documents, ...newFiles];
+      onUpdate(proj.id, { documents: merged, pagesAutoDetected: false });
+      const pages = await detectPages(merged);
+      onUpdate(proj.id, { pages, pagesAutoDetected: true });
+    },
+  });
+
+  const subtotal = calculateProjectSubtotal(proj);
+
+  return (
+    <div className="bg-white border border-[#5123d4]/20 rounded-xl p-5 space-y-4 shadow-sm">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+        <div className="flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-[#5123d4] text-white text-xs font-bold flex items-center justify-center shrink-0">{index + 2}</span>
+          <h4 className="font-bold text-sm text-gray-900">{proj.service || "New Service"}</h4>
+        </div>
+        <button
+          type="button"
+          onClick={() => onRemove(proj.id)}
+          className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 rounded-lg px-2 py-1 transition-colors"
+        >
+          <X className="w-3 h-3" /> Remove
+        </button>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Service <span className="text-red-500">*</span></label>
+        <select
+          aria-label="Additional project service"
+          value={proj.service}
+          onChange={(e) => onUpdate(proj.id, { service: e.target.value })}
+          className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+        >
+          <option value="">Select a service…</option>
+          {["Printing", "Photocopy", "Binding", "Scanning", "Typing", "Document Conversion", "Graphic/Logo Design", "Business Card / ID Card", "Application Services", "Technical Support", "Lamination", "Other"].map((opt) => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+        <button
+          type="button"
+          onClick={() => onUpdate(proj.id, { uploadMode: "file" })}
+          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "file" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+        >Upload File</button>
+        <button
+          type="button"
+          onClick={() => onUpdate(proj.id, { uploadMode: "text", documents: [], pages: undefined, pagesAutoDetected: false })}
+          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "text" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+        >Type / Paste</button>
+      </div>
+
+      {proj.uploadMode === "file" ? (
+        <div className="space-y-2">
+          <div
+            {...getRootProps()}
+            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${isDragActive ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-300 hover:border-[#5123d4]/60 hover:bg-gray-50"}`}
+          >
+            <input {...getInputProps()} />
+            <UploadCloud className={`w-8 h-8 mx-auto mb-2 transition-colors ${isDragActive ? "text-[#5123d4]" : "text-gray-400"}`} />
+            <p className="text-sm font-medium text-gray-700">{isDragActive ? "Drop files here…" : "Drag & drop or click to browse"}</p>
+            <p className="text-xs text-gray-400 mt-1">PDF, Word, images — Max 50MB each · Multiple files</p>
+          </div>
+          {proj.documents.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-600">
+                  {proj.documents.length} file{proj.documents.length !== 1 ? "s" : ""} selected
+                  {proj.pagesAutoDetected && proj.pages && (
+                    <span className="ml-2 text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                      ✓ {proj.pages} page{proj.pages !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onUpdate(proj.id, { documents: [], pages: undefined, pagesAutoDetected: false })}
+                  className="text-xs text-red-400 hover:text-red-600"
+                >Clear all</button>
+              </div>
+              {proj.documents.map((file, fi) => (
+                <div key={fi} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs font-bold text-green-600 shrink-0">#{fi + 1}</span>
+                    <span className="text-sm text-green-700 font-medium truncate max-w-xs">✓ {file.name}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = proj.documents.filter((_, i) => i !== fi);
+                      onUpdate(proj.id, { documents: updated });
+                      if (updated.length === 0) {
+                        onUpdate(proj.id, { pages: undefined, pagesAutoDetected: false });
+                      } else {
+                        detectPages(updated).then(p => onUpdate(proj.id, { pages: p, pagesAutoDetected: true }));
+                      }
+                    }}
+                    className="text-xs text-red-400 hover:text-red-600 ml-2 shrink-0"
+                  >Remove</button>
+                </div>
+              ))}
+              {isPrint && (
+                <div className="pt-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Total Pages
+                    {detectingPages && <span className="ml-1 text-[#5123d4]">(counting…)</span>}
+                    {proj.pagesAutoDetected && !detectingPages && <span className="ml-1 text-green-600">✓ auto-detected</span>}
+                  </label>
+                  <input
+                    type="number"
+                    readOnly
+                    title="Pages"
+                    value={proj.pages ?? ""}
+                    className="w-full bg-[#F1F5F9] text-black px-3 py-2 rounded-lg text-sm cursor-not-allowed opacity-70"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <textarea
+          value={proj.documentText}
+          onChange={(e) => onUpdate(proj.id, { documentText: e.target.value })}
+          placeholder="Paste or type your document content here…"
+          rows={5}
+          className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-y"
+        />
+      )}
+
+      {isPrint && (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+            <div className="space-y-2">
+              {([
+                { value: "Black & white" as const, prices: { A4: 300, A3: 500, "Custom type": 300, Passport: 300 } },
+                { value: "Coloured" as const, prices: { A4: 500, A3: 1200, "Custom type": 500, Passport: 750 } },
+              ]).map((opt) => {
+                const paper = (proj.paperType || "A4") as string;
+                const price = (opt.prices as Record<string, number>)[paper] ?? opt.prices.A4;
+                const selected = proj.printColor === opt.value;
+                return (
+                  <label
+                    key={opt.value}
+                    className={`flex items-center justify-between gap-3 cursor-pointer border rounded-lg px-4 py-3 transition-all ${selected ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-200 bg-gray-50 hover:border-[#5123d4]/40"}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name={`color_${proj.id}`}
+                        value={opt.value}
+                        checked={selected}
+                        onChange={() => onUpdate(proj.id, { printColor: opt.value })}
+                        className="w-4 h-4 text-[#5123d4] focus:ring-[#5123d4]"
+                      />
+                      <span className="text-sm font-medium text-gray-800">{opt.value}</span>
+                    </div>
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${selected ? "bg-[#5123d4] text-white border-[#5123d4]" : "bg-white text-[#5123d4] border-[#5123d4]/30"}`}>
+                      ₦{price}/pg
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <RadioRow
+            label="Size"
+            name={`size_${proj.id}`}
+            options={["A4", "A3", "Custom type", "Passport"]}
+            value={proj.paperType || ""}
+            onChange={(v) => onUpdate(proj.id, { paperType: v as AdditionalProject["paperType"] })}
+          />
+        </div>
+      )}
+
+      {proj.service && (
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <span className="text-sm font-semibold text-gray-600">Project Subtotal</span>
+          <span className="text-sm font-bold text-[#5123d4]">₦{subtotal.toLocaleString()}</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -166,8 +417,8 @@ export default function OrderDetailsContent() {
     hardcopyState:        orderData.hardcopyState || "",
     hardcopyCity:         orderData.hardcopyCity || "",
     hardcopyContactName:  orderData.hardcopyContactName || "",
-    hardcopyCompany:      orderData.hardcopyCompany || "",
     hardcopyContactPhone: orderData.hardcopyContactPhone || "",
+    hardcopyOrderRef:     orderData.hardcopyOrderRef || "",
     hardcopyDocCount:     orderData.hardcopyDocCount || "",
     hardcopyDocMode:      orderData.hardcopyDocMode || "",
     hardcopyCustomDesc:   orderData.hardcopyCustomDesc || "",
@@ -179,6 +430,31 @@ export default function OrderDetailsContent() {
       ? orderData.scheduledStops
       : [{ address: "", state: "", date: "", time: "" }]
   );
+
+  const [additionalProjects, setAdditionalProjects] = useState<AdditionalProject[]>(
+    (orderData.additionalProjects?.length ? orderData.additionalProjects as AdditionalProject[] : [])
+  );
+
+  const addProject = () => {
+    setAdditionalProjects(prev => [...prev, {
+      id: Math.random().toString(36).slice(2, 10),
+      service: "",
+      uploadMode: "file",
+      documents: [],
+      documentText: "",
+      printColor: "",
+      paperType: "",
+      pages: undefined,
+      finishingOption: "",
+      pagesAutoDetected: false,
+    }]);
+  };
+
+  const removeProject = (id: string) => setAdditionalProjects(prev => prev.filter(p => p.id !== id));
+
+  const updateProject = (id: string, updates: Partial<AdditionalProject>) => {
+    setAdditionalProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  };
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadMode, setUploadMode] = useState<"file" | "text" | "hardcopy">(
@@ -282,8 +558,9 @@ export default function OrderDetailsContent() {
 
   const calculateTotal = (): number => {
     const techPickup = uploadMode === "hardcopy" ? 3000 : 0;
-    if (formData.service === "Lamination") return LAMINATION_FEE + getDeliveryFee() + techPickup;
-    if (!isPrintService) return SERVICE_FEE + getDeliveryFee() + techPickup;
+    const projectsTotal = additionalProjects.reduce((sum, p) => sum + calculateProjectSubtotal(p), 0);
+    if (formData.service === "Lamination") return LAMINATION_FEE + getDeliveryFee() + techPickup + projectsTotal;
+    if (!isPrintService) return SERVICE_FEE + getDeliveryFee() + techPickup + projectsTotal;
 
     const sizeKey = (formData.paperType || "A4") as keyof typeof RATE["Black & white"];
     const rate = RATE[formData.printColor || "Black & white"]?.[sizeKey] || 0;
@@ -291,7 +568,7 @@ export default function OrderDetailsContent() {
     const pagesCost = (formData.pages ?? 0) * rate;
     const totalBeforeDelivery = pagesCost + finishingCost + SERVICE_FEE;
     const express = formData.expressService ? totalBeforeDelivery * (EXPRESS_MULTIPLIER - 1) : 0;
-    return Math.max(totalBeforeDelivery + express + getDeliveryFee() + techPickup, SERVICE_FEE);
+    return Math.max(totalBeforeDelivery + express + getDeliveryFee() + techPickup, SERVICE_FEE) + projectsTotal;
   };
 
   const needsAddress = ["Express Delivery", "Standard Delivery", "Economy Delivery"].includes(formData.deliveryMethod || "");
@@ -352,7 +629,7 @@ export default function OrderDetailsContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    setOrderData({ ...formData, documents: uploadedFiles, scheduledStops } as OrderData);
+    setOrderData({ ...formData, documents: uploadedFiles, scheduledStops, additionalProjects } as OrderData);
     router.push("/order/review");
   };
 
@@ -501,7 +778,7 @@ export default function OrderDetailsContent() {
                   uploadMode === "hardcopy" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                Hardcopy
+                Hardcopy / Computer Pickup
               </button>
             </div>
 
@@ -577,20 +854,13 @@ export default function OrderDetailsContent() {
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact at Pickup</p>
                   <TextInput
-                    label="Contact Person Name"
+                    label="Name of Person or Company"
                     name="hardcopyContactName"
                     required
-                    placeholder="Name of person we should meet"
+                    placeholder="e.g. John Doe or ABC Enterprises"
                     value={formData.hardcopyContactName || ""}
                     onChange={(v) => handleInputChange("hardcopyContactName", v)}
                     error={errors.hardcopyContactName}
-                  />
-                  <TextInput
-                    label="Company / Organisation (Optional)"
-                    name="hardcopyCompany"
-                    placeholder="e.g. ABC Enterprises, University of Lagos"
-                    value={formData.hardcopyCompany || ""}
-                    onChange={(v) => handleInputChange("hardcopyCompany", v)}
                   />
                   <TextInput
                     label="Contact Phone Number"
@@ -601,6 +871,13 @@ export default function OrderDetailsContent() {
                     value={formData.hardcopyContactPhone || ""}
                     onChange={(v) => handleInputChange("hardcopyContactPhone", v)}
                     error={errors.hardcopyContactPhone}
+                  />
+                  <TextInput
+                    label="Order ID (Optional)"
+                    name="hardcopyOrderRef"
+                    placeholder="e.g. CS-20260001 — if you have an existing order number"
+                    value={formData.hardcopyOrderRef || ""}
+                    onChange={(v) => handleInputChange("hardcopyOrderRef", v)}
                   />
                 </div>
 
@@ -937,6 +1214,20 @@ export default function OrderDetailsContent() {
             )}
           </SectionCard>
 
+          {/* Additional Projects */}
+          {additionalProjects.map((proj, idx) => (
+            <ProjectCard key={proj.id} proj={proj} index={idx} onUpdate={updateProject} onRemove={removeProject} />
+          ))}
+
+          <button
+            type="button"
+            onClick={addProject}
+            className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-[#5123d4] border-2 border-dashed border-[#5123d4]/30 rounded-xl py-4 hover:bg-[#f0ebff] hover:border-[#5123d4]/50 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            Add Another Service to This Order
+          </button>
+
           {uploadMode !== "hardcopy" && (
             <SectionCard title="Delivery">
               <div>
@@ -1162,6 +1453,12 @@ export default function OrderDetailsContent() {
               {formData.deliveryMethod === "Special Submission" && (
                 <div className="flex justify-between text-green-700"><span>Special Submission:</span><span>Free</span></div>
               )}
+              {additionalProjects.filter(p => p.service).map((proj, idx) => (
+                <div key={proj.id} className="flex justify-between text-gray-600">
+                  <span>Project {idx + 2} – {proj.service}:</span>
+                  <span>₦{calculateProjectSubtotal(proj).toLocaleString()}</span>
+                </div>
+              ))}
               <div className="pt-2 border-t border-gray-200 font-bold flex justify-between">
                 <span>Total:</span>
                 <span className="text-[#5123d4]">₦{calculateTotal().toLocaleString()}</span>

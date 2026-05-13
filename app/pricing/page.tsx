@@ -18,7 +18,7 @@ const SECTIONS = [
     subtitle: "Per page rate",
     items: [
       { label: "Black & White Print (A4)", price: "₦300/page" },
-      { label: "Color Print (A4 Text)", price: "₦700/page" },
+      { label: "Color Print (A4 Text)", price: "₦500/page" },
       { label: "Color Image Print (A4)", price: "From ₦2,000" },
       { label: "Photocopy", price: "₦150/page" },
       { label: "Passport Photo (4 copies)", price: "₦3,000" },
