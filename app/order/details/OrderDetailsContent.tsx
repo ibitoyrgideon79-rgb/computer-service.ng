@@ -694,7 +694,7 @@ export default function OrderDetailsContent() {
                     {(
                       [
                         { value: "Black & white", prices: { A4: 300, A3: 500, "Custom type": 300, Passport: 300 } },
-                        { value: "Coloured",       prices: { A4: 700, A3: 1200, "Custom type": 700, Passport: 750 } },
+                        { value: "Coloured",       prices: { A4: 500, A3: 1200, "Custom type": 500, Passport: 750 } },
                       ] as { value: OrderData["printColor"]; prices: Record<string, number> }[]
                     ).map((opt) => {
                       const paper = (formData.paperType || "A4") as string;

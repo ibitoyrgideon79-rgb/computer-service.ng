@@ -60,12 +60,21 @@ export default function OrderReviewPage() {
 
   const RATE: Record<string, Record<string, number>> = {
     "Black & white": { A4: 300, A3: 500, "Custom type": 300, Passport: 300 },
-    Coloured:        { A4: 700, A3: 1200, "Custom type": 700, Passport: 750 },
+    Coloured:        { A4: 500, A3: 1200, "Custom type": 500, Passport: 750 },
   };
   const FINISHING_COST: Record<string, number> = {
     None: 0, Stapled: 200, "Spiral Binding": 500, "Hardcover Binding": 2000,
   };
   const SERVICE_FEE = 2000;
+
+  const additionalProjects = orderData.additionalProjects ?? [];
+  const calcProjSubtotal = (proj: NonNullable<typeof orderData.additionalProjects>[0]) => {
+    const c  = proj.printColor || "Black & white";
+    const p  = proj.paperType  || "A4";
+    const pg = proj.pages      || 1;
+    return (RATE[c]?.[p] ?? 50) * pg + (FINISHING_COST[proj.finishingOption] ?? 0);
+  };
+  const projectsTotal = additionalProjects.reduce((sum, p) => sum + calcProjSubtotal(p), 0);
 
   const color       = orderData.printColor || "Black & white";
   const paper       = orderData.paperType  || "A4";
@@ -91,8 +100,8 @@ export default function OrderReviewPage() {
   const deliveryFee = getDeliveryFee();
   const serviceFee  = SERVICE_FEE;
   const total       = isLamination
-    ? LAMINATION_FEE + deliveryFee
-    : baseDoc + finishing + expressExtra + deliveryFee + serviceFee;
+    ? LAMINATION_FEE + deliveryFee + projectsTotal
+    : baseDoc + finishing + expressExtra + deliveryFee + serviceFee + projectsTotal;
 
   // Preview logic
   const hasCustomHtml = !!(orderData.customDocumentHtml?.trim());
@@ -208,6 +217,36 @@ export default function OrderReviewPage() {
           });
         } catch {
           // Non-blocking — order is still placed even if file upload fails
+        }
+      }
+
+      // 2b. Upload additional project files
+      for (const proj of additionalProjects) {
+        if (proj.documents && proj.documents.length > 0) {
+          try {
+            const projPayloads = await Promise.all(
+              proj.documents.map((file) =>
+                new Promise<{ name: string; type: string; size: number; dataUrl: string }>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve({
+                    name:    `[${proj.service}] ${file.name}`,
+                    type:    file.type,
+                    size:    file.size,
+                    dataUrl: reader.result as string,
+                  });
+                  reader.onerror = reject;
+                  reader.readAsDataURL(file);
+                })
+              )
+            );
+            await fetch(`/api/orders/${savedOrderId}/documents`, {
+              method:  "POST",
+              headers: { "Content-Type": "application/json" },
+              body:    JSON.stringify({ files: projPayloads }),
+            });
+          } catch {
+            // Non-blocking
+          }
         }
       }
 
@@ -458,6 +497,19 @@ export default function OrderReviewPage() {
                     <p className="font-semibold text-black">Delivery</p>
                     <p className="text-gray-700">{deliveryFee > 0 ? `₦${deliveryFee.toLocaleString()}` : "Free"}</p>
                   </div>
+                  {additionalProjects.length > 0 && (
+                    <>
+                      <div className="pt-2 mt-1 border-t border-gray-100">
+                        <p className="text-[11px] font-bold text-[#5123d4] uppercase tracking-wide mb-2">Additional Services</p>
+                        {additionalProjects.map((proj, idx) => (
+                          <div key={proj.id ?? idx} className="flex justify-between gap-2 mb-1.5">
+                            <p className="text-black shrink-0 text-xs">{proj.service || `Service ${idx + 1}`} ({proj.pages || 1}pg, {proj.printColor || "B&W"})</p>
+                            <p className="text-gray-700 text-xs">₦{calcProjSubtotal(proj).toLocaleString()}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between pt-2 mt-1 border-t border-gray-100">
                     <p className="text-base font-bold text-[#5123d4]">Total</p>
                     <p className="text-base font-bold text-[#5123d4]">₦{total.toLocaleString()}</p>
