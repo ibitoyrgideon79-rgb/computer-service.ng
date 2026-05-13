@@ -147,7 +147,7 @@ const SECTIONS = [
       { label: "CAC Business Name Registration", price: "₦50,000" },
       { label: "Private Limited Company (Ltd)", price: "₦85,000" },
       { label: "Public Company Registration", price: "₦180,000" },
-      { label: "Incorporated Trustee / NGO", price: "₦120,000" },
+      { label: "Incorporated Trustee / NGO", price: "₦150,000" },
       { label: "Annual Returns – Business Name (BN)", price: "₦15,500" },
       { label: "Annual Returns – Private Limited", price: "₦20,000" },
     ],
@@ -210,7 +210,7 @@ export default function PricingPage() {
       {/* Navbar */}
       <header className="w-full border-b border-gray-900 sticky top-0 bg-black z-50">
         <div className="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
-          <Link href="/" className="flex flex-col self-end pb-2">
+          <Link href="/" className="flex flex-col self-end pb-3">
             <div className="relative h-12 w-44 md:h-16 md:w-60 shrink-0">
               <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
             </div>

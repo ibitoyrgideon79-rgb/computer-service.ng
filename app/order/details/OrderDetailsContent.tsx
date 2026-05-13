@@ -182,7 +182,7 @@ export default function OrderDetailsContent() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadMode, setUploadMode] = useState<"file" | "text" | "hardcopy">(
-    orderData.deliveryMethod === "Hardcopy Pickup" ? "hardcopy" : orderData.documentText ? "text" : "file"
+    orderData.deliveryMethod === "Hardcopy Pickup" || Boolean(orderData.hardcopyState) ? "hardcopy" : orderData.documentText ? "text" : "file"
   );
   const [uploadedFiles, setUploadedFiles] = useState<File[]>(
     orderData.documents?.length ? orderData.documents : orderData.document ? [orderData.document] : []
@@ -281,7 +281,7 @@ export default function OrderDetailsContent() {
   };
 
   const calculateTotal = (): number => {
-    const techPickup = uploadMode === "hardcopy" && formData.hardcopyDocMode === "custom" ? 3000 : 0;
+    const techPickup = uploadMode === "hardcopy" ? 3000 : 0;
     if (formData.service === "Lamination") return LAMINATION_FEE + getDeliveryFee() + techPickup;
     if (!isPrintService) return SERVICE_FEE + getDeliveryFee() + techPickup;
 
@@ -317,7 +317,7 @@ export default function OrderDetailsContent() {
     if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required";
     if (!formData.service) newErrors.service = "Service is required";
     if (uploadMode !== "hardcopy" && !formData.deliveryMethod) newErrors.deliveryMethod = "Delivery method is required";
-    if (uploadMode === "hardcopy" && formData.hardcopyDocMode === "custom" && !formData.deliveryMethod) {
+    if (uploadMode === "hardcopy" && !formData.deliveryMethod) {
       newErrors.deliveryMethod = "Return delivery method is required";
     }
 
@@ -376,20 +376,29 @@ export default function OrderDetailsContent() {
           </SectionCard>
 
           <SectionCard title="Service Details">
-            <RadioRow
-              label="Service"
-              name="service"
-              required
-              options={[
-                "Printing", "Photocopy", "Binding", "Scanning",
-                "Typing", "Document Conversion", "Graphic/Logo Design",
-                "Business Card / ID Card", "Application Services",
-                "Technical Support", "Lamination", "Other",
-              ]}
-              value={formData.service || ""}
-              onChange={(v) => handleInputChange("service", v)}
-              error={errors.service}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Service <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="service"
+                aria-label="Service"
+                value={formData.service || ""}
+                onChange={(e) => handleInputChange("service", e.target.value)}
+                className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 ${errors.service ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"} text-sm`}
+              >
+                <option value="">Select a service…</option>
+                {[
+                  "Printing", "Photocopy", "Binding", "Scanning",
+                  "Typing", "Document Conversion", "Graphic/Logo Design",
+                  "Business Card / ID Card", "Application Services",
+                  "Technical Support", "Lamination", "Other",
+                ].map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              {errors.service && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.service}</p>}
+            </div>
 
             {categoryParam && (
               <div className="flex items-center gap-2 bg-[#f0ebff] border border-[#5123d4]/20 rounded-lg px-4 py-2.5">
@@ -439,25 +448,6 @@ export default function OrderDetailsContent() {
                 </div>
 
                 <RadioRow label="Size" name="paperType" required options={["A4", "A3", "Custom type", "Passport"]} value={formData.paperType || ""} onChange={(v) => handleInputChange("paperType", v as OrderData["paperType"])} />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Number of Pages <span className="text-red-500">*</span>
-                    {pagesAutoDetected && !detectingPages && (
-                      <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-green-600 font-normal bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
-                        ✓ Auto-detected
-                      </span>
-                    )}
-                  </label>
-                  <input
-                    type="number"
-                    name="pages"
-                    title="Number of pages"
-                    readOnly
-                    value={String(formData.pages ?? "")}
-                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm cursor-not-allowed opacity-70"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Automatically counted from your uploaded files.</p>
-                </div>
               </>
             )}
 
@@ -505,7 +495,7 @@ export default function OrderDetailsContent() {
                 onClick={() => {
                   setUploadMode("hardcopy");
                   setUploadedFiles([]);
-                  setFormData(prev => ({ ...prev, document: null, documents: [], documentText: "", deliveryMethod: "Hardcopy Pickup" }));
+                  setFormData(prev => ({ ...prev, document: null, documents: [], documentText: "", deliveryMethod: "" }));
                 }}
                 className={`flex-1 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   uploadMode === "hardcopy" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"
@@ -678,66 +668,116 @@ export default function OrderDetailsContent() {
                   })()}
 
                   {formData.hardcopyDocMode === "custom" && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                          <span className="text-amber-600 font-bold text-sm">₦</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-amber-800">₦3,000 Pickup Fee</p>
-                          <p className="text-xs text-amber-600 mt-0.5">A pickup fee applies for tech support / repair requests.</p>
-                        </div>
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Describe the Issue</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Describe the issue here… (e.g. screen cracked, won't turn on, slow performance)"
+                        value={formData.hardcopyCustomDesc || ""}
+                        onChange={(e) => handleInputChange("hardcopyCustomDesc", e.target.value)}
+                        className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-none"
+                      />
+                    </div>
+                  )}
+                </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Describe the Issue</label>
-                        <textarea
-                          rows={3}
-                          placeholder="Describe the issue here… (e.g. screen cracked, won't turn on, slow performance)"
-                          value={formData.hardcopyCustomDesc || ""}
-                          onChange={(e) => handleInputChange("hardcopyCustomDesc", e.target.value)}
-                          className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-none"
-                        />
-                      </div>
+                {/* Pickup fee + return delivery — shared for all hardcopy modes */}
+                <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                    <span className="text-amber-600 font-bold text-sm">₦</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">₦3,000 Pickup Fee</p>
+                    <p className="text-xs text-amber-600 mt-0.5">A pickup fee applies for all hardcopy collection requests.</p>
+                  </div>
+                </div>
 
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 mb-2">Return Delivery <span className="text-red-500">*</span></p>
-                        <p className="text-xs text-gray-400 mb-3">Choose how you want your device returned after the repair.</p>
-                        <div className="space-y-2">
-                          {DELIVERY_OPTIONS.filter((o) =>
-                            ["Express Delivery", "Standard Delivery", "Economy Delivery"].includes(o.value)
-                          ).map((opt) => {
-                            const selected = formData.deliveryMethod === opt.value;
-                            return (
-                              <label
-                                key={opt.value}
-                                className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-all ${selected ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-200 bg-gray-50 hover:border-[#5123d4]/40"}`}
-                              >
-                                <input
-                                  type="radio"
-                                  name="returnDelivery"
-                                  value={opt.value}
-                                  checked={selected}
-                                  onChange={() => handleInputChange("deliveryMethod", opt.value as OrderData["deliveryMethod"])}
-                                  className="mt-0.5 w-4 h-4 text-[#5123d4] focus:ring-[#5123d4] shrink-0"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-sm font-semibold text-gray-900">{opt.title}</span>
-                                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border shrink-0 ${selected ? "bg-[#5123d4] text-white border-[#5123d4]" : "bg-white text-[#5123d4] border-[#5123d4]/30"}`}>
-                                      {opt.price}
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-gray-400 mt-0.5">{opt.subtitle}</p>
-                                </div>
-                              </label>
-                            );
-                          })}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Return Delivery <span className="text-red-500">*</span></p>
+                  <p className="text-xs text-gray-400 mb-3">Choose how you want your documents / device returned.</p>
+                  <div className="space-y-2">
+                    {DELIVERY_OPTIONS.filter((o) =>
+                      ["Express Delivery", "Standard Delivery", "Economy Delivery", "Schedule Delivery"].includes(o.value)
+                    ).map((opt) => {
+                      const selected = formData.deliveryMethod === opt.value;
+                      return (
+                        <label
+                          key={opt.value}
+                          className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-all ${selected ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-200 bg-gray-50 hover:border-[#5123d4]/40"}`}
+                        >
+                          <input
+                            type="radio"
+                            name="returnDelivery"
+                            value={opt.value}
+                            checked={selected}
+                            onChange={() => handleInputChange("deliveryMethod", opt.value as OrderData["deliveryMethod"])}
+                            className="mt-0.5 w-4 h-4 text-[#5123d4] focus:ring-[#5123d4] shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-semibold text-gray-900">{opt.title}</span>
+                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full border shrink-0 ${selected ? "bg-[#5123d4] text-white border-[#5123d4]" : "bg-white text-[#5123d4] border-[#5123d4]/30"}`}>
+                                {opt.price}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">{opt.subtitle}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {errors.deliveryMethod && (
+                    <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.deliveryMethod}</p>
+                  )}
+
+                  {/* Schedule Delivery stops (inside hardcopy) */}
+                  {formData.deliveryMethod === "Schedule Delivery" && (
+                    <div className="space-y-3 mt-4">
+                      <p className="text-sm font-medium text-gray-700">Delivery Stops</p>
+                      {scheduledStops.map((stop, idx) => (
+                        <div key={idx} className="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-gray-700">Stop {idx + 1}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-[#5123d4]">₦5,000</span>
+                              {idx > 0 && (
+                                <button type="button" onClick={() => removeStop(idx)} className="text-red-400 hover:text-red-600" aria-label="Remove stop">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <TextInput label="Address" name={`hc_stop_address_${idx}`} required placeholder="Full delivery address" value={stop.address} onChange={(v) => updateStop(idx, "address", v)} />
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
+                            <select
+                              title={`Stop ${idx + 1} state`}
+                              value={stop.state}
+                              onChange={(e) => updateStop(idx, "state", e.target.value)}
+                              className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                            >
+                              <option value="">Select state</option>
+                              {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Date <span className="text-red-500">*</span></label>
+                              <input type="date" title={`Stop ${idx + 1} date`} value={stop.date} min={new Date().toISOString().split("T")[0]} onChange={(e) => updateStop(idx, "date", e.target.value)} className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Time <span className="text-red-500">*</span></label>
+                              <input type="time" title={`Stop ${idx + 1} time`} value={stop.time} onChange={(e) => updateStop(idx, "time", e.target.value)} className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm" />
+                            </div>
+                          </div>
                         </div>
-                        {errors.deliveryMethod && (
-                          <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.deliveryMethod}</p>
-                        )}
-                      </div>
+                      ))}
+                      {errors.scheduledStops && (
+                        <p className="text-red-500 text-xs flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.scheduledStops}</p>
+                      )}
+                      <button type="button" onClick={addStop} className="flex items-center gap-2 text-sm font-semibold text-[#5123d4] border border-[#5123d4]/30 rounded-xl px-4 py-2.5 hover:bg-[#f0ebff] transition-colors">
+                        <Plus className="w-4 h-4" /> Add Stop
+                      </button>
                     </div>
                   )}
                 </div>
@@ -824,6 +864,34 @@ export default function OrderDetailsContent() {
                         </button>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {showPrintOptions && ["Printing", "Photocopy"].includes(formData.service || "") && (
+                  <div className="pt-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Total Pages
+                      {pagesAutoDetected && !detectingPages && (
+                        <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-green-600 font-normal bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                          ✓ Auto-detected
+                        </span>
+                      )}
+                      {detectingPages && (
+                        <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-[#5123d4] font-normal bg-[#f0ebff] border border-[#5123d4]/20 px-2 py-0.5 rounded-full">
+                          <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                          Counting…
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="number"
+                      name="pages"
+                      title="Number of pages"
+                      readOnly
+                      value={String(formData.pages ?? "")}
+                      className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm cursor-not-allowed opacity-70"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Automatically counted from all uploaded files combined.</p>
                   </div>
                 )}
 
@@ -1074,15 +1142,15 @@ export default function OrderDetailsContent() {
                   )}
                 </>
               )}
-              {uploadMode === "hardcopy" && formData.hardcopyDocMode === "custom" && (
+              {uploadMode === "hardcopy" && (
                 <div className="flex justify-between text-amber-700">
-                  <span>Pickup Fee (Tech Support):</span>
+                  <span>Pickup Fee:</span>
                   <span>₦3,000</span>
                 </div>
               )}
               {formData.deliveryMethod && formData.deliveryMethod !== "Special Submission" && formData.deliveryMethod !== "Hardcopy Pickup" && (
                 <div className="flex justify-between">
-                  <span>{uploadMode === "hardcopy" && formData.hardcopyDocMode === "custom" ? "Return " : ""}Delivery ({formData.deliveryMethod}):</span>
+                  <span>{uploadMode === "hardcopy" ? "Return " : ""}Delivery ({formData.deliveryMethod}):</span>
                   <span>
                     {formData.deliveryMethod === "Schedule Delivery"
                       ? `₦${(5000 * scheduledStops.length).toLocaleString()} (${scheduledStops.length} stop${scheduledStops.length !== 1 ? "s" : ""})`
