@@ -281,8 +281,9 @@ export default function OrderDetailsContent() {
   };
 
   const calculateTotal = (): number => {
-    if (formData.service === "Lamination") return LAMINATION_FEE + getDeliveryFee();
-    if (!isPrintService) return SERVICE_FEE + getDeliveryFee();
+    const techPickup = uploadMode === "hardcopy" && formData.hardcopyDocMode === "custom" ? 3000 : 0;
+    if (formData.service === "Lamination") return LAMINATION_FEE + getDeliveryFee() + techPickup;
+    if (!isPrintService) return SERVICE_FEE + getDeliveryFee() + techPickup;
 
     const sizeKey = (formData.paperType || "A4") as keyof typeof RATE["Black & white"];
     const rate = RATE[formData.printColor || "Black & white"]?.[sizeKey] || 0;
@@ -290,10 +291,25 @@ export default function OrderDetailsContent() {
     const pagesCost = (formData.pages ?? 0) * rate;
     const totalBeforeDelivery = pagesCost + finishingCost + SERVICE_FEE;
     const express = formData.expressService ? totalBeforeDelivery * (EXPRESS_MULTIPLIER - 1) : 0;
-    return Math.max(totalBeforeDelivery + express + getDeliveryFee(), SERVICE_FEE);
+    return Math.max(totalBeforeDelivery + express + getDeliveryFee() + techPickup, SERVICE_FEE);
   };
 
   const needsAddress = ["Express Delivery", "Standard Delivery", "Economy Delivery"].includes(formData.deliveryMethod || "");
+
+  const getDocumentSectionTitle = () => {
+    const svc = formData.service;
+    if (!svc) return "Document";
+    const map: Record<string, string> = {
+      Scanning: "Document to Scan",
+      Printing: "Document to Print",
+      Photocopy: "Document to Photocopy",
+      Binding: "Document to Bind",
+      Typing: "Document to Type",
+      "Document Conversion": "Document to Convert",
+      Lamination: "Document to Laminate",
+    };
+    return map[svc] ?? "Document";
+  };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -301,6 +317,9 @@ export default function OrderDetailsContent() {
     if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required";
     if (!formData.service) newErrors.service = "Service is required";
     if (uploadMode !== "hardcopy" && !formData.deliveryMethod) newErrors.deliveryMethod = "Delivery method is required";
+    if (uploadMode === "hardcopy" && formData.hardcopyDocMode === "custom" && !formData.deliveryMethod) {
+      newErrors.deliveryMethod = "Return delivery method is required";
+    }
 
     if (needsAddress) {
       if (!formData.pickupState)    newErrors.pickupState    = "State is required";
@@ -388,8 +407,8 @@ export default function OrderDetailsContent() {
                   <div className="space-y-2">
                     {(
                       [
-                        { value: "Black & white", prices: { A4: 50, A3: 100, "Custom type": 80 } },
-                        { value: "Coloured",       prices: { A4: 150, A3: 300, "Custom type": 200 } },
+                        { value: "Black & white", prices: { A4: 300, A3: 500, "Custom type": 300, Passport: 300 } },
+                        { value: "Coloured",       prices: { A4: 700, A3: 1200, "Custom type": 700, Passport: 750 } },
                       ] as { value: OrderData["printColor"]; prices: Record<string, number> }[]
                     ).map((opt) => {
                       const paper = (formData.paperType || "A4") as string;
@@ -451,7 +470,7 @@ export default function OrderDetailsContent() {
             )}
           </SectionCard>
 
-          <SectionCard title="Document">
+          <SectionCard title={getDocumentSectionTitle()}>
             <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
               <button
                 type="button"
@@ -600,7 +619,7 @@ export default function OrderDetailsContent() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Documents to Collect</label>
                   <div className="flex gap-2 mb-3">
                     {(["known", "unsure", "custom"] as const).map((mode) => {
-                      const labels = { known: "I know the count", unsure: "Not sure", custom: "Custom" };
+                      const labels = { known: "I know the count", unsure: "Not sure", custom: "Tech Support" };
                       const active = (formData.hardcopyDocMode || "known") === mode;
                       return (
                         <button
@@ -659,15 +678,66 @@ export default function OrderDetailsContent() {
                   })()}
 
                   {formData.hardcopyDocMode === "custom" && (
-                    <div>
-                      <textarea
-                        rows={3}
-                        placeholder="Describe your documents (e.g. 2 A4 booklets, 1 large folder, 3 loose sheets)…"
-                        value={formData.hardcopyCustomDesc || ""}
-                        onChange={(e) => handleInputChange("hardcopyCustomDesc", e.target.value)}
-                        className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-none"
-                      />
-                      <p className="text-xs text-gray-400 mt-1">Describe the size, type, or quantity so our rider comes prepared.</p>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                          <span className="text-amber-600 font-bold text-sm">₦</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-amber-800">₦3,000 Pickup Fee</p>
+                          <p className="text-xs text-amber-600 mt-0.5">A pickup fee applies for tech support / repair requests.</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Describe the Issue</label>
+                        <textarea
+                          rows={3}
+                          placeholder="Describe the issue here… (e.g. screen cracked, won't turn on, slow performance)"
+                          value={formData.hardcopyCustomDesc || ""}
+                          onChange={(e) => handleInputChange("hardcopyCustomDesc", e.target.value)}
+                          className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Return Delivery <span className="text-red-500">*</span></p>
+                        <p className="text-xs text-gray-400 mb-3">Choose how you want your device returned after the repair.</p>
+                        <div className="space-y-2">
+                          {DELIVERY_OPTIONS.filter((o) =>
+                            ["Express Delivery", "Standard Delivery", "Economy Delivery"].includes(o.value)
+                          ).map((opt) => {
+                            const selected = formData.deliveryMethod === opt.value;
+                            return (
+                              <label
+                                key={opt.value}
+                                className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-all ${selected ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-200 bg-gray-50 hover:border-[#5123d4]/40"}`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="returnDelivery"
+                                  value={opt.value}
+                                  checked={selected}
+                                  onChange={() => handleInputChange("deliveryMethod", opt.value as OrderData["deliveryMethod"])}
+                                  className="mt-0.5 w-4 h-4 text-[#5123d4] focus:ring-[#5123d4] shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-semibold text-gray-900">{opt.title}</span>
+                                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border shrink-0 ${selected ? "bg-[#5123d4] text-white border-[#5123d4]" : "bg-white text-[#5123d4] border-[#5123d4]/30"}`}>
+                                      {opt.price}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-gray-400 mt-0.5">{opt.subtitle}</p>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {errors.deliveryMethod && (
+                          <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.deliveryMethod}</p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -728,7 +798,10 @@ export default function OrderDetailsContent() {
                     </div>
                     {uploadedFiles.map((file, idx) => (
                       <div key={idx} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                        <span className="text-sm text-green-700 font-medium truncate max-w-xs">✓ {file.name}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs font-bold text-green-600 shrink-0">#{idx + 1}</span>
+                          <span className="text-sm text-green-700 font-medium truncate max-w-xs">✓ {file.name}</span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
@@ -1001,9 +1074,15 @@ export default function OrderDetailsContent() {
                   )}
                 </>
               )}
+              {uploadMode === "hardcopy" && formData.hardcopyDocMode === "custom" && (
+                <div className="flex justify-between text-amber-700">
+                  <span>Pickup Fee (Tech Support):</span>
+                  <span>₦3,000</span>
+                </div>
+              )}
               {formData.deliveryMethod && formData.deliveryMethod !== "Special Submission" && formData.deliveryMethod !== "Hardcopy Pickup" && (
                 <div className="flex justify-between">
-                  <span>Delivery ({formData.deliveryMethod}):</span>
+                  <span>{uploadMode === "hardcopy" && formData.hardcopyDocMode === "custom" ? "Return " : ""}Delivery ({formData.deliveryMethod}):</span>
                   <span>
                     {formData.deliveryMethod === "Schedule Delivery"
                       ? `₦${(5000 * scheduledStops.length).toLocaleString()} (${scheduledStops.length} stop${scheduledStops.length !== 1 ? "s" : ""})`
