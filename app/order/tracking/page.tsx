@@ -125,7 +125,14 @@ function RecallOtpModal({ order, onClose, onSuccess }: RecallModalProps) {
     }
   };
 
-  const maskedPhone = order.phoneNumber.replace(/(\+?\d{3})\d{4}(\d{4})/, "$1****$2");
+  const maskedPhone = (() => {
+    const digits = (order.phoneNumber || "").replace(/\D/g, "");
+    if (digits.length < 6) return order.phoneNumber;
+    const start = digits.slice(0, 3);
+    const end   = digits.slice(-3);
+    const stars = "*".repeat(Math.max(digits.length - 6, 5));
+    return start + stars + end;
+  })();
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
