@@ -883,7 +883,7 @@ export default function OrderDetailsContent() {
 
                 {/* Document count — smart selector */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Documents to Collect</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Number of Document/Computer to pick</label>
                   <div className="flex gap-2 mb-3">
                     {(["known", "unsure", "custom"] as const).map((mode) => {
                       const labels = { known: "I know the count", unsure: "Not sure", custom: "Tech Support" };
@@ -965,7 +965,7 @@ export default function OrderDetailsContent() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-amber-800">₦3,000 Pickup Fee</p>
-                    <p className="text-xs text-amber-600 mt-0.5">A pickup fee applies for all hardcopy collection requests.</p>
+                    <p className="text-xs text-amber-600 mt-0.5">A pickup fee applies</p>
                   </div>
                 </div>
 
