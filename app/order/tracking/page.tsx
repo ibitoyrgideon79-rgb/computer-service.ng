@@ -391,7 +391,11 @@ function TrackingContent() {
       pickupLocation:      order.pickupLocation     || "",
       specificInstruction: order.specificInstruction || "",
     });
-    router.push("/order/editor");
+    if (order.documentText?.trim()) {
+      router.push("/order/editor");
+    } else {
+      router.push("/order/review");
+    }
   };
 
   // Computed display values

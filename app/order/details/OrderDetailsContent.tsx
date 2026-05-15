@@ -166,7 +166,7 @@ function ProjectCard({
           className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
         >
           <option value="">Select a service…</option>
-          {["Printing", "Photocopy", "Binding", "Scanning", "Typing", "Document Conversion", "Graphic/Logo Design", "Business Card / ID Card", "Application Services", "Technical Support", "Lamination", "Other"].map((opt) => (
+          {["Printing", "Photocopy", "Binding", "Scanning", "Typing", "Document Conversion", "Graphic/Logo Design", "Business Card / ID Card", "Application Services", "Technical Support", "Lamination", "Hardcopy / Computer Pickup", "Other"].map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
@@ -660,20 +660,50 @@ export default function OrderDetailsContent() {
               <select
                 name="service"
                 aria-label="Service"
-                value={formData.service || ""}
-                onChange={(e) => handleInputChange("service", e.target.value)}
+                value={["Photocopy", "Lamination"].includes(formData.service || "") ? "Printing" : (formData.service || "")}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleInputChange("service", val as OrderData["service"]);
+                }}
                 className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 ${errors.service ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"} text-sm`}
               >
                 <option value="">Select a service…</option>
                 {[
-                  "Printing", "Photocopy", "Binding", "Scanning",
+                  "Printing", "Binding", "Scanning",
                   "Typing", "Document Conversion", "Graphic/Logo Design",
                   "Business Card / ID Card", "Application Services",
-                  "Technical Support", "Lamination", "Other",
+                  "Technical Support", "Other",
                 ].map((opt) => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
+
+              {/* Print type sub-selector — shown when Printing group is active */}
+              {["Printing", "Photocopy", "Lamination"].includes(formData.service || "") && (
+                <div className="mt-2">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Print Type</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { value: "Printing",   label: "Standard Print" },
+                      { value: "Photocopy",  label: "Photocopy"      },
+                      { value: "Lamination", label: "Lamination"     },
+                    ].map(({ value, label }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => handleInputChange("service", value as OrderData["service"])}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          formData.service === value
+                            ? "bg-[#5123d4] text-white border-[#5123d4]"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-[#5123d4]/50"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {errors.service && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.service}</p>}
             </div>
 

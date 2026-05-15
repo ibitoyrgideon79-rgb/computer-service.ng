@@ -144,3 +144,23 @@ export async function PATCH(
     return NextResponse.json({ error: "Failed to update application" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    verifyAdminRequest(req);
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  try {
+    await prisma.partnerApplication.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[DELETE /api/admin/partners/[id]]", err);
+    return NextResponse.json({ error: "Failed to delete application" }, { status: 500 });
+  }
+}
