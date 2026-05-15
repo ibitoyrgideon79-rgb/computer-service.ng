@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search } from "lucide-react";
 
 interface PartnerApplication {
@@ -40,7 +40,7 @@ export default function PartnersAdmin() {
       const res = await fetch("/api/admin/partners");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
-      setApplications(data.applications || []);
+      setApplications(Array.isArray(data) ? data : (data.applications || []));
     } catch (error) {
       console.error("Error fetching applications:", error);
     } finally {
