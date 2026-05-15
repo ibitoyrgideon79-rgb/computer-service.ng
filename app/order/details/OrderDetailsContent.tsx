@@ -71,7 +71,7 @@ const NIGERIAN_STATES = [
 interface AdditionalProject {
   id: string;
   service: string;
-  uploadMode: "file" | "text";
+  uploadMode: "file" | "text" | "hardcopy";
   documents: File[];
   documentText: string;
   printColor: "Black & white" | "Coloured" | "";
@@ -79,10 +79,23 @@ interface AdditionalProject {
   pages?: number;
   finishingOption: "None" | "Spiral Binding" | "Stapled" | "Hardcover Binding" | "";
   pagesAutoDetected: boolean;
+  bindingType?: string;
+  hardcopyState?: string;
+  hardcopyCity?: string;
+  hardcopyPickupDate?: string;
+  hardcopyPickupTime?: string;
+  hardcopyContactName?: string;
+  hardcopyContactPhone?: string;
+  hardcopyOrderRef?: string;
+  hardcopyDocMode?: "known" | "unsure" | "custom" | "";
+  hardcopyDocCount?: string;
+  hardcopyCustomDesc?: string;
+  hardcopyInstructions?: string;
 }
 
 function calculateProjectSubtotal(proj: AdditionalProject): number {
   if (!proj.service) return 0;
+  if (proj.service === "Hardcopy / Computer Pickup") return 3000;
   if (proj.service === "Lamination") return LAMINATION_FEE;
   const isPrint = ["Printing", "Photocopy"].includes(proj.service);
   if (!isPrint) return SERVICE_FEE;
@@ -101,7 +114,12 @@ function ProjectCard({
   onRemove: (id: string) => void;
 }) {
   const [detectingPages, setDetectingPages] = useState(false);
-  const isPrint = ["Printing", "Photocopy"].includes(proj.service);
+
+  const PRINT_GROUP = ["Printing", "Photocopy", "Binding", "Lamination"];
+  const isPrintGroup = PRINT_GROUP.includes(proj.service);
+  const isHardcopy   = proj.service === "Hardcopy / Computer Pickup";
+  const isPrint      = ["Printing", "Photocopy"].includes(proj.service);
+  const isBinding    = proj.service === "Binding";
 
   const detectPages = async (files: File[]): Promise<number> => {
     setDetectingPages(true);
@@ -157,35 +175,84 @@ function ProjectCard({
         </button>
       </div>
 
+      {/* Service dropdown */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Service <span className="text-red-500">*</span></label>
         <select
           aria-label="Additional project service"
-          value={proj.service}
-          onChange={(e) => onUpdate(proj.id, { service: e.target.value })}
+          value={isPrintGroup ? "Printing" : proj.service}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === "Printing") {
+              onUpdate(proj.id, { service: "Printing", uploadMode: "file" });
+            } else if (val === "Hardcopy / Computer Pickup") {
+              onUpdate(proj.id, { service: val, uploadMode: "hardcopy", documents: [], documentText: "" });
+            } else {
+              onUpdate(proj.id, { service: val, uploadMode: proj.uploadMode === "hardcopy" ? "file" : proj.uploadMode });
+            }
+          }}
           className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
         >
           <option value="">Select a service…</option>
-          {["Printing", "Photocopy", "Binding", "Scanning", "Typing", "Document Conversion", "Graphic/Logo Design", "Business Card / ID Card", "Application Services", "Technical Support", "Lamination", "Hardcopy / Computer Pickup", "Other"].map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
+          <option value="Printing">Printing</option>
+          <option value="Scanning">Scanning</option>
+          <option value="Typing">Typing</option>
+          <option value="Document Conversion">Document Conversion</option>
+          <option value="Graphic/Logo Design">Graphic/Logo Design</option>
+          <option value="Business Card / ID Card">Business Card / ID Card</option>
+          <option value="Application Services">Application Services</option>
+          <option value="Technical Support">Technical Support</option>
+          <option value="Hardcopy / Computer Pickup">Hardcopy / Computer Pickup</option>
+          <option value="Other">Other</option>
         </select>
+
+        {/* Print sub-type buttons */}
+        {isPrintGroup && (
+          <div className="mt-2">
+            <p className="text-xs font-medium text-gray-500 mb-2">Print Type</p>
+            <div className="flex gap-2 flex-wrap">
+              {([
+                { value: "Printing",   label: "Standard Print" },
+                { value: "Photocopy",  label: "Photocopy"      },
+                { value: "Binding",    label: "Binding"        },
+                { value: "Lamination", label: "Lamination"     },
+              ] as { value: string; label: string }[]).map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => onUpdate(proj.id, { service: value })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    proj.service === value
+                      ? "bg-[#5123d4] text-white border-[#5123d4]"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-[#5123d4]/50"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
-        <button
-          type="button"
-          onClick={() => onUpdate(proj.id, { uploadMode: "file" })}
-          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "file" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-        >Upload File</button>
-        <button
-          type="button"
-          onClick={() => onUpdate(proj.id, { uploadMode: "text", documents: [], pages: undefined, pagesAutoDetected: false })}
-          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "text" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-        >Type / Paste</button>
-      </div>
+      {/* Upload mode toggle — hidden for hardcopy */}
+      {!isHardcopy && (
+        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+          <button
+            type="button"
+            onClick={() => onUpdate(proj.id, { uploadMode: "file" })}
+            className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "file" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          >Upload File</button>
+          <button
+            type="button"
+            onClick={() => onUpdate(proj.id, { uploadMode: "text", documents: [], pages: undefined, pagesAutoDetected: false })}
+            className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "text" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+          >Type / Paste</button>
+        </div>
+      )}
 
-      {proj.uploadMode === "file" ? (
+      {/* File upload / text input — hidden for hardcopy */}
+      {!isHardcopy && proj.uploadMode === "file" && (
         <div className="space-y-2">
           <div
             {...getRootProps()}
@@ -253,13 +320,221 @@ function ProjectCard({
             </div>
           )}
         </div>
-      ) : (
+      )}
+
+      {!isHardcopy && proj.uploadMode === "text" && (
         <textarea
           value={proj.documentText}
           onChange={(e) => onUpdate(proj.id, { documentText: e.target.value })}
           placeholder="Paste or type your document content here…"
           rows={5}
           className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-y"
+        />
+      )}
+
+      {/* Hardcopy pickup form */}
+      {isHardcopy && (
+        <div className="space-y-4">
+          <p className="text-xs text-gray-500">
+            We will come to you to collect your hardcopy documents or device. Fill in the pickup details below.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
+              <select
+                aria-label="Pickup state"
+                value={proj.hardcopyState || ""}
+                onChange={(e) => onUpdate(proj.id, { hardcopyState: e.target.value })}
+                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+              >
+                <option value="">Select state…</option>
+                {NIGERIAN_STATES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">City / Area <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                title="City"
+                placeholder="e.g. Wuse Zone 2"
+                value={proj.hardcopyCity || ""}
+                onChange={(e) => onUpdate(proj.id, { hardcopyCity: e.target.value })}
+                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Date <span className="text-red-500">*</span></label>
+              <input
+                type="date"
+                title="Pickup date"
+                value={proj.hardcopyPickupDate || ""}
+                onChange={(e) => onUpdate(proj.id, { hardcopyPickupDate: e.target.value })}
+                min={new Date().toISOString().split("T")[0]}
+                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Time <span className="text-red-500">*</span></label>
+              <input
+                type="time"
+                title="Pickup time"
+                value={proj.hardcopyPickupTime || ""}
+                onChange={(e) => onUpdate(proj.id, { hardcopyPickupTime: e.target.value })}
+                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact at Pickup</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name of Person or Company <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                title="Contact name"
+                placeholder="e.g. John Doe or ABC Enterprises"
+                value={proj.hardcopyContactName || ""}
+                onChange={(e) => onUpdate(proj.id, { hardcopyContactName: e.target.value })}
+                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Phone Number <span className="text-red-500">*</span></label>
+              <input
+                type="tel"
+                title="Contact phone"
+                placeholder="e.g. 08012345678"
+                value={proj.hardcopyContactPhone || ""}
+                onChange={(e) => onUpdate(proj.id, { hardcopyContactPhone: e.target.value })}
+                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Order ID (Optional)</label>
+              <input
+                type="text"
+                title="Order reference"
+                placeholder="e.g. CS-20260001 — if you have an existing order number"
+                value={proj.hardcopyOrderRef || ""}
+                onChange={(e) => onUpdate(proj.id, { hardcopyOrderRef: e.target.value })}
+                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Document / device count */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Number of Document/Computer to pick</label>
+            <div className="flex gap-2 mb-3">
+              {(["known", "unsure", "custom"] as const).map((mode) => {
+                const labels = { known: "I know the count", unsure: "Not sure", custom: "Tech Support" };
+                const active = (proj.hardcopyDocMode || "known") === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => onUpdate(proj.id, { hardcopyDocMode: mode })}
+                    className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg border transition-all ${active ? "bg-[#5123d4] text-white border-[#5123d4]" : "bg-white text-gray-600 border-gray-200 hover:border-[#5123d4]/40"}`}
+                  >
+                    {labels[mode]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {(proj.hardcopyDocMode === "known" || !proj.hardcopyDocMode) && (
+              <div>
+                <input
+                  type="number"
+                  min={1}
+                  title="Number of documents"
+                  placeholder="e.g. 3"
+                  value={proj.hardcopyDocCount || ""}
+                  onChange={(e) => onUpdate(proj.id, { hardcopyDocCount: e.target.value })}
+                  className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                />
+                <p className="text-xs text-gray-400 mt-1">Enter the exact number of separate documents/files.</p>
+              </div>
+            )}
+
+            {proj.hardcopyDocMode === "unsure" && (() => {
+              const estimatedDocs = parseInt(proj.hardcopyDocCount || "0", 10) > 0
+                ? Math.max(1, Math.ceil(parseInt(proj.hardcopyDocCount!, 10) / 20))
+                : null;
+              return (
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Total number of pages (approx.)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    title="Total pages"
+                    placeholder="e.g. 60"
+                    value={proj.hardcopyDocCount || ""}
+                    onChange={(e) => onUpdate(proj.id, { hardcopyDocCount: e.target.value })}
+                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                  />
+                  {estimatedDocs !== null && (
+                    <div className="mt-2 flex items-center gap-2 bg-[#f0ebff] border border-[#5123d4]/20 rounded-lg px-3 py-2">
+                      <span className="text-xs text-[#5123d4] font-semibold">Estimated: ~{estimatedDocs} document{estimatedDocs !== 1 ? "s" : ""}</span>
+                      <span className="text-xs text-gray-400">(~20 pages each)</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {proj.hardcopyDocMode === "custom" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Describe the Issue</label>
+                <textarea
+                  rows={3}
+                  placeholder="Describe the issue here… (e.g. screen cracked, won't turn on, slow performance)"
+                  value={proj.hardcopyCustomDesc || ""}
+                  onChange={(e) => onUpdate(proj.id, { hardcopyCustomDesc: e.target.value })}
+                  className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-none"
+                />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Additional Instructions</label>
+            <textarea
+              rows={2}
+              value={proj.hardcopyInstructions || ""}
+              onChange={(e) => onUpdate(proj.id, { hardcopyInstructions: e.target.value })}
+              placeholder="Any special instructions for our rider (e.g. gate code, landmark)…"
+              className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-none"
+            />
+          </div>
+
+          {/* Pickup fee notice */}
+          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            <div className="shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+              <span className="text-amber-600 font-bold text-sm">₦</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-amber-800">₦3,000 Pickup Fee</p>
+              <p className="text-xs text-amber-600 mt-0.5">A pickup fee applies</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Binding type */}
+      {isBinding && (
+        <RadioRow
+          label="Binding Type"
+          name={`bindingType_${proj.id}`}
+          options={["Spiral", "Comb", "Hard Cover"]}
+          value={proj.bindingType || ""}
+          onChange={(v) => onUpdate(proj.id, { bindingType: v })}
         />
       )}
 
@@ -387,10 +662,6 @@ export default function OrderDetailsContent() {
   const serviceParam   = searchParams.get("service") || "";
   const categoryParam  = searchParams.get("category") || "";
 
-  const isPrintService    = ["Printing", "Photocopy", "Scanning"].includes(serviceParam);
-  const isBindingService  = serviceParam === "Binding";
-  const showPrintOptions  = isPrintService || isBindingService || !serviceParam;
-
   const [formData, setFormData] = useState<Partial<OrderData>>({
     service:          serviceParam || orderData.service || "",
     category:         categoryParam || orderData.category || "",
@@ -424,6 +695,11 @@ export default function OrderDetailsContent() {
     hardcopyCustomDesc:   orderData.hardcopyCustomDesc || "",
     hardcopyInstructions: orderData.hardcopyInstructions || "",
   });
+
+  const currentService   = formData.service || serviceParam;
+  const isPrintService   = ["Printing", "Photocopy", "Scanning"].includes(currentService);
+  const isBindingService = currentService === "Binding";
+  const showPrintOptions = isPrintService || isBindingService || !currentService;
 
   const [scheduledStops, setScheduledStops] = useState<ScheduledStop[]>(
     (orderData.scheduledStops && orderData.scheduledStops.length > 0)
@@ -660,7 +936,7 @@ export default function OrderDetailsContent() {
               <select
                 name="service"
                 aria-label="Service"
-                value={["Photocopy", "Lamination"].includes(formData.service || "") ? "Printing" : (formData.service || "")}
+                value={["Photocopy", "Lamination", "Binding"].includes(formData.service || "") ? "Printing" : (formData.service || "")}
                 onChange={(e) => {
                   const val = e.target.value;
                   handleInputChange("service", val as OrderData["service"]);
@@ -669,7 +945,7 @@ export default function OrderDetailsContent() {
               >
                 <option value="">Select a service…</option>
                 {[
-                  "Printing", "Binding", "Scanning",
+                  "Printing", "Scanning",
                   "Typing", "Document Conversion", "Graphic/Logo Design",
                   "Business Card / ID Card", "Application Services",
                   "Technical Support", "Other",
@@ -679,13 +955,14 @@ export default function OrderDetailsContent() {
               </select>
 
               {/* Print type sub-selector — shown when Printing group is active */}
-              {["Printing", "Photocopy", "Lamination"].includes(formData.service || "") && (
+              {["Printing", "Photocopy", "Lamination", "Binding"].includes(formData.service || "") && (
                 <div className="mt-2">
                   <p className="text-xs font-medium text-gray-500 mb-2">Print Type</p>
                   <div className="flex gap-2 flex-wrap">
                     {[
                       { value: "Printing",   label: "Standard Print" },
                       { value: "Photocopy",  label: "Photocopy"      },
+                      { value: "Binding",    label: "Binding"        },
                       { value: "Lamination", label: "Lamination"     },
                     ].map(({ value, label }) => (
                       <button

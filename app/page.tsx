@@ -33,6 +33,7 @@ export default function Home() {
   const router = useRouter();
   const { loadFromLocalStorage } = useOrderStore();
   const [selectedService, setSelectedService] = useState("");
+  const [selectedPrintSubType, setSelectedPrintSubType] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [recallModalOpen, setRecallModalOpen] = useState(false);
@@ -76,6 +77,9 @@ export default function Home() {
     "Photocopy": [
       "A4 Photocopy", "A3 Photocopy", "A5 Photocopy",
       "Legal Size Photocopy", "Bulk Photocopy",
+    ],
+    "Hardcopy / Computer Pickup": [
+      "Document Pickup", "Computer / Laptop Pickup", "Phone Pickup", "Other Device Pickup",
     ],
     "Typing": [
       "CV / Resume", "Cover Letter", "Application Letter",
@@ -135,36 +139,50 @@ export default function Home() {
     "Application Services": "Select application type",
     "Technical Support": "Select support type",
     "Lamination": "Select lamination type",
+    "Hardcopy / Computer Pickup": "Select pickup type",
   };
 
+  // The effective service used to look up categories — uses sub-type when Printing group is selected
+  const effectiveService = selectedService === "Printing"
+    ? (selectedPrintSubType || "Printing")
+    : selectedService;
+
   const handleServiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedService(e.target.value);
-    setSelectedCategory(""); // Reset category when service changes
+    const val = e.target.value;
+    setSelectedService(val);
+    setSelectedCategory("");
+    // Default to Standard Print sub-type when Printing group is selected
+    setSelectedPrintSubType(val === "Printing" ? "Printing" : "");
   };
 
   const getAvailableCategories = () => {
-    if (!selectedService) return [];
-    return serviceCategoryMap[selectedService] || [];
+    if (!effectiveService) return [];
+    return serviceCategoryMap[effectiveService] || [];
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const service = formData.get("service")?.toString() || "";
     const printType = formData.get("printType")?.toString() || "";
     const category = formData.get("category")?.toString() || "";
     const otherCategory = formData.get("otherCategory")?.toString() || "";
-    
+
+    // Resolve actual service: use the print sub-type when Printing group is active
+    const actualService = selectedService === "Printing"
+      ? (selectedPrintSubType || "Printing")
+      : selectedService;
+
     const params = new URLSearchParams();
-    if (service) params.set("service", service);
-    if (printType && service === "Printing") params.set("printType", printType);
-    // If 'Other' is selected, pass the custom written category instead
+    if (actualService) params.set("service", actualService);
+    if (printType && ["Printing", "Photocopy"].includes(actualService)) {
+      params.set("printType", printType);
+    }
     if (category === "Other" && otherCategory) {
       params.set("category", otherCategory);
     } else if (category) {
       params.set("category", category);
     }
-    
+
     router.push(`/order/details?${params.toString()}`);
   };
 
@@ -370,36 +388,65 @@ export default function Home() {
                 >
                   <option value="" disabled>What do you want</option>
                   <option value="Printing">Printing</option>
-                  <option value="Photocopy">Photocopy</option>
                   <option value="Typing">Typing</option>
-                  <option value="Binding">Binding</option>
                   <option value="Scanning">Scanning</option>
                   <option value="Document Conversion">Document Conversion</option>
                   <option value="Graphic/Logo Design">Graphic/Logo Design</option>
                   <option value="Business Card / ID Card">Business Card / ID Card</option>
                   <option value="Application Services">Application Services</option>
                   <option value="Technical Support">Technical Support</option>
-                  <option value="Lamination">Lamination</option>
+                  <option value="Hardcopy / Computer Pickup">Hardcopy / Computer Pickup</option>
                 </select>
                 <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none" />
               </div>
 
               {selectedService === "Printing" && (
-                <div className="relative animate-in fade-in slide-in-from-top-2 duration-300">
-                  <select
-                    name="printType"
-                    required
-                    title="Select print colour"
-                    defaultValue="Black and White"
-                    onInvalid={(e) => (e.target as HTMLSelectElement).setCustomValidity("Please select a color option.")}
-                    onInput={(e) => (e.target as HTMLSelectElement).setCustomValidity("")}
-                    className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer border border-[#5123d4]/30"
-                  >
-                    <option value="" disabled>Select color option</option>
-                    <option value="Black and White">Black and White</option>
-                    <option value="Colored">Colored</option>
-                  </select>
-                  <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none" />
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  {/* Print sub-type buttons */}
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-2 px-1">Print Type</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {([
+                        { value: "Printing",   label: "Standard Print" },
+                        { value: "Photocopy",  label: "Photocopy"      },
+                        { value: "Binding",    label: "Binding"        },
+                        { value: "Lamination", label: "Lamination"     },
+                      ] as { value: string; label: string }[]).map(({ value, label }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => { setSelectedPrintSubType(value); setSelectedCategory(""); }}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                            selectedPrintSubType === value
+                              ? "bg-[#5123d4] text-white border-[#5123d4]"
+                              : "bg-white text-gray-700 border-gray-300 hover:border-[#5123d4]/60"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Color dropdown — only for Standard Print or Photocopy */}
+                  {["Printing", "Photocopy", ""].includes(selectedPrintSubType) && (
+                    <div className="relative">
+                      <select
+                        name="printType"
+                        required
+                        title="Select print color"
+                        defaultValue="Black and White"
+                        onInvalid={(e) => (e.target as HTMLSelectElement).setCustomValidity("Please select a color option.")}
+                        onInput={(e) => (e.target as HTMLSelectElement).setCustomValidity("")}
+                        className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer border border-[#5123d4]/30"
+                      >
+                        <option value="" disabled>Select color option</option>
+                        <option value="Black and White">Black and White</option>
+                        <option value="Colored">Colored</option>
+                      </select>
+                      <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 pointer-events-none" />
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -412,10 +459,10 @@ export default function Home() {
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   onInvalid={(e) => (e.target as HTMLSelectElement).setCustomValidity("Please select a service category.")}
                   onInput={(e) => (e.target as HTMLSelectElement).setCustomValidity("")}
-                  disabled={!selectedService}
+                  disabled={!effectiveService}
                   className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="" disabled>{selectedService ? categoryPlaceholder[selectedService] : "Select a service category"}</option>
+                  <option value="" disabled>{effectiveService ? (categoryPlaceholder[effectiveService] ?? "Select a category") : "Select a service category"}</option>
                   {getAvailableCategories().map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}

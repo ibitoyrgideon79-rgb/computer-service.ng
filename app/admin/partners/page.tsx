@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search } from "lucide-react";
 
 interface PartnerApplication {
   id: string;
@@ -33,6 +33,7 @@ export default function PartnersAdmin() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [photoCache, setPhotoCache] = useState<Record<string, PartnerPhoto[]>>({});
   const [loadingPhotos, setLoadingPhotos] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const fetchApplications = useCallback(async () => {
     try {
@@ -117,8 +118,16 @@ export default function PartnersAdmin() {
   };
 
   const filteredApps = applications.filter(app => {
-    if (filter === "all") return true;
-    return app.status.toLowerCase() === filter;
+    const statusMatch = filter === "all" || app.status.toLowerCase() === filter;
+    if (!statusMatch) return false;
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      (app.full_name || "").toLowerCase().includes(q) ||
+      (app.company_name || "").toLowerCase().includes(q) ||
+      (app.address || "").toLowerCase().includes(q) ||
+      (app.services || "").toLowerCase().includes(q)
+    );
   });
 
   const counts = {
@@ -142,6 +151,27 @@ export default function PartnersAdmin() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-black mb-6">Partner Applications</h1>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          placeholder="Search by name, company, city, state or service…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg bg-white text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5123d4]/40"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+          >
+            ✕
+          </button>
+        )}
+      </div>
 
       {/* Filter tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">

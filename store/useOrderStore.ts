@@ -76,7 +76,7 @@ export interface OrderData {
   additionalProjects?: Array<{
     id: string;
     service: string;
-    uploadMode: "file" | "text";
+    uploadMode: "file" | "text" | "hardcopy";
     documents: File[];
     documentText: string;
     printColor: string;
@@ -84,6 +84,18 @@ export interface OrderData {
     pages?: number;
     finishingOption: string;
     pagesAutoDetected: boolean;
+    bindingType?: string;
+    hardcopyState?: string;
+    hardcopyCity?: string;
+    hardcopyPickupDate?: string;
+    hardcopyPickupTime?: string;
+    hardcopyContactName?: string;
+    hardcopyContactPhone?: string;
+    hardcopyOrderRef?: string;
+    hardcopyDocMode?: "known" | "unsure" | "custom" | "";
+    hardcopyDocCount?: string;
+    hardcopyCustomDesc?: string;
+    hardcopyInstructions?: string;
   }>;
 
   // Approval flow
