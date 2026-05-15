@@ -364,6 +364,8 @@ export default function Home() {
                   title="Select a service"
                   value={selectedService}
                   onChange={handleServiceChange}
+                  onInvalid={(e) => (e.target as HTMLSelectElement).setCustomValidity("Please select a service.")}
+                  onInput={(e) => (e.target as HTMLSelectElement).setCustomValidity("")}
                   className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer"
                 >
                   <option value="" disabled>What do you want</option>
@@ -389,6 +391,8 @@ export default function Home() {
                     required
                     title="Select print colour"
                     defaultValue="Black and White"
+                    onInvalid={(e) => (e.target as HTMLSelectElement).setCustomValidity("Please select a color option.")}
+                    onInput={(e) => (e.target as HTMLSelectElement).setCustomValidity("")}
                     className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer border border-[#5123d4]/30"
                   >
                     <option value="" disabled>Select color option</option>
@@ -406,6 +410,8 @@ export default function Home() {
                   title="Select a service category"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
+                  onInvalid={(e) => (e.target as HTMLSelectElement).setCustomValidity("Please select a service category.")}
+                  onInput={(e) => (e.target as HTMLSelectElement).setCustomValidity("")}
                   disabled={!selectedService}
                   className="w-full appearance-none bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -421,11 +427,13 @@ export default function Home() {
               {selectedCategory === "Other" && (
                 <div className="relative animate-in fade-in slide-in-from-top-2 duration-300">
                   <input 
-                    type="text" 
+                    type="text"
                     name="otherCategory"
                     required
-                    placeholder="Please specify your service category..." 
+                    placeholder="Please specify your service category..."
                     className="w-full bg-[#E2E8F0] text-gray-800 text-base font-medium px-6 py-5 rounded focus:outline-none focus:ring-2 focus:ring-[#5123d4] placeholder:text-gray-500 border border-[#5123d4]/30"
+                    onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity("Please describe your service category.")}
+                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity("")}
                     autoFocus
                   />
                 </div>
