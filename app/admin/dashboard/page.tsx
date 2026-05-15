@@ -493,6 +493,7 @@ export default function AdminDashboard() {
   const [expandedPartnerId, setExpandedPartnerId] = useState<string | null>(null);
   const [partnerPhotos, setPartnerPhotos] = useState<Record<string, PartnerPhoto[]>>({});
   const [photosLoading, setPhotosLoading] = useState<string | null>(null);
+  const [deletingPartnerId, setDeletingPartnerId] = useState<string | null>(null);
   const [lightboxPhoto, setLightboxPhoto] = useState<{ dataUrl: string; label: string } | null>(null);
   const prevCountRef                          = useRef(0);
 
@@ -618,6 +619,22 @@ export default function AdminDashboard() {
       toast.error("Failed to update application");
     }
   }, []);
+
+  const handlePartnerDelete = useCallback(async (id: string, name: string) => {
+    if (!confirm(`Delete application from "${name}"? This cannot be undone.`)) return;
+    setDeletingPartnerId(id);
+    try {
+      const res = await fetch(`/api/admin/partners/${id}`, { method: "DELETE", headers: authHeaders() });
+      if (!res.ok) throw new Error();
+      setPartners((prev) => prev.filter((p) => p.id !== id));
+      if (expandedPartnerId === id) setExpandedPartnerId(null);
+      toast.success("Application deleted");
+    } catch {
+      toast.error("Failed to delete application");
+    } finally {
+      setDeletingPartnerId(null);
+    }
+  }, [expandedPartnerId]);
 
 
   const statCards = stats
@@ -940,7 +957,7 @@ export default function AdminDashboard() {
                             <a href={`mailto:${p.email}`} onClick={e => e.stopPropagation()} className="text-[#5123d4] hover:underline text-sm">{p.email}</a>
                           </td>
                           <td className="px-5 py-3.5 text-gray-500 max-w-48 truncate" title={p.services}>{p.services || "—"}</td>
-                          <td className="px-5 py-3.5 text-gray-500 max-w-48 truncate" title={p.address}>{p.address}</td>
+                          <td className="px-5 py-3.5 text-gray-700 text-sm">{p.address || "—"}</td>
                           <td className="px-5 py-3.5">
                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
                               p.status === "Approved"  ? "bg-green-100 text-green-700 border-green-200" :
@@ -983,6 +1000,17 @@ export default function AdminDashboard() {
                                   Reject
                                 </button>
                               )}
+                              <button
+                                type="button"
+                                onClick={() => handlePartnerDelete(p.id, p.full_name)}
+                                disabled={deletingPartnerId === p.id}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+                                title="Delete application"
+                              >
+                                {deletingPartnerId === p.id
+                                  ? <span className="text-[10px] text-red-400">…</span>
+                                  : <Trash2 className="w-3.5 h-3.5" />}
+                              </button>
                             </div>
                           </td>
                         </tr>
