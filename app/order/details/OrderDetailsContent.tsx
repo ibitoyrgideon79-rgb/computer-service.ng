@@ -175,18 +175,16 @@ function ProjectCard({
         </button>
       </div>
 
-      {/* Service dropdown */}
-      <div>
+      {/* Service dropdown — hidden when Hardcopy Pickup tab is active */}
+      {!isHardcopy && <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Service <span className="text-red-500">*</span></label>
         <select
           aria-label="Additional project service"
-          value={isPrintGroup ? "Printing" : proj.service}
+          value={isPrintGroup ? "Printing" : (isHardcopy ? "" : proj.service)}
           onChange={(e) => {
             const val = e.target.value;
             if (val === "Printing") {
               onUpdate(proj.id, { service: "Printing", uploadMode: "file" });
-            } else if (val === "Hardcopy / Computer Pickup") {
-              onUpdate(proj.id, { service: val, uploadMode: "hardcopy", documents: [], documentText: "" });
             } else {
               onUpdate(proj.id, { service: val, uploadMode: proj.uploadMode === "hardcopy" ? "file" : proj.uploadMode });
             }
@@ -202,7 +200,6 @@ function ProjectCard({
           <option value="Business Card / ID Card">Business Card / ID Card</option>
           <option value="Application Services">Application Services</option>
           <option value="Technical Support">Technical Support</option>
-          <option value="Hardcopy / Computer Pickup">Hardcopy / Computer Pickup</option>
           <option value="Other">Other</option>
         </select>
 
@@ -233,23 +230,38 @@ function ProjectCard({
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
-      {/* Upload mode toggle — hidden for hardcopy */}
-      {!isHardcopy && (
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
-          <button
-            type="button"
-            onClick={() => onUpdate(proj.id, { uploadMode: "file" })}
-            className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "file" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-          >Upload File</button>
-          <button
-            type="button"
-            onClick={() => onUpdate(proj.id, { uploadMode: "text", documents: [], pages: undefined, pagesAutoDetected: false })}
-            className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "text" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-          >Type / Paste</button>
-        </div>
-      )}
+      {/* Upload / input mode tabs — Upload File | Type / Paste | Hardcopy Pickup */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+        <button
+          type="button"
+          onClick={() => {
+            if (isHardcopy) {
+              onUpdate(proj.id, { uploadMode: "file", service: "" });
+            } else {
+              onUpdate(proj.id, { uploadMode: "file" });
+            }
+          }}
+          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "file" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+        >Upload File</button>
+        <button
+          type="button"
+          onClick={() => {
+            if (isHardcopy) {
+              onUpdate(proj.id, { uploadMode: "text", service: "", documents: [], pages: undefined, pagesAutoDetected: false });
+            } else {
+              onUpdate(proj.id, { uploadMode: "text", documents: [], pages: undefined, pagesAutoDetected: false });
+            }
+          }}
+          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "text" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+        >Type / Paste</button>
+        <button
+          type="button"
+          onClick={() => onUpdate(proj.id, { uploadMode: "hardcopy", service: "Hardcopy / Computer Pickup", documents: [], documentText: "" })}
+          className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "hardcopy" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+        >Hardcopy Pickup</button>
+      </div>
 
       {/* File upload / text input — hidden for hardcopy */}
       {!isHardcopy && proj.uploadMode === "file" && (

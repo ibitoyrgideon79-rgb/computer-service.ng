@@ -10,6 +10,10 @@ import {
   RotateCcw, Edit, Loader2,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import {
+  PRINT_RATES, FINISHING_COSTS, LAMINATION_FEE, HARDCOPY_PICKUP_FEE,
+  getServiceFee, getDeliveryFee, EXPRESS_SURCHARGE,
+} from "@/lib/fees";
 
 const PdfPreview = dynamic(() => import("./PdfPreview"), {
   ssr: false,
@@ -77,21 +81,16 @@ export default function OrderReviewPage() {
     setNumPages(numPages);
   }
 
-  // ── Pricing ─────────────────────────────────────────────────────────────────
-  const RATE: Record<string, Record<string, number>> = {
-    "Black & white": { A4: 300, A3: 500, "Custom type": 300, Passport: 300 },
-    Coloured:        { A4: 500, A3: 1200, "Custom type": 500, Passport: 750 },
-  };
-  const FINISHING_COST: Record<string, number> = {
-    None: 0, Stapled: 200, "Spiral Binding": 500, "Hardcover Binding": 2000,
-  };
-  const SERVICE_FEE = 2000;
-
+  // ── Pricing (from shared /lib/fees.ts — single source of truth) ─────────────
   const calcProjSubtotal = (proj: NonNullable<typeof orderData.additionalProjects>[0]) => {
+    if (proj.service === "Hardcopy / Computer Pickup") return HARDCOPY_PICKUP_FEE;
+    if (proj.service === "Lamination") return LAMINATION_FEE;
     const c  = proj.printColor || "Black & white";
     const p  = proj.paperType  || "A4";
     const pg = proj.pages      || 1;
-    return (RATE[c]?.[p] ?? 50) * pg + (FINISHING_COST[proj.finishingOption] ?? 0);
+    const isPrint = ["Printing", "Photocopy"].includes(proj.service || "");
+    if (!isPrint) return getServiceFee(proj.service);
+    return (PRINT_RATES[c]?.[p] ?? 50) * pg + (FINISHING_COSTS[proj.finishingOption] ?? 0);
   };
   const projectsTotal = additionalProjects.reduce((sum, p) => sum + calcProjSubtotal(p), 0);
 
@@ -99,27 +98,24 @@ export default function OrderReviewPage() {
   const paper        = orderData.paperType  || "A4";
   const pages        = orderData.pages      || 1;
   const copies       = orderData.copies     || 1;
-  const perPage      = RATE[color]?.[paper] ?? 50;
+  const perPage      = PRINT_RATES[color]?.[paper] ?? 50;
   const baseDoc      = perPage * pages * copies;
-  const finishing    = FINISHING_COST[orderData.finishingOption ?? "None"] ?? 0;
+  const finishing    = FINISHING_COSTS[orderData.finishingOption ?? "None"] ?? 0;
   const isExpress    = orderData.expressService === true || orderData.deadline === "Express (1hr - 2hrs)";
-  const expressExtra = isExpress ? Math.round(baseDoc * 0.5) : 0;
+  const expressExtra = isExpress ? Math.round(baseDoc * EXPRESS_SURCHARGE) : 0;
   const isLamination = orderData.service === "Lamination";
-  const LAMINATION_FEE = 700;
+  const isHardcopyPickup = orderData.service === "Hardcopy / Computer Pickup";
 
-  const getDeliveryFee = () => {
-    const method = orderData.deliveryMethod || "";
-    if (method === "Express Delivery")  return 3000;
-    if (method === "Standard Delivery") return 2000;
-    if (method === "Economy Delivery")  return 1000;
-    if (method === "Schedule Delivery") return 5000 * Math.max((orderData.scheduledStops?.length) || 0, 1);
-    return 0;
-  };
+  const deliveryFee = getDeliveryFee(
+    orderData.deliveryMethod,
+    orderData.scheduledStops?.length,
+  );
+  const serviceFee = isLamination || isHardcopyPickup ? 0 : getServiceFee(orderData.service);
 
-  const deliveryFee = getDeliveryFee();
-  const serviceFee  = SERVICE_FEE;
-  const total       = isLamination
+  const total = isLamination
     ? LAMINATION_FEE + deliveryFee + projectsTotal
+    : isHardcopyPickup
+    ? HARDCOPY_PICKUP_FEE + deliveryFee + projectsTotal
     : baseDoc + finishing + expressExtra + deliveryFee + serviceFee + projectsTotal;
 
   // ── Preview logic ───────────────────────────────────────────────────────────
