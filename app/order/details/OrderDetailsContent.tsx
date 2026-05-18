@@ -262,7 +262,7 @@ function ProjectCard({
           type="button"
           onClick={() => onUpdate(proj.id, { uploadMode: "hardcopy", service: "Hardcopy / Computer Pickup", documents: [], documentText: "" })}
           className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${proj.uploadMode === "hardcopy" ? "bg-white text-[#5123d4] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-        >Hardcopy Pickup</button>
+        >Hardcopy / Computer Pick up</button>
       </div>
 
       {/* File upload / text input — hidden for hardcopy */}
@@ -349,9 +349,16 @@ function ProjectCard({
       {/* Hardcopy pickup form */}
       {isHardcopy && (
         <div className="space-y-4">
-          <p className="text-xs text-gray-500">
-            We will come to you to collect your hardcopy documents or device. Fill in the pickup details below.
-          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Item Description <span className="text-red-500">*</span></label>
+            <textarea
+              rows={3}
+              placeholder="Describe what we are picking up (e.g. 2 printed documents, 1 laptop for repair, ID card lamination)…"
+              value={proj.documentText || ""}
+              onChange={(e) => onUpdate(proj.id, { documentText: e.target.value })}
+              className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-none"
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -966,51 +973,21 @@ export default function OrderDetailsContent() {
               <select
                 name="service"
                 aria-label="Service"
-                value={["Photocopy", "Lamination", "Binding"].includes(formData.service || "") ? "Printing" : (formData.service || "")}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  handleInputChange("service", val as OrderData["service"]);
-                }}
+                value={formData.service || ""}
+                onChange={(e) => handleInputChange("service", e.target.value as OrderData["service"])}
                 className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 ${errors.service ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"} text-sm`}
               >
                 <option value="">Select a service…</option>
                 {[
-                  "Printing", "Scanning",
-                  "Typing", "Document Conversion", "Graphic/Logo Design",
+                  "Printing", "Photocopy", "Typing", "Binding", "Scanning",
+                  "Document Conversion", "Graphic/Logo Design",
                   "Business Card / ID Card", "Application Services",
-                  "Technical Support", "Other",
+                  "Technical Support", "Lamination",
+                  "Hardcopy / Computer Pickup", "Other",
                 ].map((opt) => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
-
-              {/* Print type sub-selector — shown when Printing group is active */}
-              {["Printing", "Photocopy", "Lamination", "Binding"].includes(formData.service || "") && (
-                <div className="mt-2">
-                  <p className="text-xs font-medium text-gray-500 mb-2">Print Type</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {[
-                      { value: "Printing",   label: "Standard Print" },
-                      { value: "Photocopy",  label: "Photocopy"      },
-                      { value: "Binding",    label: "Binding"        },
-                      { value: "Lamination", label: "Lamination"     },
-                    ].map(({ value, label }) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => handleInputChange("service", value as OrderData["service"])}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          formData.service === value
-                            ? "bg-[#5123d4] text-white border-[#5123d4]"
-                            : "bg-white text-gray-600 border-gray-200 hover:border-[#5123d4]/50"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
               {errors.service && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.service}</p>}
             </div>
 
@@ -1139,9 +1116,16 @@ export default function OrderDetailsContent() {
 
             {uploadMode === "hardcopy" ? (
               <div className="space-y-4 pt-1">
-                <p className="text-xs text-gray-500">
-                  We will come to you to collect your hardcopy documents. Fill in the pickup details below.
-                </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Item Description <span className="text-red-500">*</span></label>
+                  <textarea
+                    rows={3}
+                    placeholder="Describe what we are picking up (e.g. 2 printed documents, 1 laptop for repair, ID card lamination)…"
+                    value={formData.documentText || ""}
+                    onChange={(e) => handleInputChange("documentText", e.target.value)}
+                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm resize-none"
+                  />
+                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
