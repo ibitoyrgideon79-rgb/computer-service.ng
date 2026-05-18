@@ -82,6 +82,7 @@ export interface OrderData {
     printColor: string;
     paperType: string;
     pages?: number;
+    copies?: number;
     finishingOption: string;
     pagesAutoDetected: boolean;
     bindingType?: string;

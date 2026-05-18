@@ -85,12 +85,13 @@ export default function OrderReviewPage() {
   const calcProjSubtotal = (proj: NonNullable<typeof orderData.additionalProjects>[0]) => {
     if (proj.service === "Hardcopy / Computer Pickup") return HARDCOPY_PICKUP_FEE;
     if (proj.service === "Lamination") return LAMINATION_FEE;
-    const c  = proj.printColor || "Black & white";
-    const p  = proj.paperType  || "A4";
-    const pg = proj.pages      || 1;
+    const c   = proj.printColor || "Black & white";
+    const p   = proj.paperType  || "A4";
+    const pg  = proj.pages      || 1;
+    const cp  = proj.copies ?? 1;
     const isPrint = ["Printing", "Photocopy"].includes(proj.service || "");
     if (!isPrint) return getServiceFee(proj.service);
-    return (PRINT_RATES[c]?.[p] ?? 50) * pg + (FINISHING_COSTS[proj.finishingOption] ?? 0);
+    return (PRINT_RATES[c]?.[p] ?? 50) * pg * cp + (FINISHING_COSTS[proj.finishingOption] ?? 0);
   };
   const projectsTotal = additionalProjects.reduce((sum, p) => sum + calcProjSubtotal(p), 0);
 
@@ -475,7 +476,11 @@ export default function OrderReviewPage() {
                       <p className="text-[11px] font-bold text-[#5123d4] uppercase tracking-wide mb-2">Additional Services</p>
                       {additionalProjects.map((proj, idx) => (
                         <div key={proj.id ?? idx} className="flex justify-between gap-2 mb-1.5">
-                          <p className="text-black shrink-0 text-xs">{proj.service || `Service ${idx + 2}`} ({proj.pages || 1}pg, {proj.printColor || "B&W"})</p>
+                          <p className="text-black shrink-0 text-xs">
+                            {proj.service || `Service ${idx + 2}`} ({proj.pages || 1}pg
+                            {proj.service === "Photocopy" && proj.copies && proj.copies > 1 ? ` × ${proj.copies} copies` : ""}
+                            {proj.printColor ? `, ${proj.printColor}` : ", B&W"})
+                          </p>
                           <p className="text-gray-700 text-xs">₦{calcProjSubtotal(proj).toLocaleString()}</p>
                         </div>
                       ))}

@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: "Computer Service NG",
   description: "Request any document or computer service online and we will deliver quality result to you.",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
+    icon: "/New Logo.jpeg",
+    shortcut: "/New Logo.jpeg",
+    apple: "/New Logo.jpeg",
   },
 };
 

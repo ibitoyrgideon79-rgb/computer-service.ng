@@ -79,6 +79,7 @@ interface AdditionalProject {
   pages?: number;
   finishingOption: "None" | "Spiral Binding" | "Stapled" | "Hardcover Binding" | "";
   pagesAutoDetected: boolean;
+  copies?: number;
   bindingType?: string;
   hardcopyState?: string;
   hardcopyCity?: string;
@@ -102,7 +103,8 @@ function calculateProjectSubtotal(proj: AdditionalProject): number {
   const sizeKey = (proj.paperType || "A4") as string;
   const rate = RATE[proj.printColor || "Black & white"]?.[sizeKey] ?? 0;
   const finCost = FINISHING_COST[proj.finishingOption || "None"] ?? 0;
-  return Math.max((proj.pages ?? 0) * rate + finCost + SERVICE_FEE, SERVICE_FEE);
+  const copies = proj.copies ?? 1;
+  return Math.max((proj.pages ?? 0) * rate * copies + finCost + SERVICE_FEE, SERVICE_FEE);
 }
 
 function ProjectCard({
@@ -593,6 +595,20 @@ function ProjectCard({
             value={proj.paperType || ""}
             onChange={(v) => onUpdate(proj.id, { paperType: v as AdditionalProject["paperType"] })}
           />
+
+          {proj.service === "Photocopy" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Number of Copies</label>
+              <input
+                type="number"
+                title="Number of copies"
+                min={1}
+                value={proj.copies ?? 1}
+                onChange={(e) => onUpdate(proj.id, { copies: Math.max(1, Number(e.target.value)) })}
+                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -673,6 +689,7 @@ export default function OrderDetailsContent() {
 
   const serviceParam   = searchParams.get("service") || "";
   const categoryParam  = searchParams.get("category") || "";
+  const copiesParam    = Number(searchParams.get("copies")) || undefined;
 
   const [formData, setFormData] = useState<Partial<OrderData>>({
     service:          serviceParam || orderData.service || "",
@@ -681,6 +698,7 @@ export default function OrderDetailsContent() {
     name:             orderData.name,
     email:            orderData.email,
     phoneNumber:      orderData.phoneNumber,
+    copies:           copiesParam || orderData.copies || 1,
     printColor:       orderData.printColor,
     paperType:        orderData.paperType,
     pages:            orderData.pages,
@@ -1044,6 +1062,22 @@ export default function OrderDetailsContent() {
                 </div>
 
                 <RadioRow label="Size" name="paperType" required options={["A4", "A3", "Custom type", "Passport"]} value={formData.paperType || ""} onChange={(v) => handleInputChange("paperType", v as OrderData["paperType"])} />
+
+                {formData.service === "Photocopy" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Number of Copies <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      title="Number of copies"
+                      min={1}
+                      value={formData.copies ?? 1}
+                      onChange={(e) => handleInputChange("copies", Math.max(1, Number(e.target.value)) as unknown as OrderData["copies"])}
+                      className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5123d4] text-sm"
+                    />
+                  </div>
+                )}
               </>
             )}
 

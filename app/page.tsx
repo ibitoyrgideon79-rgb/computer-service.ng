@@ -178,7 +178,7 @@ export default function Home() {
       {/* Navbar */}
       <header className="w-full border-b border-gray-900 sticky top-0 bg-black z-50">
         <div className="container mx-auto px-4 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
-          <Link href="/" className="flex flex-col items-start justify-center">
+          <Link href="/" className="flex flex-col items-start justify-center -mt-2">
             <div className="relative h-12 w-44 sm:h-16 sm:w-56 md:h-20 md:w-72 shrink-0">
               <Image src="/Computer service PNG 111.png" alt="computerservice.ng" fill className="object-contain object-left" priority quality={100} />
             </div>
