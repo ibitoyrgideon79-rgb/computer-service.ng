@@ -190,14 +190,6 @@ export default function PartnerOnboarding() {
   };
 
   const validateAgreementsStep = (): boolean => {
-    if (!formData.agreedToTerms) {
-      setError("You must agree to the Terms & Conditions");
-      return false;
-    }
-    if (!formData.agreedToPrivacy) {
-      setError("You must agree to the Privacy Policy");
-      return false;
-    }
     if (!formData.agreedToNda) {
       setError("You must agree to the NDA");
       return false;
@@ -381,6 +373,39 @@ export default function PartnerOnboarding() {
                 {entityType === "individual" ? "Personal Information" : "Business Information"}
               </h2>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Are you a Company or an Individual? <span className="text-red-500">*</span>
+                </label>
+                <div className="flex rounded-lg overflow-hidden border border-gray-200 w-fit">
+                  <button
+                    type="button"
+                    onClick={() => setEntityType("company")}
+                    className={`px-5 py-2 text-sm font-medium transition-colors ${
+                      entityType === "company"
+                        ? "bg-[#5123d4] text-white"
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Company
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEntityType("individual");
+                      if (!formData.companyName) handleInputChange("companyName", formData.fullName);
+                    }}
+                    className={`px-5 py-2 text-sm font-medium transition-colors ${
+                      entityType === "individual"
+                        ? "bg-[#5123d4] text-white"
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Individual
+                  </button>
+                </div>
+              </div>
+
               {entityType === "company" ? (
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
@@ -481,55 +506,16 @@ export default function PartnerOnboarding() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Are you a Company or an Individual? <span className="text-red-500">*</span>
+                  {entityType === "company" ? "Company Name" : "Full Name"} <span className="text-red-500">*</span>
                 </label>
-                {/* Toggle */}
-                <div className="flex rounded-lg overflow-hidden border border-gray-200 mb-3 w-fit">
-                  <button
-                    type="button"
-                    onClick={() => setEntityType("company")}
-                    className={`px-5 py-2 text-sm font-medium transition-colors ${
-                      entityType === "company"
-                        ? "bg-[#5123d4] text-white"
-                        : "bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    Company
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEntityType("individual");
-                      if (!formData.companyName) handleInputChange("companyName", formData.fullName);
-                    }}
-                    className={`px-5 py-2 text-sm font-medium transition-colors ${
-                      entityType === "individual"
-                        ? "bg-[#5123d4] text-white"
-                        : "bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    Individual
-                  </button>
-                </div>
-                {entityType === "company" ? (
-                  <input
-                    type="text"
-                    required
-                    value={formData.companyName}
-                    onChange={(e) => handleInputChange("companyName", e.target.value)}
-                    placeholder="Enter your company name"
-                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    required
-                    value={formData.companyName}
-                    onChange={(e) => handleInputChange("companyName", e.target.value)}
-                    placeholder="Enter your full name"
-                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-                  />
-                )}
+                <input
+                  type="text"
+                  required
+                  value={formData.companyName}
+                  onChange={(e) => handleInputChange("companyName", e.target.value)}
+                  placeholder={entityType === "company" ? "Enter your company name" : "Enter your full name"}
+                  className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                />
               </div>
 
               <div>
@@ -741,38 +727,6 @@ export default function PartnerOnboarding() {
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-black mb-6">Review & Agree to Terms</h2>
 
-              <div className="border border-gray-200 rounded-lg p-4">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.agreedToTerms}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, agreedToTerms: e.target.checked }))
-                    }
-                    className="w-5 h-5 text-[#5123d4] rounded mt-1 flex-shrink-0"
-                  />
-                  <span className="text-sm text-gray-700">
-                    I agree to the <span className="font-semibold">Terms & Conditions</span>
-                  </span>
-                </label>
-              </div>
-
-              <div className="border border-gray-200 rounded-lg p-4">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.agreedToPrivacy}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, agreedToPrivacy: e.target.checked }))
-                    }
-                    className="w-5 h-5 text-[#5123d4] rounded mt-1 flex-shrink-0"
-                  />
-                  <span className="text-sm text-gray-700">
-                    I agree to the <span className="font-semibold">Privacy Policy</span>
-                  </span>
-                </label>
-              </div>
-
               <div className="border-2 border-[#5123d4] rounded-xl overflow-hidden">
                 {/* NDA header */}
                 <div className="bg-[#5123d4] px-4 py-3 flex items-center justify-between">
@@ -937,14 +891,6 @@ export default function PartnerOnboarding() {
                 <div>
                   <p className="text-xs text-gray-500 font-medium uppercase mb-2">Agreements</p>
                   <ul className="space-y-1 text-sm text-gray-800">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      Terms & Conditions
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      Privacy Policy
-                    </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                       NDA

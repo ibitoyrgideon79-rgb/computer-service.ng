@@ -125,8 +125,13 @@ export default function PartnersAdmin() {
     return (
       (app.full_name || "").toLowerCase().includes(q) ||
       (app.company_name || "").toLowerCase().includes(q) ||
+      (app.email || "").toLowerCase().includes(q) ||
+      (app.phone_number || "").toLowerCase().includes(q) ||
       (app.address || "").toLowerCase().includes(q) ||
-      (app.services || "").toLowerCase().includes(q)
+      (app.position || "").toLowerCase().includes(q) ||
+      (app.business_details || "").toLowerCase().includes(q) ||
+      (app.services || "").toLowerCase().includes(q) ||
+      (app.status || "").toLowerCase().includes(q)
     );
   });
 
