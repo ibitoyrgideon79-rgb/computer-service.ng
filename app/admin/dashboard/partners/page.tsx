@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search, LayoutDashboard, Package, Users, X } from "lucide-react";
-import Link from "next/link";
+import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 function getToken(): string {
@@ -170,24 +169,6 @@ export default function PartnersAdmin() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <Link
-          href="/admin/dashboard"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <LayoutDashboard className="w-4 h-4" /> Dashboard
-        </Link>
-        <Link
-          href="/admin/orders"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <Package className="w-4 h-4" /> Orders
-        </Link>
-        <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-[#5123d4] text-white">
-          <Users className="w-4 h-4" /> Partners
-        </span>
-      </div>
-
       <h1 className="text-2xl font-bold text-black mb-6">Partner Applications</h1>
 
       {/* Search */}

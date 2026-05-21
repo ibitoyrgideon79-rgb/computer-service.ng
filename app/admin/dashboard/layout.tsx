@@ -23,8 +23,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const navLinks = [
     { href: "/admin/dashboard",          icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/admin/orders",             icon: Package,         label: "Orders"    },
-    { href: "/admin/partners",           icon: Users,           label: "Partners"  },
+    { href: "/admin/dashboard/orders",   icon: Package,         label: "Orders"    },
+    { href: "/admin/dashboard/partners", icon: Users,           label: "Partners"  },
     { href: "/admin/dashboard/settings", icon: Settings,        label: "Settings"  },
   ];
 

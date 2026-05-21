@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, Truck, Package, Search, LayoutDashboard, Users, Trash2, ExternalLink, MapPin } from "lucide-react";
+import { Loader2, Truck, Package, Search, Trash2, ExternalLink, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -105,24 +105,6 @@ export default function OrdersAdmin() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <Link
-          href="/admin/dashboard"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <LayoutDashboard className="w-4 h-4" /> Dashboard
-        </Link>
-        <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-[#5123d4] text-white">
-          <Package className="w-4 h-4" /> Orders
-        </span>
-        <Link
-          href="/admin/partners"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <Users className="w-4 h-4" /> Partners
-        </Link>
-      </div>
-
       <h1 className="text-2xl font-bold text-black mb-6">Orders</h1>
 
       <div className="relative mb-4">
