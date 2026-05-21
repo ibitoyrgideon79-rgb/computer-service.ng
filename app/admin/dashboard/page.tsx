@@ -711,13 +711,13 @@ export default function AdminDashboard() {
 
         <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
                     {statsLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
               {Array.from({ length: 7 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm h-20 animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
               {statCards.map((c) => (
                 <StatCard key={c.label} {...c} />
               ))}

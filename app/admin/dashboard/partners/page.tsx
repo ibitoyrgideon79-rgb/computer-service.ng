@@ -168,7 +168,7 @@ export default function PartnersAdmin() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 w-full max-w-7xl mx-auto">
       <h1 className="text-2xl font-bold text-black mb-6">Partner Applications</h1>
 
       {/* Search */}
