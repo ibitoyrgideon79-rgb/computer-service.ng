@@ -44,7 +44,7 @@ export interface OrderData {
   backCover: 'Plain' | 'Cardboard' | '';
 
   // Delivery
-  deliveryMethod: 'Express Delivery' | 'Standard Delivery' | 'Economy Delivery' | 'Schedule Delivery' | 'Special Submission' | 'Hardcopy Pickup' | '';
+  deliveryMethod: 'Express Delivery' | 'Standard Delivery' | 'Economy Delivery' | 'Schedule Delivery' | 'Special Submission' | 'Hardcopy Pickup' | 'Email Delivery' | '';
   scheduledStops?: ScheduledStop[];
   specificInstruction: string;
   deadline: 'Standard (3hrs - 5hrs)' | 'Express (1hr - 2hrs)' | 'Custom (Date Picker)' | '';
