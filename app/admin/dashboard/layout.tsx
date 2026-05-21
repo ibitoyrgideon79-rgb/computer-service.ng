@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { LayoutDashboard, LogOut, ExternalLink, Settings } from "lucide-react";
+import { LayoutDashboard, LogOut, ExternalLink, Settings, Package, Users } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -23,6 +23,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const navLinks = [
     { href: "/admin/dashboard",          icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/admin/orders",             icon: Package,         label: "Orders"    },
+    { href: "/admin/partners",           icon: Users,           label: "Partners"  },
     { href: "/admin/dashboard/settings", icon: Settings,        label: "Settings"  },
   ];
 

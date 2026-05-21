@@ -58,6 +58,14 @@ const DELIVERY_OPTIONS = [
     fee: 0,
     description: "Need your document submitted to a Government or Private organization? After receiving your order number, visit Submitar.com to complete your request.",
   },
+  {
+    value: "Email Delivery",
+    title: "Email Delivery 📧",
+    subtitle: "Sent directly to your inbox",
+    price: "Free",
+    fee: 0,
+    description: "We'll email the completed work to the address you provide. Best for soft-copy services (designs, scans, edited documents).",
+  },
 ];
 
 const NIGERIAN_STATES = [
@@ -922,6 +930,12 @@ export default function OrderDetailsContent() {
       if (scheduledStops.length === 0 || !valid) newErrors.scheduledStops = "Please fill in all stop details";
     }
 
+    if (formData.deliveryMethod === "Email Delivery") {
+      const email = (formData.deliveryDetails || "").trim();
+      if (!email) newErrors.deliveryDetails = "Email address is required";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.deliveryDetails = "Please enter a valid email address";
+    }
+
     if (uploadMode === "hardcopy") {
       if (!formData.hardcopyState)        newErrors.hardcopyState       = "State is required";
       if (!formData.hardcopyCity)         newErrors.hardcopyCity        = "City is required";
@@ -1631,6 +1645,25 @@ export default function OrderDetailsContent() {
                     <TextInput label="City / Area" name="pickupCity" required placeholder="e.g. Wuse Zone 2" value={formData.pickupCity || ""} onChange={(v) => handleInputChange("pickupCity", v)} error={errors.pickupCity} />
                   </div>
                   <TextInput label="Street Address / Landmark" name="pickupLocation" required placeholder="e.g. No. 5 Ibrahim Tahir Road, beside GTB" value={formData.pickupLocation || ""} onChange={(v) => handleInputChange("pickupLocation", v)} error={errors.pickupLocation} />
+                </div>
+              )}
+
+              {formData.deliveryMethod === "Email Delivery" && (
+                <div className="space-y-2 pt-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email Address for Delivery <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="where should we send the completed work?"
+                    value={formData.deliveryDetails || ""}
+                    onChange={(e) => handleInputChange("deliveryDetails", e.target.value)}
+                    className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg focus:outline-none focus:ring-2 ${errors.deliveryDetails ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"} text-sm`}
+                  />
+                  {errors.deliveryDetails && (
+                    <p className="text-red-500 text-xs flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.deliveryDetails}</p>
+                  )}
+                  <p className="text-xs text-gray-500">We&apos;ll send the completed file(s) to this address as soon as your order is ready.</p>
                 </div>
               )}
 

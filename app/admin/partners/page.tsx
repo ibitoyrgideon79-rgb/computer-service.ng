@@ -1,7 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search, LayoutDashboard, Package, Users } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+function getToken(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("admin_token") ?? "";
+}
+
+function authHeaders(): HeadersInit {
+  return { authorization: `Bearer ${getToken()}` };
+}
 
 interface PartnerApplication {
   id: string;
@@ -25,6 +36,7 @@ interface PartnerPhoto {
 }
 
 export default function PartnersAdmin() {
+  const router = useRouter();
   const [applications, setApplications] = useState<PartnerApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
@@ -37,7 +49,8 @@ export default function PartnersAdmin() {
 
   const fetchApplications = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/partners");
+      const res = await fetch("/api/admin/partners", { headers: authHeaders() });
+      if (res.status === 401) { router.push("/admin/login"); return; }
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setApplications(Array.isArray(data) ? data : (data.applications || []));
@@ -46,17 +59,18 @@ export default function PartnersAdmin() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
+    if (!getToken()) { router.push("/admin/login"); return; }
     fetchApplications();
-  }, [fetchApplications]);
+  }, [fetchApplications, router]);
 
   const fetchPhotos = async (id: string) => {
     if (photoCache[id]) return;
     setLoadingPhotos(id);
     try {
-      const res = await fetch(`/api/admin/partners/${id}/photos`);
+      const res = await fetch(`/api/admin/partners/${id}/photos`, { headers: authHeaders() });
       if (res.ok) {
         const photos = await res.json() as PartnerPhoto[];
         setPhotoCache(prev => ({ ...prev, [id]: photos }));
@@ -79,7 +93,7 @@ export default function PartnersAdmin() {
     try {
       const res = await fetch(`/api/admin/partners/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
@@ -98,7 +112,7 @@ export default function PartnersAdmin() {
     if (!confirm("Delete this partner application? This cannot be undone.")) return;
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/admin/partners/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/partners/${id}`, { method: "DELETE", headers: authHeaders() });
       if (res.ok) {
         setApplications(prev => prev.filter(app => app.id !== id));
         if (expandedId === id) setExpandedId(null);
@@ -155,6 +169,24 @@ export default function PartnersAdmin() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <Link
+          href="/admin/dashboard"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <LayoutDashboard className="w-4 h-4" /> Dashboard
+        </Link>
+        <Link
+          href="/admin/orders"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <Package className="w-4 h-4" /> Orders
+        </Link>
+        <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-[#5123d4] text-white">
+          <Users className="w-4 h-4" /> Partners
+        </span>
+      </div>
+
       <h1 className="text-2xl font-bold text-black mb-6">Partner Applications</h1>
 
       {/* Search */}

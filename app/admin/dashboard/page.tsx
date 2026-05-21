@@ -389,6 +389,8 @@ function DetailPanel({ order, onClose, onDelete }: { order: Order; onClose: () =
                 })()
               ) : order.delivery_method === "Special Submission" ? (
                 <DetailRow label="Action" value="Submitar.com submission" />
+              ) : order.delivery_method === "Email Delivery" ? (
+                <DetailRow label="Send to Email" value={order.delivery_details || order.email || "—"} />
               ) : (
                 order.delivery_details && <DetailRow label="Delivery Address" value={order.delivery_details} />
               )}

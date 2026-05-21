@@ -33,6 +33,7 @@ interface FormData {
   position: string;
   businessDetails: string;
   selectedServices: string[];
+  servicePrices: Record<string, string>;
   officePhotos: File[];
   personalPhoto: File | null;
   idCardPhoto: File | null;
@@ -58,6 +59,7 @@ export default function PartnerOnboarding() {
     position: "",
     businessDetails: "",
     selectedServices: [],
+    servicePrices: {},
     officePhotos: [],
     personalPhoto: null,
     idCardPhoto: null,
@@ -89,16 +91,28 @@ export default function PartnerOnboarding() {
     }
   };
 
-  const resolvedFullName = entityType === "individual"
-    ? `${formData.firstName} ${formData.lastName}`.trim()
-    : formData.fullName;
+  const resolvedFullName = `${formData.firstName} ${formData.lastName}`.trim();
+  const resolvedCompanyName = entityType === "company" ? formData.companyName : resolvedFullName;
 
   const toggleService = (service: string) => {
+    setFormData((prev) => {
+      const isOn = prev.selectedServices.includes(service);
+      const nextPrices = { ...prev.servicePrices };
+      if (isOn) delete nextPrices[service];
+      return {
+        ...prev,
+        selectedServices: isOn
+          ? prev.selectedServices.filter((s) => s !== service)
+          : [...prev.selectedServices, service],
+        servicePrices: nextPrices,
+      };
+    });
+  };
+
+  const setServicePrice = (service: string, price: string) => {
     setFormData((prev) => ({
       ...prev,
-      selectedServices: prev.selectedServices.includes(service)
-        ? prev.selectedServices.filter((s) => s !== service)
-        : [...prev.selectedServices, service],
+      servicePrices: { ...prev.servicePrices, [service]: price },
     }));
   };
 
@@ -126,22 +140,22 @@ export default function PartnerOnboarding() {
   };
 
   const validateFormStep = (): boolean => {
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      setError("Please enter your first and last name");
+      return false;
+    }
     if (entityType === "individual") {
-      if (!formData.firstName.trim() || !formData.lastName.trim()) {
-        setError("Please enter your first and last name");
-        return false;
-      }
       if (!formData.employmentType.trim()) {
         setError("Please select your employment type");
         return false;
       }
     } else {
-      if (!formData.fullName.trim()) {
-        setError("Please fill in all required fields");
+      if (!formData.companyName.trim()) {
+        setError("Please enter your company name");
         return false;
       }
     }
-    if (!formData.companyName.trim() || !formData.email.trim() ||
+    if (!formData.email.trim() ||
         !formData.phoneNumber.trim() || !formData.address.trim() || !formData.position.trim() ||
         !formData.businessDetails.trim()) {
       setError("Please fill in all required fields");
@@ -237,16 +251,25 @@ export default function PartnerOnboarding() {
     setError("");
 
     try {
-      const allServices = formData.selectedServices.includes("Other") && otherServiceText.trim()
-        ? [...formData.selectedServices.filter(s => s !== "Other"), otherServiceText.trim()]
-        : formData.selectedServices;
+      const formatService = (name: string, priceKey: string) => {
+        const price = (formData.servicePrices[priceKey] || "").trim();
+        return price ? `${name} — ₦${price}` : name;
+      };
+
+      const baseServices = formData.selectedServices.filter(s => s !== "Other");
+      const allServices = [
+        ...baseServices.map(s => formatService(s, s)),
+        ...(formData.selectedServices.includes("Other") && otherServiceText.trim()
+          ? [formatService(otherServiceText.trim(), "Other")]
+          : []),
+      ];
 
       const response = await fetch("/api/partners", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: resolvedFullName,
-          companyName: formData.companyName,
+          companyName: resolvedCompanyName,
           email: formData.email,
           phoneNumber: formData.phoneNumber,
           address: formData.address,
@@ -407,19 +430,34 @@ export default function PartnerOnboarding() {
               </div>
 
               {entityType === "company" ? (
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.fullName}
-                      onChange={(e) => handleInputChange("fullName", e.target.value)}
-                      placeholder="Your full name"
-                      className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-                    />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        First Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange("firstName", e.target.value)}
+                        placeholder="First name"
+                        className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        placeholder="Last name"
+                        className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -431,6 +469,19 @@ export default function PartnerOnboarding() {
                       value={formData.position}
                       onChange={(e) => handleInputChange("position", e.target.value)}
                       placeholder="e.g., Manager, Director"
+                      className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Company Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.companyName}
+                      onChange={(e) => handleInputChange("companyName", e.target.value)}
+                      placeholder="Enter your company name"
                       className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
                     />
                   </div>
@@ -506,20 +557,6 @@ export default function PartnerOnboarding() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {entityType === "company" ? "Company Name" : "Full Name"} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.companyName}
-                  onChange={(e) => handleInputChange("companyName", e.target.value)}
-                  placeholder={entityType === "company" ? "Enter your company name" : "Enter your full name"}
-                  className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -576,40 +613,79 @@ export default function PartnerOnboarding() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Services Offered <span className="text-red-500">*</span>
+                  Services Offered & Your Prices <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {AVAILABLE_SERVICES.map((service) => (
-                    <label key={service} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.selectedServices.includes(service)}
-                        onChange={() => toggleService(service)}
-                        className="w-4 h-4 text-[#5123d4] rounded focus:ring-[#5123d4]"
-                      />
-                      <span className="text-sm text-gray-700">{service}</span>
-                    </label>
-                  ))}
-                  <label className="flex items-center gap-2 cursor-pointer col-span-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.selectedServices.includes("Other")}
-                      onChange={() => toggleService("Other")}
-                      className="w-4 h-4 text-[#5123d4] rounded focus:ring-[#5123d4]"
-                    />
-                    <span className="text-sm text-gray-700">Other / Custom</span>
-                  </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {AVAILABLE_SERVICES.map((service) => {
+                    const checked = formData.selectedServices.includes(service);
+                    return (
+                      <div
+                        key={service}
+                        className={`rounded-lg border transition-colors ${
+                          checked ? "border-[#5123d4] bg-[#f5f1ff]" : "border-gray-200 bg-white"
+                        }`}
+                      >
+                        <label className="flex items-center gap-2 cursor-pointer px-3 py-2">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleService(service)}
+                            className="w-4 h-4 text-[#5123d4] rounded focus:ring-[#5123d4]"
+                          />
+                          <span className="text-sm text-gray-700 flex-1">{service}</span>
+                        </label>
+                        {checked && (
+                          <div className="px-3 pb-2">
+                            <div className="flex items-center bg-white border border-gray-200 rounded-md overflow-hidden">
+                              <span className="px-2 text-xs text-gray-500 border-r border-gray-200 py-1.5">₦</span>
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="Your price (e.g. 500/page)"
+                                value={formData.servicePrices[service] || ""}
+                                onChange={(e) => setServicePrice(service, e.target.value)}
+                                className="flex-1 px-2 py-1.5 text-xs text-black bg-white focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                {formData.selectedServices.includes("Other") && (
+
+                <label className="flex items-center gap-2 cursor-pointer mt-2">
                   <input
-                    type="text"
-                    placeholder="Describe your other services…"
-                    value={otherServiceText}
-                    onChange={(e) => setOtherServiceText(e.target.value)}
-                    className="mt-3 w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                    type="checkbox"
+                    checked={formData.selectedServices.includes("Other")}
+                    onChange={() => toggleService("Other")}
+                    className="w-4 h-4 text-[#5123d4] rounded focus:ring-[#5123d4]"
                   />
+                  <span className="text-sm text-gray-700">Other / Custom</span>
+                </label>
+                {formData.selectedServices.includes("Other") && (
+                  <div className="mt-2 space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Describe your other services…"
+                      value={otherServiceText}
+                      onChange={(e) => setOtherServiceText(e.target.value)}
+                      className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                    />
+                    <div className="flex items-center bg-white border border-gray-200 rounded-md overflow-hidden">
+                      <span className="px-2 text-xs text-gray-500 border-r border-gray-200 py-2">₦</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Your price for this custom service"
+                        value={formData.servicePrices["Other"] || ""}
+                        onChange={(e) => setServicePrice("Other", e.target.value)}
+                        className="flex-1 px-2 py-2 text-sm text-black bg-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
                 )}
-                <p className="text-xs text-gray-500 mt-2">Select all services you currently offer</p>
+                <p className="text-xs text-gray-500 mt-2">Tick each service you offer and enter your price.</p>
               </div>
             </div>
           )}
@@ -814,35 +890,30 @@ export default function PartnerOnboarding() {
 
               <div className="bg-gray-50 rounded-lg p-6 space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
-                  {entityType === "individual" ? (
-                    <>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium uppercase">First Name</p>
-                        <p className="text-gray-900 font-semibold">{formData.firstName}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium uppercase">Last Name</p>
-                        <p className="text-gray-900 font-semibold">{formData.lastName}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 font-medium uppercase">Employment Status</p>
-                        <p className="text-gray-900 font-semibold">{formData.employmentType}</p>
-                      </div>
-                    </>
-                  ) : (
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium uppercase">First Name</p>
+                    <p className="text-gray-900 font-semibold">{formData.firstName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium uppercase">Last Name</p>
+                    <p className="text-gray-900 font-semibold">{formData.lastName}</p>
+                  </div>
+                  {entityType === "individual" && (
                     <div>
-                      <p className="text-xs text-gray-500 font-medium uppercase">Full Name</p>
-                      <p className="text-gray-900 font-semibold">{formData.fullName}</p>
+                      <p className="text-xs text-gray-500 font-medium uppercase">Employment Status</p>
+                      <p className="text-gray-900 font-semibold">{formData.employmentType}</p>
                     </div>
                   )}
                   <div>
                     <p className="text-xs text-gray-500 font-medium uppercase">{entityType === "company" ? "Position" : "Occupation"}</p>
                     <p className="text-gray-900 font-semibold">{formData.position}</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium uppercase">{entityType === "company" ? "Company" : "Individual"}</p>
-                    <p className="text-gray-900 font-semibold">{formData.companyName}</p>
-                  </div>
+                  {entityType === "company" && (
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase">Company</p>
+                      <p className="text-gray-900 font-semibold">{formData.companyName}</p>
+                    </div>
+                  )}
                   <div>
                     <p className="text-xs text-gray-500 font-medium uppercase">Email</p>
                     <p className="text-gray-900 font-semibold">{formData.email}</p>
@@ -858,13 +929,17 @@ export default function PartnerOnboarding() {
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-500 font-medium uppercase mb-2">Services Offered</p>
+                  <p className="text-xs text-gray-500 font-medium uppercase mb-2">Services & Prices</p>
                   <div className="flex flex-wrap gap-2">
-                    {formData.selectedServices.map((service) => (
-                      <span key={service} className="bg-[#5123d4] text-white text-xs font-medium px-3 py-1 rounded-full">
-                        {service}
-                      </span>
-                    ))}
+                    {formData.selectedServices.map((service) => {
+                      const label = service === "Other" ? (otherServiceText.trim() || "Other") : service;
+                      const price = (formData.servicePrices[service] || "").trim();
+                      return (
+                        <span key={service} className="bg-[#5123d4] text-white text-xs font-medium px-3 py-1 rounded-full">
+                          {label}{price ? ` — ₦${price}` : ""}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
 
