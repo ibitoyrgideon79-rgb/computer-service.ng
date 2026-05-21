@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search, LayoutDashboard, Package, Users } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search, LayoutDashboard, Package, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -46,6 +46,7 @@ export default function PartnersAdmin() {
   const [photoCache, setPhotoCache] = useState<Record<string, PartnerPhoto[]>>({});
   const [loadingPhotos, setLoadingPhotos] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [lightboxPhoto, setLightboxPhoto] = useState<PartnerPhoto | null>(null);
 
   const fetchApplications = useCallback(async () => {
     try {
@@ -304,13 +305,23 @@ export default function PartnersAdmin() {
                             <img
                               src={photo.dataUrl}
                               alt={photo.label}
-                              className="w-full h-32 object-cover"
+                              onClick={() => setLightboxPhoto(photo)}
+                              className="w-full h-32 object-cover cursor-zoom-in"
                             />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <div
+                              className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 pointer-events-none"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setLightboxPhoto(photo)}
+                                className="bg-white text-black px-3 py-1.5 rounded-lg text-xs font-medium shadow pointer-events-auto"
+                              >
+                                Click to enlarge
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => downloadPhoto(photo)}
-                                className="bg-white text-black px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 shadow"
+                                className="bg-white text-black px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 shadow pointer-events-auto"
                               >
                                 <Download className="w-3 h-3" /> Download
                               </button>
@@ -369,6 +380,43 @@ export default function PartnersAdmin() {
           );
         })}
       </div>
+
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex flex-col items-center justify-center p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-white font-semibold text-sm">{lightboxPhoto.label}</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => downloadPhoto(lightboxPhoto)}
+                  className="flex items-center gap-1.5 text-white/80 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-xs font-medium"
+                >
+                  <Download className="w-4 h-4" /> Download
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightboxPhoto(null)}
+                  className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightboxPhoto.dataUrl}
+              alt={lightboxPhoto.label}
+              className="w-full max-h-[80vh] object-contain rounded-xl shadow-2xl bg-black"
+            />
+            <p className="text-white/40 text-xs text-center mt-3">Click outside to close</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
