@@ -235,7 +235,7 @@ export default function PartnersAdmin() {
                     {serviceList.length > 0 && (
                       <div className="flex gap-1.5 mt-2 flex-wrap">
                         {serviceList.slice(0, 4).map(s => (
-                          <span key={s} className="text-xs bg-white/80 border border-white px-2 py-0.5 rounded font-medium">{s}</span>
+                          <span key={s} className="text-xs bg-white border border-gray-300 text-gray-800 px-2 py-0.5 rounded font-medium">{s}</span>
                         ))}
                         {serviceList.length > 4 && (
                           <span className="text-xs text-gray-500">+{serviceList.length - 4} more</span>
