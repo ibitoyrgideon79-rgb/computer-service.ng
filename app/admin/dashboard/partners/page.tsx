@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search, X } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ChevronDown, Trash2, Download, Image, Search, X, MessageSquare, Send, Paperclip, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 function getToken(): string {
@@ -34,6 +34,13 @@ interface PartnerPhoto {
   dataUrl: string;
 }
 
+interface PartnerUpdate {
+  id: string;
+  message: string;
+  imageDataUrl: string | null;
+  createdAt: string;
+}
+
 export default function PartnersAdmin() {
   const router = useRouter();
   const [applications, setApplications] = useState<PartnerApplication[]>([]);
@@ -46,6 +53,11 @@ export default function PartnersAdmin() {
   const [loadingPhotos, setLoadingPhotos] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [lightboxPhoto, setLightboxPhoto] = useState<PartnerPhoto | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<{ src: string; label: string } | null>(null);
+  const [updates, setUpdates] = useState<Record<string, PartnerUpdate[]>>({});
+  const [updateMessage, setUpdateMessage] = useState<Record<string, string>>({});
+  const [updateImage, setUpdateImage] = useState<Record<string, string>>({});
+  const [postingUpdate, setPostingUpdate] = useState<string | null>(null);
 
   const fetchApplications = useCallback(async () => {
     try {
@@ -82,10 +94,95 @@ export default function PartnersAdmin() {
     }
   };
 
+  const fetchUpdates = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/partners/${id}/updates`, { headers: authHeaders() });
+      if (res.ok) {
+        const data = await res.json() as PartnerUpdate[];
+        setUpdates(prev => ({ ...prev, [id]: data }));
+      }
+    } catch (error) {
+      console.error("Error fetching updates:", error);
+    }
+  };
+
   const handleExpand = (id: string) => {
     const newId = expandedId === id ? null : id;
     setExpandedId(newId);
-    if (newId) fetchPhotos(newId);
+    if (newId) {
+      fetchPhotos(newId);
+      fetchUpdates(newId);
+    }
+  };
+
+  const compressImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        const img = new window.Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const MAX = 1400;
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { resolve(reader.result as string); return; }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.75));
+        };
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+
+  const handleUpdateImageChange = async (id: string, file: File | null) => {
+    if (!file) { setUpdateImage(prev => ({ ...prev, [id]: "" })); return; }
+    try {
+      const dataUrl = await compressImage(file);
+      setUpdateImage(prev => ({ ...prev, [id]: dataUrl }));
+    } catch (err) {
+      console.error("image compress failed", err);
+    }
+  };
+
+  const postUpdate = async (id: string) => {
+    const message = (updateMessage[id] || "").trim();
+    if (!message) return;
+    setPostingUpdate(id);
+    try {
+      const res = await fetch(`/api/admin/partners/${id}/updates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ message, imageDataUrl: updateImage[id] || null }),
+      });
+      if (res.ok) {
+        const created = await res.json() as PartnerUpdate;
+        setUpdates(prev => ({ ...prev, [id]: [created, ...(prev[id] || [])] }));
+        setUpdateMessage(prev => ({ ...prev, [id]: "" }));
+        setUpdateImage(prev => ({ ...prev, [id]: "" }));
+      }
+    } catch (error) {
+      console.error("Error posting update:", error);
+    } finally {
+      setPostingUpdate(null);
+    }
+  };
+
+  const deleteUpdate = async (partnerId: string, updateId: string) => {
+    if (!confirm("Delete this update?")) return;
+    try {
+      const res = await fetch(`/api/admin/partners/${partnerId}/updates/${updateId}`, {
+        method: "DELETE", headers: authHeaders(),
+      });
+      if (res.ok) {
+        setUpdates(prev => ({ ...prev, [partnerId]: (prev[partnerId] || []).filter(u => u.id !== updateId) }));
+      }
+    } catch (error) {
+      console.error("Error deleting update:", error);
+    }
   };
 
   const updateStatus = async (id: string, newStatus: string) => {
@@ -316,6 +413,91 @@ export default function PartnersAdmin() {
                     <p className="text-xs text-gray-400">Photos could not be loaded.</p>
                   ) : null}
 
+                  {/* Updates section */}
+                  <div className="border-t border-gray-200 pt-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-3 flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5" /> Updates & Messages
+                    </p>
+
+                    <div className="bg-white border border-gray-200 rounded-lg p-3 mb-3 space-y-2">
+                      <textarea
+                        placeholder="Write a message to this partner (they'll receive it by email)…"
+                        value={updateMessage[app.id] || ""}
+                        onChange={(e) => setUpdateMessage(prev => ({ ...prev, [app.id]: e.target.value }))}
+                        rows={3}
+                        className="w-full text-sm text-black bg-[#F1F5F9] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#5123d4] resize-none"
+                      />
+                      {updateImage[app.id] && (
+                        <div className="relative inline-block">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={updateImage[app.id]} alt="attachment preview" className="h-20 rounded-md border border-gray-200" />
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateImageChange(app.id, null)}
+                            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                            title="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <label className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-[#5123d4] cursor-pointer">
+                          <Paperclip className="w-3.5 h-3.5" />
+                          {updateImage[app.id] ? "Change image" : "Attach image"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleUpdateImageChange(app.id, e.target.files?.[0] || null)}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => postUpdate(app.id)}
+                          disabled={postingUpdate === app.id || !(updateMessage[app.id] || "").trim()}
+                          className="inline-flex items-center gap-1.5 bg-[#5123d4] hover:bg-[#401AA0] disabled:opacity-50 text-white px-3 py-1.5 rounded-md text-xs font-medium"
+                        >
+                          {postingUpdate === app.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                          {postingUpdate === app.id ? "Sending…" : "Post & Email Partner"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {(updates[app.id] || []).length === 0 ? (
+                      <p className="text-xs text-gray-400 italic">No updates yet for this partner.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {(updates[app.id] || []).map(u => (
+                          <div key={u.id} className="bg-white border border-gray-200 rounded-lg p-3 flex gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-800 whitespace-pre-wrap wrap-break-word">{u.message}</p>
+                              {u.imageDataUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => setLightboxSrc({ src: u.imageDataUrl as string, label: "Update image" })}
+                                  className="mt-2 inline-block"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={u.imageDataUrl} alt="update" className="h-24 rounded-md border border-gray-200 hover:opacity-90 cursor-zoom-in" />
+                                </button>
+                              )}
+                              <p className="text-[11px] text-gray-400 mt-1.5">{new Date(u.createdAt).toLocaleString()}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => deleteUpdate(app.id, u.id)}
+                              className="text-gray-400 hover:text-red-600 self-start"
+                              title="Delete update"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
                     {app.status !== "Approved" && (
@@ -392,6 +574,43 @@ export default function PartnersAdmin() {
             <img
               src={lightboxPhoto.dataUrl}
               alt={lightboxPhoto.label}
+              className="w-full max-h-[80vh] object-contain rounded-xl shadow-2xl bg-black"
+            />
+            <p className="text-white/40 text-xs text-center mt-3">Click outside to close</p>
+          </div>
+        </div>
+      )}
+
+      {lightboxSrc && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex flex-col items-center justify-center p-4"
+          onClick={() => setLightboxSrc(null)}
+        >
+          <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-white font-semibold text-sm">{lightboxSrc.label}</span>
+              <div className="flex items-center gap-1">
+                <a
+                  href={lightboxSrc.src}
+                  download={`${lightboxSrc.label.replace(/\s+/g, "_")}.jpg`}
+                  className="flex items-center gap-1.5 text-white/80 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 transition-colors text-xs font-medium"
+                >
+                  <Download className="w-4 h-4" /> Download
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setLightboxSrc(null)}
+                  className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightboxSrc.src}
+              alt={lightboxSrc.label}
               className="w-full max-h-[80vh] object-contain rounded-xl shadow-2xl bg-black"
             />
             <p className="text-white/40 text-xs text-center mt-3">Click outside to close</p>

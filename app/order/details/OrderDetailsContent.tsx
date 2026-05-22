@@ -1788,7 +1788,7 @@ export default function OrderDetailsContent() {
                 </>
               ) : (
                 <>
-                  <div className="flex justify-between"><span>Service Fee:</span><span>₦2,000</span></div>
+                  <div className="flex justify-between"><span>Processing Fee:</span><span>₦2,000</span></div>
                   {isPrintService && formData.pages && (
                     <div className="flex justify-between">
                       <span>Printing ({formData.pages} pages):</span>

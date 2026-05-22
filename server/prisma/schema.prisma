@@ -65,21 +65,34 @@ model Order {
 }
 
 model PartnerApplication {
-  id              String         @id @default(uuid())
-  fullName        String         @map("full_name")
-  companyName     String         @map("company_name")
+  id              String          @id @default(uuid())
+  fullName        String          @map("full_name")
+  companyName     String          @map("company_name")
   email           String
-  phoneNumber     String?        @map("phone_number")
+  phoneNumber     String?         @map("phone_number")
   address         String
   position        String?
-  businessDetails String?        @map("business_details")
+  businessDetails String?         @map("business_details")
   services        String?
-  photoCount      Int            @default(0) @map("photo_count")
-  status          String         @default("Pending")
-  createdAt       DateTime       @default(now()) @map("created_at")
+  photoCount      Int             @default(0) @map("photo_count")
+  status          String          @default("Pending")
+  createdAt       DateTime        @default(now()) @map("created_at")
   photos          PartnerPhoto[]
+  updates         PartnerUpdate[]
 
   @@map("partner_applications")
+}
+
+model PartnerUpdate {
+  id            String             @id @default(uuid())
+  applicationId String             @map("application_id")
+  message       String             @db.Text
+  imageDataUrl  String?            @map("image_data_url") @db.Text
+  createdAt     DateTime           @default(now()) @map("created_at")
+  application   PartnerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("partner_updates")
 }
 
 model PartnerPhoto {

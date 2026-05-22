@@ -102,6 +102,27 @@ export async function notifyAdminNewOrder(order: OrderNotification): Promise<voi
 }
 
 
+export async function notifyPartnerUpdate(args: {
+  to: string;
+  partnerName: string;
+  message: string;
+  hasImage: boolean;
+}): Promise<void> {
+  if (!args.to) return;
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:580px;margin:auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
+      <h2 style="color:#5123d4;margin:0 0 6px;">📣 Update from ComputerService.ng</h2>
+      <p style="color:#6b7280;margin:0 0 20px;font-size:14px;">Hi ${args.partnerName.split(" ")[0] || args.partnerName}, the team has posted an update on your partner profile.</p>
+      <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin-bottom:20px;">
+        <p style="color:#111827;font-size:14px;line-height:1.6;white-space:pre-wrap;margin:0;">${args.message.replace(/[<>&]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;"}[c] as string))}</p>
+        ${args.hasImage ? `<p style="color:#6b7280;font-size:12px;margin:14px 0 0;">📎 An image was attached to this update. Log in to view it.</p>` : ""}
+      </div>
+      <p style="color:#9ca3af;font-size:11px;margin-top:20px;">ComputerService.ng — Partner notifications</p>
+    </div>`;
+  await sendEmail(args.to, "Update from ComputerService.ng", html);
+}
+
+
 export async function notifyCustomerOrderConfirmed(order: OrderNotification): Promise<void> {
   if (!order.phoneNumber && !order.email) return;
 
