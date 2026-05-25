@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, Suspense } from "react
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   CheckCircle, Clock, Package, Truck, PartyPopper, Copy,
-  ArrowRight, Phone, Mail, Search, Loader2, CreditCard,
+  ArrowRight, ArrowLeft, Phone, Mail, Search, Loader2, CreditCard,
   RefreshCw, RotateCcw, X,
 } from "lucide-react";
 import { useOrderStore } from "@/store/useOrderStore";
@@ -415,6 +415,15 @@ function TrackingContent() {
   return (
     <div className="min-h-screen bg-linear-to-br from-[#f0ebff] via-white to-[#ebf4ff] font-sans text-black">
       <div className="container mx-auto px-4 max-w-2xl py-10 sm:py-16">
+
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#5123d4] hover:text-[#401AA0] mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
 
         {/* Payment verification spinner */}
         {verifying && (

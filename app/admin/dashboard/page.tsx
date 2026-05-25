@@ -109,11 +109,11 @@ function StatCard({
   label, value, icon: Icon, color,
 }: { label: string; value: number | string; icon: React.ElementType; color: string }) {
   return (
-    <div className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm flex items-center gap-2.5 min-w-0">
+    <div className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm flex flex-col items-start gap-2 min-w-0">
       <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
         <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 w-full">
         <p className="text-lg sm:text-xl font-bold text-black leading-tight truncate" title={String(value)}>{value}</p>
         <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 truncate" title={label}>{label}</p>
       </div>
