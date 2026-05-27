@@ -247,7 +247,8 @@ export default function Home() {
               We Bring Computer Services to your doorstep.
             </h1>
             <p className="text-base sm:text-lg text-gray-600">
-              Request any document or computer services online and we will deliver quality result to you.
+              Request any computer service, and we’ll deliver quality results right to your doorstep.
+              Fast, reliable, and professional solutions tailored to your needs.
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-2 sm:mt-4">
               <Link href="/order/details" className="bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3 rounded-md font-medium flex items-center justify-center gap-2 transition-colors shadow-sm">
