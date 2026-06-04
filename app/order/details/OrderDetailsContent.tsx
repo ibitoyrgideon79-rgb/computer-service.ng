@@ -1780,62 +1780,6 @@ export default function OrderDetailsContent() {
             </SectionCard>
           )}
 
-          <SectionCard title="Order Summary">
-            <div className="space-y-2 text-sm">
-              {formData.service === "Lamination" ? (
-                <>
-                  <div className="flex justify-between"><span>Lamination:</span><span>₦700</span></div>
-                </>
-              ) : (
-                <>
-                  <div className="flex justify-between"><span>Processing Fee:</span><span>₦2,000</span></div>
-                  {isPrintService && formData.pages && (
-                    <div className="flex justify-between">
-                      <span>Printing ({formData.pages} pages):</span>
-                      <span>₦{formData.pages * (RATE[formData.printColor || "Black & white"]?.[formData.paperType as keyof typeof RATE["Black & white"] || "A4"] || 0)}</span>
-                    </div>
-                  )}
-                  {formData.finishingOption && formData.finishingOption !== "None" && (
-                    <div className="flex justify-between"><span>{formData.finishingOption}:</span><span>₦{FINISHING_COST[formData.finishingOption]}</span></div>
-                  )}
-                  {formData.expressService && (
-                    <div className="flex justify-between text-blue-600"><span>Express Service:</span><span>+50%</span></div>
-                  )}
-                </>
-              )}
-              {uploadMode === "hardcopy" && (
-                <div className="flex justify-between text-amber-700">
-                  <span>Pickup Fee:</span>
-                  <span>₦3,000</span>
-                </div>
-              )}
-              {formData.deliveryMethod && formData.deliveryMethod !== "Special Submission" && formData.deliveryMethod !== "Hardcopy Pickup" && (
-                <div className="flex justify-between">
-                  <span>{uploadMode === "hardcopy" ? "Return " : ""}Delivery ({formData.deliveryMethod}):</span>
-                  <span>
-                    {formData.deliveryMethod === "Schedule Delivery"
-                      ? `₦${(5000 * scheduledStops.length).toLocaleString()} (${scheduledStops.length} stop${scheduledStops.length !== 1 ? "s" : ""})`
-                      : `₦${getDeliveryFee().toLocaleString()}`
-                    }
-                  </span>
-                </div>
-              )}
-              {formData.deliveryMethod === "Special Submission" && (
-                <div className="flex justify-between text-green-700"><span>Special Submission:</span><span>Free</span></div>
-              )}
-              {additionalProjects.filter(p => p.service).map((proj, idx) => (
-                <div key={proj.id} className="flex justify-between text-gray-600">
-                  <span>Project {idx + 2} – {proj.service}:</span>
-                  <span>₦{calculateProjectSubtotal(proj).toLocaleString()}</span>
-                </div>
-              ))}
-              <div className="pt-2 border-t border-gray-200 font-bold flex justify-between">
-                <span>Total:</span>
-                <span className="text-[#5123d4]">₦{calculateTotal().toLocaleString()}</span>
-              </div>
-            </div>
-          </SectionCard>
-
           <button type="submit" className="w-full bg-[#5123d4] hover:bg-[#401AA0] text-white py-3 rounded-lg font-medium transition-colors">
             Continue to Review
           </button>
