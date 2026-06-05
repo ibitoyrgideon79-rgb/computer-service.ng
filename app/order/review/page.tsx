@@ -462,7 +462,7 @@ export default function OrderReviewPage() {
                         </div>
                       )}
                       <div className="flex justify-between">
-                        <p className="font-semibold text-black">Service fee</p>
+                        <p className="font-semibold text-black">Processing fee</p>
                         <p className="text-gray-700">₦{serviceFee.toLocaleString()}</p>
                       </div>
                     </>

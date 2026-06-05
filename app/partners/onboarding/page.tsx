@@ -231,7 +231,7 @@ export default function PartnerOnboarding() {
         const img = new window.Image();
         img.onerror = reject;
         img.onload = () => {
-          const MAX = 1200;
+          const MAX = 900;
           const scale = Math.min(1, MAX / Math.max(img.width, img.height));
           const canvas = document.createElement("canvas");
           canvas.width  = Math.round(img.width  * scale);
@@ -239,12 +239,15 @@ export default function PartnerOnboarding() {
           const ctx = canvas.getContext("2d");
           if (!ctx) { resolve(reader.result as string); return; }
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL("image/jpeg", 0.7));
+          resolve(canvas.toDataURL("image/jpeg", 0.6));
         };
         img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     });
+
+  const PENDING_APP_KEY    = "partner_pending_app_id";
+  const PENDING_LABELS_KEY = "partner_pending_uploaded_labels";
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -264,30 +267,37 @@ export default function PartnerOnboarding() {
           : []),
       ];
 
-      const response = await fetch("/api/partners", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: resolvedFullName,
-          companyName: resolvedCompanyName,
-          email: formData.email,
-          phoneNumber: formData.phoneNumber,
-          address: formData.address,
-          position: formData.position,
-          businessDetails: formData.businessDetails,
-          services: allServices,
-          photoCount: formData.officePhotos.length,
-        }),
-      });
+      // Reuse an existing application from a prior failed attempt so we don't
+      // create duplicates when the user retries after a photo upload error.
+      let appId = typeof window !== "undefined" ? localStorage.getItem(PENDING_APP_KEY) || "" : "";
 
-      const data = await response.json();
+      if (!appId) {
+        const response = await fetch("/api/partners", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName: resolvedFullName,
+            companyName: resolvedCompanyName,
+            email: formData.email,
+            phoneNumber: formData.phoneNumber,
+            address: formData.address,
+            position: formData.position,
+            businessDetails: formData.businessDetails,
+            services: allServices,
+            photoCount: formData.officePhotos.length,
+          }),
+        });
 
-      if (!response.ok) {
-        setError(data.error || "Failed to submit application");
-        return;
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || "Failed to submit application");
+          return;
+        }
+
+        appId = data.id as string;
+        try { localStorage.setItem(PENDING_APP_KEY, appId); } catch {}
       }
-
-      const appId = data.id as string;
 
       // Upload photos one at a time to avoid large payloads
       const idLabel = entityType === "individual" ? (formData.idType || "ID Document") : "ID Card";
@@ -297,21 +307,55 @@ export default function PartnerOnboarding() {
         ...(formData.idCardPhoto    ? [{ file: formData.idCardPhoto,   label: idLabel }]          : []),
       ];
 
+      // Don't re-upload photos that already succeeded on a prior attempt.
+      const alreadyUploaded: string[] = (() => {
+        try {
+          const raw = localStorage.getItem(PENDING_LABELS_KEY);
+          return raw ? (JSON.parse(raw) as string[]) : [];
+        } catch { return []; }
+      })();
+
+      const failed: string[] = [];
       for (const { file, label } of photosToUpload) {
-        const dataUrl = await compressAndEncode(file);
-        await fetch(`/api/partners/${appId}/photos`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ label, dataUrl }),
-        });
+        if (alreadyUploaded.includes(label)) continue;
+        try {
+          const dataUrl = await compressAndEncode(file);
+          const res = await fetch(`/api/partners/${appId}/photos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ label, dataUrl }),
+          });
+          if (res.ok) {
+            alreadyUploaded.push(label);
+            try { localStorage.setItem(PENDING_LABELS_KEY, JSON.stringify(alreadyUploaded)); } catch {}
+          } else {
+            failed.push(label);
+          }
+        } catch {
+          failed.push(label);
+        }
       }
+
+      if (failed.length > 0) {
+        setError(
+          `${failed.length} photo${failed.length > 1 ? "s" : ""} failed to upload (${failed.join(", ")}). ` +
+          `Please check your internet and tap Submit again — we'll only retry the failed photos, not create a duplicate application.`
+        );
+        return;
+      }
+
+      // Everything saved — clear the pending app markers
+      try {
+        localStorage.removeItem(PENDING_APP_KEY);
+        localStorage.removeItem(PENDING_LABELS_KEY);
+      } catch {}
 
       setSubmitted(true);
       setTimeout(() => {
         router.push("/");
       }, 3000);
     } catch {
-      setError("Network error. Please try again.");
+      setError("Network error. Please tap Submit again to retry — we won't create a duplicate application.");
     } finally {
       setLoading(false);
     }
