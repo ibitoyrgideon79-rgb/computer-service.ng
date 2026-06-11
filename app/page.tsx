@@ -268,6 +268,13 @@ export default function Home() {
         <section className="py-14 sm:py-20 bg-gray-50 border-y border-gray-100" id="services">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="text-center mb-12">
+              <button
+                type="button"
+                onClick={() => router.push("/special-services")}
+                className="inline-flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-6 py-2.5 rounded-full text-sm font-semibold mb-6 transition-colors shadow-sm"
+              >
+                ✨ Special Services
+              </button>
               <h2 className="text-3xl font-bold text-black mb-3">Our Services</h2>
               <p className="text-gray-500 max-w-xl mx-auto">Everything you need handled quickly, professionally, and delivered to you.</p>
             </div>
