@@ -24,7 +24,7 @@ const SIZE_HINTS: Record<string, string> = {
   "Passport": "Passport photos",
 };
 const SERVICE_CATEGORIES: Record<string, string[]> = {
-  "Printing": ["Letter Size", "Photo Print", "Poster Print", "Banner Print", "Document", "Photos & Passport", "Business Materials", "Cards & Labels", "Event Prints"],
+  "Printing": ["Document", "Photo Print", "Poster Print", "Banner Print", "Photos & Passport", "Business Materials", "Cards & Labels", "Event Prints"],
   "Photocopy": ["A4 Photocopy", "A3 Photocopy", "A5 Photocopy", "Legal Size Photocopy", "Bulk Photocopy"],
   "Hardcopy / Computer Pickup": ["Document Pickup", "Computer / Laptop Pickup", "Phone Pickup", "Other Device Pickup"],
   "Typing": ["CV / Resume", "Cover Letter", "Application Letter", "School Assignment", "Report Writing", "Business Letter", "Proposal / Project", "Minutes of Meeting"],
