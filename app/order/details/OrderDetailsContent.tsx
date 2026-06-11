@@ -7,13 +7,22 @@ import { UploadCloud, AlertCircle, Plus, Trash2, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
 const RATE: Record<string, Record<string, number>> = {
-  "Black & white": { A4: 300, A3: 500, "Custom type": 300, Passport: 300, "Business / ID Card": 0 },
-  Coloured:        { A4: 500, A3: 1200, "Custom type": 500, Passport: 750, "Business / ID Card": 0 },
+  "Black & white": { A4: 300, A3: 500, A5: 200, "Custom type": 300, Passport: 300, "Business / ID Card": 0 },
+  Coloured:        { A4: 500, A3: 1200, A5: 300, "Custom type": 500, Passport: 750, "Business / ID Card": 0 },
 };
 
-const PAPER_SIZES   = ["A4", "A3", "Passport", "Business / ID Card", "Custom type"];
-const CARD_SIZES    = ["A4","A3", "Passport", "Business / ID Card", "Custom type"];
+const PAPER_SIZES   = ["A3", "A4","A5", "Passport", "Business / ID Card", "Custom type"];
+const CARD_SIZES    = ["A3","A4","A5", "Passport", "Business / ID Card", "Custom type"];
 const isCardSize    = (v: string) => CARD_SIZES.includes(v);
+
+const SIZE_HINTS: Record<string, string> = {
+  "A4": "Official documents, letters, reports",
+  "A3": "Posters, banners, large prints",
+  "A5": "Flyers, notepads, small handouts",
+  "Custom type": "Special custom paper size",
+  "Business / ID Card": "Business cards, ID cards",
+  "Passport": "Passport photos",
+};
 const FINISHING_COST: Record<string, number> = {
   None: 0, Stapled: 200, "Spiral Binding": 500, "Hardcover Binding": 2000,
 };
@@ -651,11 +660,12 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 function RadioRow({
-  label, name, options, value, onChange, required, error,
+  label, name, options, value, onChange, required, error, hints,
 }: {
   label: string; name: string; options: string[];
   value: string; onChange: (val: string) => void;
   required?: boolean; error?: string;
+  hints?: Record<string, string>;
 }) {
   return (
     <div>
@@ -670,7 +680,10 @@ function RadioRow({
               onChange={() => onChange(opt)} required={required}
               className="w-4 h-4 text-[#5123d4] focus:ring-[#5123d4]"
             />
-            <span className="text-sm text-gray-800">{opt}</span>
+            <span className="text-sm text-gray-800">
+              {opt}
+              {hints?.[opt] && <span className="text-gray-400"> ({hints[opt]})</span>}
+            </span>
           </label>
         ))}
       </div>
@@ -1064,7 +1077,7 @@ export default function OrderDetailsContent() {
                     Print Type <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    {(["Paper Type", "Card Type"] as const).map((cat) => {
+                    {([["Paper Type", "Paper"], ["Card Type", "Card"]] as const).map(([cat, labelText]) => {
                       const active = sizeCategory === cat;
                       return (
                         <button
@@ -1080,7 +1093,7 @@ export default function OrderDetailsContent() {
                               : "bg-white text-gray-700 border-gray-200 hover:border-[#5123d4]/50"
                           }`}
                         >
-                          {cat}
+                          {labelText}
                         </button>
                       );
                     })}
@@ -1093,6 +1106,7 @@ export default function OrderDetailsContent() {
                     name="paperType"
                     required
                     options={PAPER_SIZES}
+                    hints={SIZE_HINTS}
                     value={formData.paperType || ""}
                     onChange={(v) => handleInputChange("paperType", v as OrderData["paperType"])}
                   />
@@ -1103,6 +1117,7 @@ export default function OrderDetailsContent() {
                     label="Card Size"
                     name="paperType"
                     required
+                    hints={SIZE_HINTS}
                     options={CARD_SIZES}
                     value={formData.paperType || ""}
                     onChange={(v) => handleInputChange("paperType", v as OrderData["paperType"])}
