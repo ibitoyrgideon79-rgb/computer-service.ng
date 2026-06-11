@@ -7,7 +7,7 @@ import { useOrderStore } from "@/store/useOrderStore";
 
 const DELIVERY_OPTIONS = [
   { value: "Express Delivery",  title: "Express Delivery ⚡",       subtitle: "30 minutes – 2 hours",                price: "₦3,000", fee: 3000 },
-  { value: "Economy Delivery",  title: "Economy Delivery 🚚",       subtitle: "Within 24 hours",                     price: "₦1,000", fee: 1000 },
+  { value: "Standard Delivery", title: "Standard Delivery 🚚",      subtitle: "2 hours – 12 hours",                  price: "₦2,000", fee: 2000 },
 ] as const;
 
 const NIGERIAN_STATES = [
@@ -18,25 +18,24 @@ const NIGERIAN_STATES = [
   "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
 ];
 
+const PROCESSING_FEE = 1500;
+const SERVICE_FEE    = 1500;
+
 export default function SpecialServicesPage() {
   const { setOrderData } = useOrderStore();
 
   const [code, setCode] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("");
-  const [deliveryEmail, setDeliveryEmail] = useState("");
-  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [pickupState, setPickupState] = useState("");
-  const [pickupCity, setPickupCity] = useState("");
-  const [pickupLocation, setPickupLocation] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
   const selectedDelivery = DELIVERY_OPTIONS.find((o) => o.value === deliveryMethod);
-  const total = selectedDelivery?.fee ?? 0;
+  const deliveryFee = selectedDelivery?.fee ?? 0;
+  const total = PROCESSING_FEE + SERVICE_FEE + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,11 +44,8 @@ export default function SpecialServicesPage() {
     if (!deliveryMethod) next.deliveryMethod = "Please select a delivery method";
 
     if (deliveryMethod) {
-      if (!name.trim())  next.name  = "Full name is required";
       if (!phone.trim()) next.phone = "Phone number is required";
-      if (!pickupState)    next.pickupState    = "State is required";
-      if (!pickupCity)     next.pickupCity     = "City is required";
-      if (!pickupLocation) next.pickupLocation = "Street address is required";
+      if (!pickupState)  next.pickupState = "State is required";
     }
 
     setErrors(next);
@@ -58,12 +54,8 @@ export default function SpecialServicesPage() {
     setOrderData({
       service:        "Special Service",
       category:       code || "Special Service",
-      name,
       phoneNumber:    phone,
-      email,
       pickupState,
-      pickupCity,
-      pickupLocation,
       deliveryMethod: deliveryMethod as never,
       deliveryDetails: "",
     });
@@ -75,15 +67,13 @@ export default function SpecialServicesPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer_name:    name,
+          customer_name:    "Special Service Customer",
           phone_number:     phone,
-          email:            email || null,
+          email:            null,
           service:          "Special Service",
           category:         code || "Special Service",
           delivery_method:  deliveryMethod,
           pickup_state:     pickupState,
-          pickup_city:      pickupCity,
-          pickup_location:  pickupLocation,
           amount:           total,
         }),
       });
@@ -99,7 +89,7 @@ export default function SpecialServicesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId: orderJson.id,
-          email:   email || "customer@computerservice.ng",
+          email:   "customer@computerservice.ng",
           amount:  total,
         }),
       });
@@ -126,7 +116,7 @@ export default function SpecialServicesPage() {
 
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-10">
           <h1 className="text-3xl font-bold text-black mb-2">Special Service</h1>
-          <p className="text-gray-600 mb-8">INVITATION PRINTING AND DELIVERY SERVICE: This specialized Invitation Printing and Delivery Service is created for the Nigeria Sub-National Investment and Tourism Information Round table, featuring the launch of the book, "Nigeria: Documenting the Economic and Tourism Potentials of the 36 States and the FCT.
+          <p className="text-gray-600 mb-8">INVITATION PRINTING AND DELIVERY SERVICE: This specialized Invitation Printing and Delivery Service is created for the Nigeria Sub-National Investment and Tourism Information Round table, featuring the launch of the book, &quot;Nigeria: Documenting the Economic and Tourism Potentials of the 36 States and the FCT.
           Input your ID Code, which can be found on the digital invitation sent to your email, select your preferred delivery method, and we will print your invitation and have it delivered to you.
           Note: For privacy and security purposes, we will contact the phone number registered with the ID Code to confirm your service request before processing and delivery.</p>
 
@@ -140,7 +130,6 @@ export default function SpecialServicesPage() {
                 placeholder="Enter your code"
                 className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
               />
-              <p className="text-xs text-gray-500 mt-1"></p>
             </div>
 
             <div>
@@ -191,42 +180,6 @@ export default function SpecialServicesPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name <span className="text-red-500">*</span></label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Your full name"
-                      className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.name ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
-                    />
-                    {errors.name && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.name}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+234 803 567 1112"
-                      className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.phone ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
-                    />
-                    {errors.phone && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.phone}</p>}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">State <span className="text-red-500">*</span></label>
                     <select
                       title="State"
@@ -242,45 +195,37 @@ export default function SpecialServicesPage() {
                     {errors.pickupState && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupState}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">City / Area <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
                     <input
-                      type="text"
-                      value={pickupCity}
-                      onChange={(e) => setPickupCity(e.target.value)}
-                      placeholder="e.g. Wuse Zone 2"
-                      className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.pickupCity ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+234 803 567 1112"
+                      className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.phone ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
                     />
-                    {errors.pickupCity && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupCity}</p>}
+                    {errors.phone && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.phone}</p>}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Street Address / Landmark <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={pickupLocation}
-                    onChange={(e) => setPickupLocation(e.target.value)}
-                    placeholder="e.g. No. 5 Ibrahim Tahir Road, beside GTB"
-                    className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.pickupLocation ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
-                  />
-                  {errors.pickupLocation && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupLocation}</p>}
+                <div className="bg-[#f8f7ff] border border-[#5123d4]/15 rounded-xl p-5 space-y-2 text-sm">
+                  <h3 className="text-base font-bold text-black mb-2">Order Summary</h3>
+                  <div className="flex justify-between text-gray-700">
+                    <span>Processing fee</span>
+                    <span>₦{PROCESSING_FEE.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-700">
+                    <span>Service fee (Coloured Printing and Card Paper)</span>
+                    <span>₦{SERVICE_FEE.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-700">
+                    <span>Delivery ({deliveryMethod})</span>
+                    <span>₦{deliveryFee.toLocaleString()}</span>
+                  </div>
+                  <div className="pt-2 mt-2 border-t border-[#5123d4]/15 flex justify-between font-bold text-base">
+                    <span>Total</span>
+                    <span className="text-[#5123d4]">₦{total.toLocaleString()}</span>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {deliveryMethod === "Email Delivery" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address for Delivery <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={deliveryEmail}
-                  onChange={(e) => setDeliveryEmail(e.target.value)}
-                  placeholder="where should we send the completed work?"
-                  className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.deliveryEmail ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
-                />
-                {errors.deliveryEmail && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.deliveryEmail}</p>}
               </div>
             )}
 
@@ -301,7 +246,7 @@ export default function SpecialServicesPage() {
                 </>
               ) : (
                 <>
-                  Proceed to Payment {total > 0 && `(₦${total.toLocaleString()})`} <ArrowRight className="w-4 h-4" />
+                  Proceed to Payment <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
