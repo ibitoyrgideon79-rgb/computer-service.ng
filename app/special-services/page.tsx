@@ -226,7 +226,7 @@ export default function SpecialServicesPage() {
                     {errors.pickupState && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupState}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone Number if different from registered number <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone Number <span className="text-red-500">*</span></label>
                     <input
                       type="tel"
                       value={phone}
