@@ -11,8 +11,6 @@ const DELIVERY_OPTIONS = [
   { value: "Standard Delivery", title: "Standard Delivery 🚚",      subtitle: "2 hours – 12 hours",                  price: "₦2,000" },
   { value: "Economy Delivery",  title: "Economy Delivery 🚚",       subtitle: "Within 24 hours",                     price: "₦1,000" },
   { value: "Schedule Delivery", title: "Schedule Delivery",         subtitle: "Custom time / multi-stop",            price: "₦5,000/stop" },
-  { value: "Email Delivery",    title: "Email Delivery 📧",         subtitle: "Sent directly to your inbox",         price: "Free" },
-  { value: "Special Submission", title: "Special Submission",       subtitle: "Government & private organizations",  price: "Free" },
 ] as const;
 
 export default function SpecialServicesPage() {
@@ -57,8 +55,8 @@ export default function SpecialServicesPage() {
         </Link>
 
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-10">
-          <h1 className="text-3xl font-bold text-black mb-2">Special Services</h1>
-          <p className="text-gray-600 mb-8">Enter your service code and choose how you&apos;d like it delivered.</p>
+          <h1 className="text-3xl font-bold text-black mb-2">Special Service</h1>
+          <p className="text-gray-600 mb-8">Enter your ID Code and choose how you&apos;d like it delivered.</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
