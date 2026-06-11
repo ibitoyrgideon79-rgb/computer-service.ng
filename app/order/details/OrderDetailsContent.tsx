@@ -16,13 +16,28 @@ const CARD_SIZES    = ["A3","A4","A5", "Passport", "Business / ID Card", "Custom
 const isCardSize    = (v: string) => CARD_SIZES.includes(v);
 
 const SIZE_HINTS: Record<string, string> = {
-  "A4": "Official documents, letters, reports",
-  "A3": "Posters, banners, large prints",
-  "A5": "Flyers, notepads, small handouts",
+  "A4": "Official documents, Letters, Reports",
+  "A3": "Posters, Banners, Large prints",
+  "A5": "Flyers, Invitation cards, Notepads, Small Handouts",
   "Custom type": "Special custom paper size",
   "Business / ID Card": "Business cards, ID cards",
   "Passport": "Passport photos",
 };
+const SERVICE_CATEGORIES: Record<string, string[]> = {
+  "Printing": ["A4 Paper", "A3 Paper", "A5 Paper", "Legal Size", "Letter Size", "Photo Print", "Poster Print", "Banner Print", "Document", "Photos & Passport", "Business Materials", "Cards & Labels", "Event Prints"],
+  "Photocopy": ["A4 Photocopy", "A3 Photocopy", "A5 Photocopy", "Legal Size Photocopy", "Bulk Photocopy"],
+  "Hardcopy / Computer Pickup": ["Document Pickup", "Computer / Laptop Pickup", "Phone Pickup", "Other Device Pickup"],
+  "Typing": ["CV / Resume", "Cover Letter", "Application Letter", "School Assignment", "Report Writing", "Business Letter", "Proposal / Project", "Minutes of Meeting"],
+  "Binding": ["Spiral Binding", "Hardcover Binding", "Perfect Binding", "Comb Binding", "Thermal Binding", "Tape Binding"],
+  "Lamination": ["A4 Lamination", "A3 Lamination", "A5 Lamination", "ID Card Lamination", "Certificate Lamination", "Photo Lamination", "Bulk Lamination"],
+  "Scanning": ["Document Scanning", "Photo Scanning", "ID / Passport Scan", "Certificate Scan", "Bulk Document Scanning"],
+  "Document Conversion": ["Word to PDF", "PDF to Word", "Image to PDF", "PowerPoint to PDF", "Excel to PDF", "PDF to Excel", "Handwritten to Typed"],
+  "Graphic/Logo Design": ["Logo Design", "Flyer Design", "Banner / Flex Design", "Brochure Design", "Poster Design", "Social Media Graphic", "Certificate Design", "Letterhead Design"],
+  "Business Card / ID Card": ["Business Card", "Staff ID Card", "Student ID Card", "Event / Visitor Badge", "Name Tag"],
+  "Application Services": ["JAMB Registration", "WAEC / NECO Registration", "School / University Application", "Job Application", "Government Form Filling", "Scholarship Application", "NIN / BVN Registration", "CAC Registration"],
+  "Technical Support": ["Laptop Repair", "Phone Repair", "Software Installation", "Virus / Malware Removal", "Data Recovery", "Network & WiFi Setup", "Printer Setup & Repair", "OS Reinstallation"],
+};
+
 const FINISHING_COST: Record<string, number> = {
   None: 0, Stapled: 200, "Spiral Binding": 500, "Hardcover Binding": 2000,
 };
@@ -1025,10 +1040,33 @@ export default function OrderDetailsContent() {
               {errors.service && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.service}</p>}
             </div>
 
-            {categoryParam && (
-              <div className="flex items-center gap-2 bg-[#f0ebff] border border-[#5123d4]/20 rounded-lg px-4 py-2.5">
-                <span className="text-xs text-[#5123d4] font-semibold uppercase tracking-wide">Selected type:</span>
-                <span className="text-sm font-medium text-gray-800">{categoryParam}</span>
+            {formData.service && SERVICE_CATEGORIES[formData.service] && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Type / Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  title="Type or category"
+                  value={formData.category || ""}
+                  onChange={(e) => handleInputChange("category", e.target.value)}
+                  className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.category ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
+                >
+                  <option value="">Select a type…</option>
+                  {SERVICE_CATEGORIES[formData.service].map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                  <option value="Other">Other</option>
+                </select>
+                {formData.category === "Other" && (
+                  <input
+                    type="text"
+                    placeholder="Please specify…"
+                    value={formData.otherCategory || ""}
+                    onChange={(e) => handleInputChange("otherCategory", e.target.value)}
+                    className="mt-2 w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                  />
+                )}
+                {errors.category && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.category}</p>}
               </div>
             )}
 
