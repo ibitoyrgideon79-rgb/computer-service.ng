@@ -7,12 +7,12 @@ import { ArrowLeft, ArrowRight, AlertCircle } from "lucide-react";
 import { useOrderStore } from "@/store/useOrderStore";
 
 const DELIVERY_OPTIONS = [
-  { value: "Express Delivery",  title: "Express Delivery ⚡",      subtitle: "30 minutes – 2 hours",  price: "₦3,000" },
-  { value: "Standard Delivery", title: "Standard Delivery 🚚",     subtitle: "2 hours – 12 hours",    price: "₦2,000" },
-  { value: "Economy Delivery",  title: "Economy Delivery 🚚",      subtitle: "Within 24 hours",       price: "₦1,000" },
-  { value: "Schedule Delivery", title: "Schedule Delivery",        subtitle: "Custom time / multi-stop", price: "₦5,000/stop" },
-  { value: "Email Delivery",    title: "Email Delivery 📧",        subtitle: "Sent directly to your inbox", price: "Free" },
-  { value: "Special Submission", title: "Special Submission",      subtitle: "Government & private organizations", price: "Free" },
+  { value: "Express Delivery",  title: "Express Delivery ⚡",       subtitle: "30 minutes – 2 hours",                price: "₦3,000" },
+  { value: "Standard Delivery", title: "Standard Delivery 🚚",      subtitle: "2 hours – 12 hours",                  price: "₦2,000" },
+  { value: "Economy Delivery",  title: "Economy Delivery 🚚",       subtitle: "Within 24 hours",                     price: "₦1,000" },
+  { value: "Schedule Delivery", title: "Schedule Delivery",         subtitle: "Custom time / multi-stop",            price: "₦5,000/stop" },
+  { value: "Email Delivery",    title: "Email Delivery 📧",         subtitle: "Sent directly to your inbox",         price: "Free" },
+  { value: "Special Submission", title: "Special Submission",       subtitle: "Government & private organizations",  price: "Free" },
 ] as const;
 
 export default function SpecialServicesPage() {
@@ -20,9 +20,6 @@ export default function SpecialServicesPage() {
   const { setOrderData } = useOrderStore();
 
   const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("");
   const [deliveryEmail, setDeliveryEmail] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -31,12 +28,10 @@ export default function SpecialServicesPage() {
     e.preventDefault();
     const next: Record<string, string> = {};
 
-    if (!name.trim())  next.name  = "Full name is required";
-    if (!phone.trim()) next.phone = "Phone number is required";
     if (!deliveryMethod) next.deliveryMethod = "Please select a delivery method";
 
     if (deliveryMethod === "Email Delivery") {
-      const target = (deliveryEmail || email).trim();
+      const target = deliveryEmail.trim();
       if (!target) next.deliveryEmail = "Email address is required for email delivery";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) next.deliveryEmail = "Please enter a valid email";
     }
@@ -47,11 +42,8 @@ export default function SpecialServicesPage() {
     setOrderData({
       service:        "Special Service",
       category:       code || "Special Service",
-      name,
-      phoneNumber:    phone,
-      email,
       deliveryMethod: deliveryMethod as never,
-      deliveryDetails: deliveryMethod === "Email Delivery" ? (deliveryEmail || email) : "",
+      deliveryDetails: deliveryMethod === "Email Delivery" ? deliveryEmail : "",
     });
 
     router.push("/order/review");
@@ -59,7 +51,7 @@ export default function SpecialServicesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f0ebff] via-white to-[#ebf4ff] py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#5123d4] hover:text-[#401AA0] mb-4">
           <ArrowLeft className="w-4 h-4" /> Back
         </Link>
@@ -68,9 +60,9 @@ export default function SpecialServicesPage() {
           <h1 className="text-3xl font-bold text-black mb-2">Special Services</h1>
           <p className="text-gray-600 mb-8">Enter your service code and choose how you&apos;d like it delivered.</p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Service Code</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">ID Code</label>
               <input
                 type="text"
                 value={code}
@@ -81,54 +73,17 @@ export default function SpecialServicesPage() {
               <p className="text-xs text-gray-500 mt-1">Use the code you received for your special service.</p>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your full name"
-                  className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.name ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
-                />
-                {errors.name && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.name}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+234 803 567 1112"
-                  className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.phone ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
-                />
-                {errors.phone && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.phone}</p>}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Delivery Method <span className="text-red-500">*</span>
               </label>
-              <div className="space-y-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {DELIVERY_OPTIONS.map((opt) => {
                   const selected = deliveryMethod === opt.value;
                   return (
                     <label
                       key={opt.value}
-                      className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
+                      className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all h-full ${
                         selected ? "border-[#5123d4] bg-[#f0ebff]" : "border-gray-200 bg-gray-50 hover:border-[#5123d4]/40"
                       }`}
                     >
@@ -149,7 +104,7 @@ export default function SpecialServicesPage() {
                             {opt.price}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5">{opt.subtitle}</p>
+                        <p className="text-xs text-gray-500 mt-1">{opt.subtitle}</p>
                       </div>
                     </label>
                   );
@@ -178,7 +133,7 @@ export default function SpecialServicesPage() {
 
             <button
               type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              className="w-full sm:w-auto sm:min-w-[260px] inline-flex items-center justify-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-6 py-3 rounded-lg font-semibold transition-colors"
             >
               Continue to Review <ArrowRight className="w-4 h-4" />
             </button>
