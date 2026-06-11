@@ -136,7 +136,7 @@ export default function SpecialServicesPage() {
               Tourism Potentials of the 36 States and the FCT.&quot;</em>
             </p>
             <p>
-              Input your ID Code (found on the digital invitation sent to your email),
+              Input your IV Code (found on the digital invitation sent to your email),
               select your preferred delivery method, and we&apos;ll print your invitation and
               have it delivered to you.
             </p>
@@ -146,14 +146,14 @@ export default function SpecialServicesPage() {
             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-sm text-amber-800 leading-relaxed">
               <strong>Note:</strong> For privacy and security, we&apos;ll contact the phone
-              number registered with your ID Code to confirm your request before processing
+              number registered with your IV Code to confirm your request before processing
               and delivery.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">ID Code</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">IV Code</label>
               <input
                 type="text"
                 value={code}
