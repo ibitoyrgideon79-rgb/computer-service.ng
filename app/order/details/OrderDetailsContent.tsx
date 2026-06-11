@@ -7,9 +7,13 @@ import { UploadCloud, AlertCircle, Plus, Trash2, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
 const RATE: Record<string, Record<string, number>> = {
-  "Black & white": { A4: 300, A3: 500, "Custom type": 300, Passport: 300 },
-  Coloured:        { A4: 500, A3: 1200, "Custom type": 500, Passport: 750 },
+  "Black & white": { A4: 300, A3: 500, "Custom type": 300, Passport: 300, "Business / ID Card": 0 },
+  Coloured:        { A4: 500, A3: 1200, "Custom type": 500, Passport: 750, "Business / ID Card": 0 },
 };
+
+const PAPER_SIZES   = ["A4", "A3", "Passport", "Business / ID Card", "Custom type"];
+const CARD_SIZES    = ["A4","A3", "Passport", "Business / ID Card", "Custom type"];
+const isCardSize    = (v: string) => CARD_SIZES.includes(v);
 const FINISHING_COST: Record<string, number> = {
   None: 0, Stapled: 200, "Spiral Binding": 500, "Hardcover Binding": 2000,
 };
@@ -787,6 +791,9 @@ export default function OrderDetailsContent() {
   const [pagesAutoDetected, setPagesAutoDetected] = useState(false);
   const [detectingPages, setDetectingPages] = useState(false);
   const [textPagesAutoDetected, setTextPagesAutoDetected] = useState(false);
+  const [sizeCategory, setSizeCategory] = useState<"Paper Type" | "Card Type" | "">(
+    isCardSize(orderData.paperType || "") ? "Card Type" : (orderData.paperType ? "Paper Type" : "")
+  );
 
   const WORDS_PER_PAGE = 250;
 
@@ -1052,7 +1059,55 @@ export default function OrderDetailsContent() {
                   {errors.printColor && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.printColor}</p>}
                 </div>
 
-                <RadioRow label="Size" name="paperType" required options={["A4", "A3", "Custom type", "Passport"]} value={formData.paperType || ""} onChange={(v) => handleInputChange("paperType", v as OrderData["paperType"])} />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Print Type <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["Paper Type", "Card Type"] as const).map((cat) => {
+                      const active = sizeCategory === cat;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => {
+                            setSizeCategory(cat);
+                            handleInputChange("paperType", "" as OrderData["paperType"]);
+                          }}
+                          className={`py-2.5 px-4 rounded-lg text-sm font-medium border transition-colors ${
+                            active
+                              ? "bg-[#5123d4] text-white border-[#5123d4]"
+                              : "bg-white text-gray-700 border-gray-200 hover:border-[#5123d4]/50"
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {sizeCategory === "Paper Type" && (
+                  <RadioRow
+                    label="Paper Size"
+                    name="paperType"
+                    required
+                    options={PAPER_SIZES}
+                    value={formData.paperType || ""}
+                    onChange={(v) => handleInputChange("paperType", v as OrderData["paperType"])}
+                  />
+                )}
+
+                {sizeCategory === "Card Type" && (
+                  <RadioRow
+                    label="Card Size"
+                    name="paperType"
+                    required
+                    options={CARD_SIZES}
+                    value={formData.paperType || ""}
+                    onChange={(v) => handleInputChange("paperType", v as OrderData["paperType"])}
+                  />
+                )}
 
                 {formData.service === "Photocopy" && (
                   <div>

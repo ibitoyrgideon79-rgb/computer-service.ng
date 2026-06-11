@@ -26,7 +26,7 @@ export interface OrderData {
   // Options
   checkFormatting: boolean;
   printColor: 'Black & white' | 'Coloured' | '';
-  paperType: 'A4' | 'A3' | 'Custom type' | '';
+  paperType: 'A4' | 'A3' | 'Custom type' | 'Passport' | 'Business / ID Card' | '';
   customPaperType?: string;
   copies: number;
   pages?: number;
