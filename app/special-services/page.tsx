@@ -276,9 +276,9 @@ export default function SpecialServicesPage() {
                     <span>Delivery ({deliveryMethod})</span>
                     <span>₦{deliveryFee.toLocaleString()}</span>
                   </div>
-                  <div className="pt-2 mt-2 border-t border-[#5123d4]/15 flex justify-between font-bold text-base">
-                    <span>Total</span>
-                    <span className="text-[#5123d4]">₦{total.toLocaleString()}</span>
+                  <div className="mt-3 -mx-5 -mb-5 px-5 py-4 bg-[#5123d4] rounded-b-xl flex items-center justify-between text-white">
+                    <span className="text-base font-bold uppercase tracking-wide">Total</span>
+                    <span className="text-2xl font-extrabold">₦{total.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
