@@ -28,6 +28,8 @@ export default function SpecialServicesPage() {
   const [deliveryMethod, setDeliveryMethod] = useState("");
   const [phone, setPhone] = useState("");
   const [pickupState, setPickupState] = useState("");
+  const [pickupCity, setPickupCity] = useState("");
+  const [pickupLocation, setPickupLocation] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [submitting, setSubmitting] = useState(false);
@@ -46,6 +48,8 @@ export default function SpecialServicesPage() {
     if (deliveryMethod) {
       if (!phone.trim()) next.phone = "Phone number is required";
       if (!pickupState)  next.pickupState = "State is required";
+      if (!pickupCity.trim())     next.pickupCity     = "City is required";
+      if (!pickupLocation.trim()) next.pickupLocation = "Street address is required";
     }
 
     setErrors(next);
@@ -56,6 +60,8 @@ export default function SpecialServicesPage() {
       category:       code || "Special Service",
       phoneNumber:    phone,
       pickupState,
+      pickupCity,
+      pickupLocation,
       deliveryMethod: deliveryMethod as never,
       deliveryDetails: "",
     });
@@ -74,6 +80,8 @@ export default function SpecialServicesPage() {
           category:         code || "Special Service",
           delivery_method:  deliveryMethod,
           pickup_state:     pickupState,
+          pickup_city:      pickupCity,
+          pickup_location:  pickupLocation,
           amount:           total,
         }),
       });
@@ -115,10 +123,33 @@ export default function SpecialServicesPage() {
         </Link>
 
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-10">
-          <h1 className="text-3xl font-bold text-black mb-2">Special Service</h1>
-          <p className="text-gray-600 mb-8">INVITATION PRINTING AND DELIVERY SERVICE: This specialized Invitation Printing and Delivery Service is created for the Nigeria Sub-National Investment and Tourism Information Round table, featuring the launch of the book, &quot;Nigeria: Documenting the Economic and Tourism Potentials of the 36 States and the FCT.
-          Input your ID Code, which can be found on the digital invitation sent to your email, select your preferred delivery method, and we will print your invitation and have it delivered to you.
-          Note: For privacy and security purposes, we will contact the phone number registered with the ID Code to confirm your service request before processing and delivery.</p>
+          <h1 className="text-3xl font-bold text-black mb-1">Special Service</h1>
+          <p className="text-sm uppercase tracking-wide text-[#5123d4] font-semibold mb-4">
+            Invitation Printing & Delivery Service
+          </p>
+
+          <div className="space-y-3 text-gray-700 leading-relaxed mb-6">
+            <p>
+              This specialized Invitation Printing and Delivery Service is created for the
+              <strong> Nigeria Sub-National Investment and Tourism Information Round Table</strong>,
+              featuring the launch of the book <em>&quot;Nigeria: Documenting the Economic and
+              Tourism Potentials of the 36 States and the FCT.&quot;</em>
+            </p>
+            <p>
+              Input your ID Code (found on the digital invitation sent to your email),
+              select your preferred delivery method, and we&apos;ll print your invitation and
+              have it delivered to you.
+            </p>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8 flex gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800 leading-relaxed">
+              <strong>Note:</strong> For privacy and security, we&apos;ll contact the phone
+              number registered with your ID Code to confirm your request before processing
+              and delivery.
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -195,7 +226,7 @@ export default function SpecialServicesPage() {
                     {errors.pickupState && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupState}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone Number if different from registered number <span className="text-red-500">*</span></label>
                     <input
                       type="tel"
                       value={phone}
@@ -205,6 +236,30 @@ export default function SpecialServicesPage() {
                     />
                     {errors.phone && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.phone}</p>}
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">City / Area <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={pickupCity}
+                    onChange={(e) => setPickupCity(e.target.value)}
+                    placeholder="e.g. Wuse Zone 2"
+                    className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.pickupCity ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
+                  />
+                  {errors.pickupCity && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupCity}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Street Address / Landmark <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={pickupLocation}
+                    onChange={(e) => setPickupLocation(e.target.value)}
+                    placeholder="e.g. No. 5 Ibrahim Tahir Road, beside GTB"
+                    className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.pickupLocation ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
+                  />
+                  {errors.pickupLocation && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupLocation}</p>}
                 </div>
 
                 <div className="bg-[#f8f7ff] border border-[#5123d4]/15 rounded-xl p-5 space-y-2 text-sm">
