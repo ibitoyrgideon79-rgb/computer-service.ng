@@ -24,7 +24,7 @@ const SERVICE_FEE    = 1500;
 export default function SpecialServicesPage() {
   const { setOrderData } = useOrderStore();
 
-  const [code, setCode] = useState("");
+  const [email, setEmail] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("");
   const [phone, setPhone] = useState("");
   const [pickupState, setPickupState] = useState("");
@@ -57,7 +57,8 @@ export default function SpecialServicesPage() {
 
     setOrderData({
       service:        "Special Service",
-      category:       code || "Special Service",
+      category:       email || "Special Service",
+      email,
       phoneNumber:    phone,
       pickupState,
       pickupCity,
@@ -75,9 +76,9 @@ export default function SpecialServicesPage() {
         body: JSON.stringify({
           customer_name:    "Special Service Customer",
           phone_number:     phone,
-          email:            null,
+          email:            email || null,
           service:          "Special Service",
-          category:         code || "Special Service",
+          category:         email || "Special Service",
           delivery_method:  deliveryMethod,
           pickup_state:     pickupState,
           pickup_city:      pickupCity,
@@ -97,7 +98,7 @@ export default function SpecialServicesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId: orderJson.id,
-          email:   "customer@computerservice.ng",
+          email:   email || "customer@computerservice.ng",
           amount:  total,
         }),
       });
@@ -138,8 +139,8 @@ export default function SpecialServicesPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 type="email"
-                value={}
-                onChange={(e) => setCode(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
               />
