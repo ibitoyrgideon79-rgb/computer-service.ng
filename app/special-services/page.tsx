@@ -128,28 +128,10 @@ export default function SpecialServicesPage() {
             Invitation Printing & Delivery Service
           </p>
 
-          <div className="space-y-3 text-gray-700 leading-relaxed mb-6">
-            <p>
-              This specialized Invitation Printing and Delivery Service is created for the
-              <strong> Nigeria Sub-National Investment and Tourism Information Round Table</strong>,
-              featuring the launch of the book <em>&quot;Nigeria: Documenting the Economic and
-              Tourism Potentials of the 36 States and the FCT.&quot;</em>
-            </p>
-            <p>
-              Input your IV Code (found on the digital invitation sent to your email),
-              select your preferred delivery method, and we&apos;ll print your invitation and
-              have it delivered to you.
-            </p>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-800 leading-relaxed">
-              <strong>Note:</strong> For privacy and security, we&apos;ll contact the phone
-              number registered with your IV Code to confirm your request before processing
-              and delivery.
-            </p>
-          </div>
+          <p className="text-gray-700 leading-relaxed mb-8">
+            Enter the email address you used to register for the program, select your preferred
+            delivery method, and we will print your invitation and have it delivered to you.
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
