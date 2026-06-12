@@ -135,9 +135,9 @@ export default function SpecialServicesPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">IV Code</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
-                type="text"
+                type="email"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Enter your code"
