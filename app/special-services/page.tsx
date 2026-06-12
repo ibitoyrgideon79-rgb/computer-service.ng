@@ -45,6 +45,10 @@ export default function SpecialServicesPage() {
 
     if (!deliveryMethod) next.deliveryMethod = "Please select a delivery method";
 
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) next.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) next.email = "Please enter a valid email";
+
     if (deliveryMethod) {
       if (!phone.trim()) next.phone = "Phone number is required";
       if (!pickupState)  next.pickupState = "State is required";
@@ -124,10 +128,20 @@ export default function SpecialServicesPage() {
         </Link>
 
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-10">
-          <h1 className="text-3xl font-bold text-black mb-1">Special Service</h1>
-          <p className="text-sm uppercase tracking-wide text-[#5123d4] font-semibold mb-4">
-            Invitation Printing & Delivery Service
-          </p>
+          <h1 className="text-3xl font-bold text-black mb-2">Special Service</h1>
+
+          <div className="bg-[#f0ebff] border-l-4 border-[#5123d4] rounded-r-lg p-5 mb-6">
+            <p className="text-sm uppercase tracking-wide text-[#5123d4] font-bold mb-2">
+              Invitation Printing &amp; Delivery Service
+            </p>
+            <p className="text-gray-800 font-semibold leading-relaxed mb-1">
+              Nigeria Sub-National Investment and Tourism Information Roundtable
+            </p>
+            <p className="text-gray-700 leading-relaxed text-sm">
+              Featuring the launch of the book{" "}
+              <em>&quot;Nigeria: Documenting the Economic and Tourism Potentials of the 36 States and the FCT.&quot;</em>
+            </p>
+          </div>
 
           <p className="text-gray-700 leading-relaxed mb-8">
             Enter the email address you used to register for the program, select your preferred
@@ -136,14 +150,15 @@ export default function SpecialServicesPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email <span className="text-red-500">*</span></label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
+                className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.email ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
               />
+              {errors.email && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.email}</p>}
             </div>
 
             <div>
@@ -194,6 +209,17 @@ export default function SpecialServicesPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone Number <span className="text-red-500">*</span></label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+234 803 567 1112"
+                      className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.phone ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
+                    />
+                    {errors.phone && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.phone}</p>}
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">State <span className="text-red-500">*</span></label>
                     <select
                       title="State"
@@ -207,17 +233,6 @@ export default function SpecialServicesPage() {
                       ))}
                     </select>
                     {errors.pickupState && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.pickupState}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone Number <span className="text-red-500">*</span></label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+234 803 567 1112"
-                      className={`w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 ${errors.phone ? "ring-2 ring-red-400" : "focus:ring-[#5123d4]"}`}
-                    />
-                    {errors.phone && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.phone}</p>}
                   </div>
                 </div>
 
