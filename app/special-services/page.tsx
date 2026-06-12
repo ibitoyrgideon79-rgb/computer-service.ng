@@ -138,9 +138,9 @@ export default function SpecialServicesPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 type="email"
-                value={code}
+                value={}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Enter your code"
+                placeholder="Enter your email"
                 className="w-full bg-[#F1F5F9] text-black px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5123d4]"
               />
             </div>
