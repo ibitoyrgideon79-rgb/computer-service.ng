@@ -264,16 +264,20 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Special Services CTA — sits between hero and services */}
+        <div className="container mx-auto px-4 lg:px-8 flex justify-center -mt-2 mb-10">
+          <Link
+            href="/special-services"
+            className="inline-flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3 rounded-full text-base font-semibold transition-colors shadow-md"
+          >
+            ✨ Special Services
+          </Link>
+        </div>
+
         {/* Services Section */}
         <section className="py-14 sm:py-20 bg-gray-50 border-y border-gray-100" id="services">
           <div className="container mx-auto px-4 lg:px-8">
             <div className="text-center mb-12">
-              <Link
-                href="/special-services"
-                className="inline-flex items-center gap-2 bg-[#5123d4] hover:bg-[#401AA0] text-white px-8 py-3 rounded-full text-base font-semibold mb-8 transition-colors shadow-md"
-              >
-                ✨ Special Services
-              </Link>
               <h2 className="text-3xl font-bold text-black mb-3">Our Services</h2>
               <p className="text-gray-500 max-w-xl mx-auto">Everything you need handled quickly, professionally, and delivered to you.</p>
             </div>
