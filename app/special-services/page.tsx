@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, AlertCircle, Loader2, MessageCircle } from "lucide-react";
 import { useOrderStore } from "@/store/useOrderStore";
 
 const DELIVERY_OPTIONS = [
@@ -129,24 +129,28 @@ export default function SpecialServicesPage() {
 
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-10">
           <h1 className="text-3xl font-bold text-black mb-2">Special Service</h1>
+          <p className="text-sm uppercase tracking-wide text-[#5123d4] font-semibold mb-5">
+          Special Service Request
+          </p>
 
           <div className="bg-[#f0ebff] border-l-4 border-[#5123d4] rounded-r-lg p-5 mb-6">
-            <p className="text-sm uppercase tracking-wide text-[#5123d4] font-bold mb-2">
-              Invitation Printing &amp; Delivery Service
-            </p>
-            <p className="text-gray-800 font-semibold leading-relaxed mb-1">
-              Nigeria Sub-National Investment and Tourism Information Roundtable
-            </p>
-            <p className="text-gray-700 leading-relaxed text-sm">
-              Featuring the launch of the book{" "}
-              <em>&quot;Nigeria: Documenting the Economic and Tourism Potentials of the 36 States and the FCT.&quot;</em>
+            <p className="text-gray-800 leading-relaxed">
+              This is a custom service request. Please chat with us on WhatsApp and let us know
+              how you would like the service to be carried out, and how you would like the
+              completed service or deliverables to be provided to you, your group, organization,
+              team, or participants.
             </p>
           </div>
 
-          <p className="text-gray-700 leading-relaxed mb-8">
-            Enter the email address you used to register for the program, select your preferred
-            delivery method, and we will print your invitation and have it delivered to you.
-          </p>
+          <a
+            href="https://wa.me/2348166027757?text=Hi%2C%20I%27d%20like%20to%20request%20a%20custom%20service."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors mb-8"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Chat with us on WhatsApp
+          </a>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
